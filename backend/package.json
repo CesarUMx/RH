@@ -20,11 +20,14 @@
     "@prisma/client": "^6.16.3",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
+    "csv-parser": "^3.2.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
     "prisma": "^6.16.3",
+    "xlsx": "^0.18.5",
     "zod": "^4.1.11"
   },
   "devDependencies": {
@@ -33,6 +36,7 @@
     "@types/express": "^5.0.3",
     "@types/helmet": "^0.0.48",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.0.0",
     "@types/node": "^24.6.1",
     "eslint": "^9.36.0",
     "eslint-config-prettier": "^10.1.8",

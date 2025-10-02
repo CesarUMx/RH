@@ -1,10 +1,12 @@
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
+import path from 'path'
 import { env } from './config/env'
 import { authRouter } from './modules/auth/router'
 import { usuariosRouter } from './modules/usuarios/router'
 import { areasRouter } from './modules/areas/router'
+import { docentesRouter } from './modules/docentes/router'
 import { requireAuth, requireRole } from './middlewares/auth'
 import { PrismaClient } from '@prisma/client'
 
@@ -17,6 +19,9 @@ app.use(cors())
 app.use(helmet())
 app.use(express.json())
 
+// Servir archivos estáticos desde la carpeta uploads
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
+
 // Iniciar servidor
 app.get('/', (_, res) => {
     res.json({ message: 'Bienvenido al servidor' })
@@ -26,6 +31,7 @@ app.get('/', (_, res) => {
 app.use('/api/auth', authRouter)
 app.use('/api/usuarios', usuariosRouter)
 app.use('/api/areas', areasRouter)
+app.use('/api/docentes', docentesRouter)
 
 // Ruta de salud
 app.get('/health', (_, res) => {
