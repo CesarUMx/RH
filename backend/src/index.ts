@@ -3,6 +3,7 @@ import cors from 'cors'
 import helmet from 'helmet'
 import { env } from './config/env'
 import { authRouter } from './modules/auth/router'
+import { usuariosRouter } from './modules/usuarios/router'
 import { requireAuth, requireRole } from './middlewares/auth'
 import { PrismaClient } from '@prisma/client'
 
@@ -22,6 +23,7 @@ app.get('/', (_, res) => {
 
 // Rutas
 app.use('/api/auth', authRouter)
+app.use('/api/usuarios', usuariosRouter)
 
 // Ruta de salud
 app.get('/health', (_, res) => {
@@ -31,13 +33,6 @@ app.get('/health', (_, res) => {
 app.get('/me', requireAuth, (req, res) => {
     // req.user tipado correctamente en estricto
     res.json({ user: req.user })
-})
-
-app.get('/usuarios', requireAuth, requireRole(['ADMIN']), async (_req, res) => {
-    const usuarios = await prisma.user.findMany({
-        include: { roles: { include: { role: true } } }
-    })
-    res.json(usuarios)
 })
 
 // Iniciar servidor
