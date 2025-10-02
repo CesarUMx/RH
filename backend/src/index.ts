@@ -15,8 +15,18 @@ const app = express()
 const prisma = new PrismaClient()
 
 // Middlewares
-app.use(cors())
-app.use(helmet())
+app.use(cors({
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'], // Orígenes permitidos (puerto por defecto de Vite)
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true // Permite enviar cookies entre orígenes
+}))
+
+// Configuración de seguridad con Helmet
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" } // Permite cargar recursos desde otros orígenes
+}))
+
 app.use(express.json())
 
 // Servir archivos estáticos desde la carpeta uploads
@@ -38,8 +48,15 @@ app.get('/health', (_, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
+// Ruta para obtener datos del usuario autenticado
+app.get('/api/me', requireAuth, (req, res) => {
+    console.log('Backend - /api/me - Usuario autenticado:', req.user);
+    res.json({ user: req.user })
+})
+
+// Ruta alternativa sin prefijo /api para compatibilidad
 app.get('/me', requireAuth, (req, res) => {
-    // req.user tipado correctamente en estricto
+    console.log('Backend - /me - Usuario autenticado:', req.user);
     res.json({ user: req.user })
 })
 
