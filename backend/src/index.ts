@@ -4,6 +4,7 @@ import helmet from 'helmet'
 import { env } from './config/env'
 import { authRouter } from './modules/auth/router'
 import { usuariosRouter } from './modules/usuarios/router'
+import { areasRouter } from './modules/areas/router'
 import { requireAuth, requireRole } from './middlewares/auth'
 import { PrismaClient } from '@prisma/client'
 
@@ -24,6 +25,7 @@ app.get('/', (_, res) => {
 // Rutas
 app.use('/api/auth', authRouter)
 app.use('/api/usuarios', usuariosRouter)
+app.use('/api/areas', areasRouter)
 
 // Ruta de salud
 app.get('/health', (_, res) => {
