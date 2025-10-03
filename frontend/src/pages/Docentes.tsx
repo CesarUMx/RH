@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { FaEdit, FaTrash, FaPlus, FaCheck, FaTimes, FaUpload, FaDownload, FaSearch } from 'react-icons/fa';
 import { createColumnHelper } from '@tanstack/react-table';
+import { useAuth } from '../context/AuthContext';
+import { useArea } from '../context/AreaContext';
 
 import { MainLayout } from '../layouts/MainLayout';
 import { DataTable } from '../components/ui/DataTable';
@@ -53,6 +55,8 @@ type UpdateDocenteForm = z.infer<typeof updateDocenteSchema>;
 
 export const Docentes = () => {
   const queryClient = useQueryClient();
+  const { hasRole } = useAuth();
+  const { selectedArea } = useArea();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -65,10 +69,23 @@ export const Docentes = () => {
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [isImporting, setIsImporting] = useState(false);
 
+  // Efecto para resetear la página cuando cambia el área seleccionada
+  useEffect(() => {
+    if (hasRole('COORD') && selectedArea) {
+      setCurrentPage(1);
+      queryClient.invalidateQueries({ queryKey: ['docentes'] });
+    }
+  }, [selectedArea?.id, hasRole, queryClient]);
+
   // Consulta para obtener docentes paginados
   const { data: docentesPaginados, isLoading } = useQuery({
-    queryKey: ['docentes', searchQuery, currentPage, pageSize],
-    queryFn: () => docentesService.getAll(searchQuery, currentPage, pageSize),
+    queryKey: ['docentes', searchQuery, currentPage, pageSize, selectedArea?.id],
+    queryFn: () => docentesService.getAll(
+      searchQuery, 
+      currentPage, 
+      pageSize, 
+      hasRole('COORD') && selectedArea ? selectedArea.id : undefined
+    ),
   });
 
   // Mutación para crear docente
@@ -243,57 +260,72 @@ export const Docentes = () => {
         </span>
       ),
     }),
-    columnHelper.display({
-      id: 'acciones',
-      header: 'Acciones',
-      cell: (info) => (
-        <div className="flex space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleEdit(info.row.original)}
-          >
-            <FaEdit className="text-primary" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleDelete(info.row.original)}
-          >
-            <FaTrash className="text-red-500" />
-          </Button>
-        </div>
-      ),
-    }),
   ];
+  
+  // Solo mostrar columna de acciones para ADMIN y RH
+  if (!hasRole('COORD') || hasRole(['ADMIN', 'RH'])) {
+    columns.push(
+      columnHelper.display({
+        id: 'acciones',
+        header: 'Acciones',
+        cell: (info) => (
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleEdit(info.row.original)}
+            >
+              <FaEdit className="text-primary" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleDelete(info.row.original)}
+            >
+              <FaTrash className="text-red-500" />
+            </Button>
+          </div>
+        ),
+      })
+    );
+  }
 
   return (
     <MainLayout>
       <div className="container mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Gestión de Docentes</h1>
-          <div className="flex space-x-2">
-            <Button
-              onClick={() => setIsImportModalOpen(true)}
-              className="flex items-center"
-              variant="secondary"
-            >
-              <FaUpload className="mr-2" /> Importar
-            </Button>
-            <Button
-              onClick={() => docentesService.downloadTemplate()}
-              className="flex items-center"
-              variant="outline"
-            >
-              <FaDownload className="mr-2" /> Descargar Plantilla
-            </Button>
-            <Button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center"
-            >
-              <FaPlus className="mr-2" /> Nuevo Docente
-            </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Gestión de Docentes</h1>
+            {hasRole('COORD') && selectedArea && (
+              <p className="text-gray-600 mt-1">Área: <span className="font-medium">{selectedArea.nombre}</span></p>
+            )}
           </div>
+          
+          {/* Mostrar botones de acción solo para ADMIN y RH */}
+          {(!hasRole('COORD') || hasRole(['ADMIN', 'RH'])) && (
+            <div className="flex space-x-2">
+              <Button
+                onClick={() => setIsImportModalOpen(true)}
+                className="flex items-center"
+                variant="secondary"
+              >
+                <FaUpload className="mr-2" /> Importar
+              </Button>
+              <Button
+                onClick={() => docentesService.downloadTemplate()}
+                className="flex items-center"
+                variant="outline"
+              >
+                <FaDownload className="mr-2" /> Descargar Plantilla
+              </Button>
+              <Button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="flex items-center"
+              >
+                <FaPlus className="mr-2" /> Nuevo Docente
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Barra de búsqueda */}

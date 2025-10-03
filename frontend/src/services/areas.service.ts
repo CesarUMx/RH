@@ -28,6 +28,11 @@ export const areasService = {
     return response.data;
   },
 
+  getMisAreas: async (): Promise<Area[]> => {
+    const response = await api.get('/areas/mis-areas');
+    return response.data;
+  },
+
   getById: async (id: number): Promise<Area> => {
     const response = await api.get(`/areas/${id}`);
     return response.data;

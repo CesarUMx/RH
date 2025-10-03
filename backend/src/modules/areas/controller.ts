@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
+import { JwtPayload } from '../../middlewares/auth'
 
 const prisma = new PrismaClient()
 
@@ -411,5 +412,45 @@ export async function eliminarCoordinador(req: Request, res: Response) {
   } catch (error) {
     console.error('Error al eliminar coordinador:', error)
     return res.status(500).json({ error: 'Error al eliminar coordinador' })
+  }
+}
+
+// GET /mis-areas - Obtener áreas asignadas al usuario actual con rol COORD
+export async function misAreas(req: Request, res: Response) {
+  try {
+    const user = req.user as JwtPayload
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Usuario no autenticado' })
+    }
+
+    // Verificar si el usuario tiene rol COORD
+    const tieneRolCoord = user.roles.includes('COORD')
+    if (!tieneRolCoord) {
+      return res.status(403).json({ 
+        error: 'El usuario no tiene el rol de Coordinador',
+        mensaje: 'Se requiere el rol COORD para acceder a esta funcionalidad'
+      })
+    }
+
+    // Obtener las áreas asignadas al usuario
+    const areasAsignadas = await prisma.coordArea.findMany({
+      where: { userId: user.id },
+      include: {
+        area: true
+      }
+    })
+
+    // Transformar la respuesta
+    const areas = areasAsignadas.map(asignacion => ({
+      id: asignacion.area.id,
+      nombre: asignacion.area.nombre,
+      activo: asignacion.area.activo
+    }))
+
+    return res.json(areas)
+  } catch (error) {
+    console.error('Error al obtener áreas asignadas:', error)
+    return res.status(500).json({ error: 'Error al obtener áreas asignadas' })
   }
 }

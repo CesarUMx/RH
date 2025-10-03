@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { AreaProvider } from './context/AreaContext';
 
 // Páginas
 import { Login } from './pages/Login';
@@ -11,6 +12,7 @@ import { Home } from './pages/Home';
 import { Usuarios } from './pages/Usuarios';
 import { Areas } from './pages/Areas';
 import { Docentes } from './pages/Docentes';
+import { Periodos } from './pages/Periodos';
 
 // Crear cliente de consulta
 const queryClient = new QueryClient({
@@ -55,8 +57,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router>
-          <Routes>
+        <AreaProvider>
+          <Router>
+            <Routes>
             <Route path="/login" element={<Login />} />
             <Route
               path="/"
@@ -90,10 +93,19 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/periodos"
+              element={
+                <ProtectedRoute requiredRoles={['ADMIN', 'RH', 'COORD']}>
+                  <Periodos />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Router>
         <Toaster position="top-right" />
+        </AreaProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

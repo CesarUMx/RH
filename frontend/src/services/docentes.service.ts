@@ -46,9 +46,9 @@ export interface ImportResult {
 }
 
 export const docentesService = {
-  getAll: async (query = '', page = 1, pageSize = 10): Promise<DocentePaginado> => {
+  getAll: async (query = '', page = 1, pageSize = 10, areaId?: number): Promise<DocentePaginado> => {
     const response = await api.get('/docentes', {
-      params: { query, page, pageSize }
+      params: { query, page, pageSize, ...(areaId ? { areaId } : {}) }
     });
     return response.data;
   },

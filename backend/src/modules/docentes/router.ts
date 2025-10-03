@@ -7,12 +7,16 @@ import {
   importarDocentes
 } from './controller'
 import { requireAuth, requireRole } from '../../middlewares/auth'
+import { requireAreaPermission } from '../../middlewares/areaPermissions'
 import { upload } from '../../middlewares/upload'
 
 export const docentesRouter = Router()
 
-// Rutas protegidas que requieren autenticación y rol ADMIN o RH
-docentesRouter.get('/', requireAuth, requireRole(['ADMIN', 'RH']), listarDocentes)
+// Rutas protegidas que requieren autenticación
+// COORD puede listar docentes, pero solo de sus áreas asignadas
+docentesRouter.get('/', requireAuth, requireRole(['ADMIN', 'RH', 'COORD']), listarDocentes)
+
+// Rutas solo para ADMIN y RH
 docentesRouter.post('/', requireAuth, requireRole(['ADMIN', 'RH']), crearDocente)
 docentesRouter.put('/:id', requireAuth, requireRole(['ADMIN', 'RH']), actualizarDocente)
 docentesRouter.delete('/:id', requireAuth, requireRole(['ADMIN', 'RH']), eliminarDocente)

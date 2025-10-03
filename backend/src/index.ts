@@ -7,6 +7,7 @@ import { authRouter } from './modules/auth/router'
 import { usuariosRouter } from './modules/usuarios/router'
 import { areasRouter } from './modules/areas/router'
 import { docentesRouter } from './modules/docentes/router'
+import { periodosRouter } from './modules/periodos/router'
 import { requireAuth, requireRole } from './middlewares/auth'
 import { PrismaClient } from '@prisma/client'
 
@@ -17,7 +18,7 @@ const prisma = new PrismaClient()
 // Middlewares
 app.use(cors({
     origin: ['http://localhost:5173', 'http://127.0.0.1:5173'], // Orígenes permitidos (puerto por defecto de Vite)
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true // Permite enviar cookies entre orígenes
 }))
@@ -42,6 +43,7 @@ app.use('/api/auth', authRouter)
 app.use('/api/usuarios', usuariosRouter)
 app.use('/api/areas', areasRouter)
 app.use('/api/docentes', docentesRouter)
+app.use('/api/periodos', periodosRouter)
 
 // Ruta de salud
 app.get('/health', (_, res) => {

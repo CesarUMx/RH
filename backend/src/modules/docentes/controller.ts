@@ -6,6 +6,7 @@ import * as path from 'path'
 import csvParser from 'csv-parser'
 import * as XLSX from 'xlsx'
 import { Readable } from 'stream'
+import { JwtPayload } from '../../middlewares/auth'
 
 const prisma = new PrismaClient()
 
@@ -32,12 +33,16 @@ const docenteUpdateSchema = z.object({
 const paginacionSchema = z.object({
   query: z.string().optional().default(''),
   page: z.string().optional().default('1'),
-  pageSize: z.string().optional().default('10')
+  pageSize: z.string().optional().default('10'),
+  areaId: z.string().optional()
 })
 
 // GET /docentes - Listar docentes con paginación y búsqueda
 export async function listarDocentes(req: Request, res: Response) {
   try {
+    // Obtener usuario actual
+    const user = req.user as JwtPayload
+    
     // Validar parámetros de consulta
     const validacion = paginacionSchema.safeParse(req.query)
     if (!validacion.success) {
@@ -47,7 +52,7 @@ export async function listarDocentes(req: Request, res: Response) {
       })
     }
 
-    const { query, page, pageSize } = validacion.data
+    const { query, page, pageSize, areaId } = validacion.data
     const pageNum = parseInt(page)
     const pageSizeNum = parseInt(pageSize)
 
@@ -59,8 +64,8 @@ export async function listarDocentes(req: Request, res: Response) {
     // Calcular skip para paginación
     const skip = (pageNum - 1) * pageSizeNum
 
-    // Construir condición de búsqueda
-    const where: Prisma.DocenteWhereInput = query
+    // Construir condición de búsqueda básica
+    let where: Prisma.DocenteWhereInput = query
       ? {
           OR: [
             { codigoInterno: { contains: query, mode: Prisma.QueryMode.insensitive } },
@@ -69,6 +74,86 @@ export async function listarDocentes(req: Request, res: Response) {
           ]
         }
       : {}
+      
+    // Si el usuario es COORD y se proporciona un areaId, verificar que tenga acceso a esa área
+    if (user && user.roles.includes('COORD')) {
+      // Si no se proporciona areaId, verificar que el usuario tenga al menos un área asignada
+      if (!areaId) {
+        const areasAsignadas = await prisma.coordArea.findMany({
+          where: { userId: user.id },
+          select: { areaId: true }
+        })
+        
+        if (areasAsignadas.length === 0) {
+          return res.status(403).json({ 
+            error: 'No autorizado', 
+            mensaje: 'No tienes áreas asignadas como coordinador' 
+          })
+        }
+        
+        // Filtrar por la primera área asignada por defecto
+        if (areasAsignadas.length > 0) {
+          const firstAreaId = areasAsignadas[0].areaId;
+          if (firstAreaId !== undefined && firstAreaId !== null) {
+            where = {
+              ...where,
+              cargas: {
+                some: {
+                  areaId: firstAreaId
+                }
+              }
+            }
+          }
+        }
+      } else {
+        // Verificar que el usuario tenga acceso al área solicitada
+        const areaIdNum = parseInt(areaId)
+        
+        if (isNaN(areaIdNum)) {
+          return res.status(400).json({ error: 'ID de área inválido' })
+        }
+        
+        const tieneAcceso = await prisma.coordArea.findFirst({
+          where: {
+            userId: user.id,
+            areaId: areaIdNum
+          }
+        })
+        
+        if (!tieneAcceso) {
+          return res.status(403).json({ 
+            error: 'No autorizado', 
+            mensaje: 'No tienes permiso para acceder a esta área' 
+          })
+        }
+        
+        // Filtrar por el área solicitada
+        where = {
+          ...where,
+          cargas: {
+            some: {
+              areaId: areaIdNum
+            }
+          }
+        }
+      }
+    } else if (areaId) {
+      // Para usuarios ADMIN o RH, si se proporciona areaId, filtrar por ese área
+      const areaIdNum = parseInt(areaId)
+      
+      if (isNaN(areaIdNum)) {
+        return res.status(400).json({ error: 'ID de área inválido' })
+      }
+      
+      where = {
+        ...where,
+        cargas: {
+          some: {
+            areaId: areaIdNum
+          }
+        }
+      }
+    }
 
     // Obtener total de registros
     const total = await prisma.docente.count({ where })

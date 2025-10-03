@@ -6,11 +6,16 @@ import {
   eliminarArea,
   listarCoordinadores,
   asignarCoordinador,
-  eliminarCoordinador
+  eliminarCoordinador,
+  misAreas
 } from './controller'
 import { requireAuth, requireRole } from '../../middlewares/auth'
 
 export const areasRouter = Router()
+
+// Ruta para obtener áreas asignadas al usuario actual (COORD)
+// IMPORTANTE: Las rutas específicas deben ir antes de las rutas genéricas
+areasRouter.get('/mis-areas', requireAuth, requireRole(['COORD']), misAreas)
 
 // Rutas para gestión de áreas (solo ADMIN)
 areasRouter.get('/', requireAuth, listarAreas)
