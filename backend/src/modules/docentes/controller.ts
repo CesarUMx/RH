@@ -75,69 +75,9 @@ export async function listarDocentes(req: Request, res: Response) {
         }
       : {}
       
-    // Si el usuario es COORD y se proporciona un areaId, verificar que tenga acceso a esa área
-    if (user && user.roles.includes('COORD')) {
-      // Si no se proporciona areaId, verificar que el usuario tenga al menos un área asignada
-      if (!areaId) {
-        const areasAsignadas = await prisma.coordArea.findMany({
-          where: { userId: user.id },
-          select: { areaId: true }
-        })
-        
-        if (areasAsignadas.length === 0) {
-          return res.status(403).json({ 
-            error: 'No autorizado', 
-            mensaje: 'No tienes áreas asignadas como coordinador' 
-          })
-        }
-        
-        // Filtrar por la primera área asignada por defecto
-        if (areasAsignadas.length > 0) {
-          const firstAreaId = areasAsignadas[0].areaId;
-          if (firstAreaId !== undefined && firstAreaId !== null) {
-            where = {
-              ...where,
-              cargas: {
-                some: {
-                  areaId: firstAreaId
-                }
-              }
-            }
-          }
-        }
-      } else {
-        // Verificar que el usuario tenga acceso al área solicitada
-        const areaIdNum = parseInt(areaId)
-        
-        if (isNaN(areaIdNum)) {
-          return res.status(400).json({ error: 'ID de área inválido' })
-        }
-        
-        const tieneAcceso = await prisma.coordArea.findFirst({
-          where: {
-            userId: user.id,
-            areaId: areaIdNum
-          }
-        })
-        
-        if (!tieneAcceso) {
-          return res.status(403).json({ 
-            error: 'No autorizado', 
-            mensaje: 'No tienes permiso para acceder a esta área' 
-          })
-        }
-        
-        // Filtrar por el área solicitada
-        where = {
-          ...where,
-          cargas: {
-            some: {
-              areaId: areaIdNum
-            }
-          }
-        }
-      }
-    } else if (areaId) {
+    // Para docentes, los coordinadores pueden ver todos los docentes sin filtrar por área
+    // El filtro por área solo se aplica para ADMIN y RH si se proporciona explícitamente
+    if (areaId) {
       // Para usuarios ADMIN o RH, si se proporciona areaId, filtrar por ese área
       const areaIdNum = parseInt(areaId)
       
@@ -391,7 +331,41 @@ function procesarXLSX(filePath: string): Record<string, any>[] {
   if (!worksheet) {
     return [];
   }
-  return XLSX.utils.sheet_to_json(worksheet) as Record<string, any>[]
+  
+  // Inspeccionar los encabezados del archivo
+  console.log('Procesando archivo Excel:', filePath);
+  console.log('Hoja de cálculo:', sheetName);
+  
+  // Obtener el rango de la hoja
+  const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:A1');
+  console.log('Rango de la hoja:', worksheet['!ref']);
+  
+  // Obtener los encabezados (primera fila)
+  const headers = [];
+  for (let C = range.s.c; C <= range.e.c; ++C) {
+    const cell = worksheet[XLSX.utils.encode_cell({r: range.s.r, c: C})];
+    if (cell && cell.v) {
+      headers.push({
+        column: XLSX.utils.encode_col(C),
+        value: cell.v.toString()
+      });
+    }
+  }
+  console.log('Encabezados detectados:', headers);
+  
+  // Convertir a JSON con opciones para manejar mejor los encabezados
+  const data = XLSX.utils.sheet_to_json(worksheet, {
+    raw: false,  // Convertir todos los valores a strings
+    defval: '',   // Valor por defecto para celdas vacías
+    header: 'A'    // Usar letras de columna como encabezados si no hay encabezados
+  }) as Record<string, any>[];
+  
+  // Mostrar la primera fila para depuración
+  if (data.length > 0) {
+    console.log('Primera fila de datos:', data[0]);
+  }
+  
+  return data
 }
 
 // Interfaz para los datos normalizados
@@ -405,10 +379,77 @@ interface DatoDocente {
 
 // Función para normalizar datos de importación
 function normalizarDatoDocente(row: Record<string, any>): DatoDocente {
-  // Extraer campos del registro
-  const codigoInterno = row.codigo_interno?.toString().trim() || ''
-  const nombre = row.nombre?.toString().trim() || ''
-  const rfc = row.rfc?.toString().trim().toUpperCase() || ''
+  // Imprimir la fila completa para depuración
+  console.log('Normalizando fila:', row);
+  
+  // Extraer campos del registro - intentar diferentes nombres de campo posibles
+  // Para código interno, buscar diferentes variantes y formatos
+  let codigoInterno = '';
+  
+  // Buscar el campo de código interno con diferentes nombres posibles
+  const posiblesCamposCodigo = ['codigo_interno', 'codigointerno', 'codigo', 'code', 'id', 'num', 'numero', 'A'];
+  
+  for (const campo of posiblesCamposCodigo) {
+    if (row[campo] !== undefined && row[campo] !== null) {
+      codigoInterno = row[campo].toString().trim();
+      console.log(`Encontrado código interno en campo '${campo}': ${codigoInterno}`);
+      break;
+    }
+  }
+  
+  // Si no se encontró el código, buscar campos numéricos sin nombre específico
+  if (!codigoInterno) {
+    for (const key in row) {
+      const value = row[key];
+      // Si es un número o parece un código y no se ha encontrado otro campo que parezca un código
+      if (value !== null && value !== undefined && 
+          (typeof value === 'number' || (typeof value === 'string' && /^\d+$/.test(value.toString().trim()))) && 
+          !['nombre', 'rfc', 'activo', 'B', 'C', 'D'].includes(key.toLowerCase())) {
+        codigoInterno = value.toString().trim();
+        console.log(`Encontrado código interno en campo genérico '${key}': ${codigoInterno}`);
+        break;
+      }
+    }
+  }
+  
+  // Buscar el campo de nombre con diferentes nombres posibles
+  let nombre = '';
+  const posiblesCamposNombre = ['nombre', 'name', 'docente', 'profesor', 'maestro', 'nombre_completo', 'nombrecompleto', 'fullname', 'full_name', 'B'];
+  
+  for (const campo of posiblesCamposNombre) {
+    if (row[campo] !== undefined && row[campo] !== null) {
+      nombre = row[campo].toString().trim();
+      console.log(`Encontrado nombre en campo '${campo}': ${nombre}`);
+      break;
+    }
+  }
+  
+  // Si no se encontró el nombre, intentar con la segunda columna (B)
+  if (!nombre && row['B'] !== undefined) {
+    nombre = row['B'].toString().trim();
+    console.log(`Usando segunda columna como nombre: ${nombre}`);
+  }
+  
+  // Buscar el campo de RFC con diferentes nombres posibles
+  let rfc = '';
+  const posiblesCamposRFC = ['rfc', 'RFC', 'r.f.c.', 'registro_fiscal', 'registrofiscal', 'tax_id', 'C'];
+  
+  for (const campo of posiblesCamposRFC) {
+    if (row[campo] !== undefined && row[campo] !== null) {
+      rfc = row[campo].toString().trim().toUpperCase();
+      console.log(`Encontrado RFC en campo '${campo}': ${rfc}`);
+      break;
+    }
+  }
+  
+  // Si no se encontró el RFC, intentar con la tercera columna (C)
+  if (!rfc && row['C'] !== undefined) {
+    rfc = row['C'].toString().trim().toUpperCase();
+    console.log(`Usando tercera columna como RFC: ${rfc}`);
+  }
+  
+  // Imprimir para depuración
+  console.log('Datos de fila:', { rowKeys: Object.keys(row), rowValues: Object.values(row), codigoInterno, nombre, rfc });
   
   // Normalizar campo activo
   let activo = true
@@ -444,15 +485,114 @@ function normalizarDatoDocente(row: Record<string, any>): DatoDocente {
   return { codigoInterno, nombre, rfc, activo }
 }
 
+// GET /docentes/plantilla - Descargar plantilla para importar docentes
+export async function descargarPlantilla(req: Request, res: Response) {
+  try {
+    // Crear la plantilla
+    const workbook = XLSX.utils.book_new()
+    
+    // Datos de ejemplo
+    const data = [
+      {
+        codigo_interno: '12345',
+        nombre: 'DOCENTE EJEMPLO',
+        rfc: 'XAXX010101000',
+        activo: '1'
+      },
+      {
+        codigo_interno: '67890',
+        nombre: 'OTRO DOCENTE EJEMPLO',
+        rfc: 'XEXX010101000',
+        activo: '1'
+      }
+    ]
+    
+    // Crear la hoja de cálculo con encabezados
+    const worksheet = XLSX.utils.json_to_sheet(data, {
+      header: ['codigo_interno', 'nombre', 'rfc', 'activo'],
+      skipHeader: false
+    })
+    
+    // Establecer encabezados más descriptivos
+    const headers = [
+      { v: 'codigo_interno', t: 's' },
+      { v: 'nombre', t: 's' },
+      { v: 'rfc', t: 's' },
+      { v: 'activo', t: 's' }
+    ]
+    
+    // Reemplazar encabezados - usar exactamente los nombres de campo esperados
+    XLSX.utils.sheet_add_aoa(worksheet, [headers.map(h => h.v)], { origin: 'A1' })
+    
+    // Añadir una fila de instrucciones
+    const instrucciones = [
+      { v: 'INSTRUCCIONES', t: 's' },
+      { v: 'NO MODIFICAR ESTA FILA', t: 's' },
+      { v: 'FORMATO: AAAA010101AAA', t: 's' },
+      { v: '1=SÍ, 0=NO', t: 's' }
+    ]
+    XLSX.utils.sheet_add_aoa(worksheet, [instrucciones], { origin: 'A2' })
+    
+    // Ajustar ancho de columnas
+    const wscols = [
+      { wch: 15 }, // Código Interno
+      { wch: 30 }, // Nombre del Docente
+      { wch: 15 }, // RFC
+      { wch: 20 }  // Activo
+    ]
+    worksheet['!cols'] = wscols
+    
+    // Agregar la hoja al libro
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Docentes')
+    
+    // Crear directorio temporal si no existe
+    const uploadsDir = path.join(process.cwd(), 'uploads')
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true })
+    }
+    
+    // Generar nombre de archivo único
+    const timestamp = new Date().getTime()
+    const fileName = `plantilla_docentes_${timestamp}.xlsx`
+    const filePath = path.join(uploadsDir, fileName)
+    
+    // Escribir el archivo
+    XLSX.writeFile(workbook, filePath)
+    
+    // Enviar el archivo como respuesta
+    res.download(filePath, 'plantilla_docentes.xlsx', (err) => {
+      if (err) {
+        console.error('Error al enviar el archivo:', err)
+      }
+      
+      // Eliminar el archivo después de enviarlo
+      fs.unlink(filePath, (unlinkErr) => {
+        if (unlinkErr) {
+          console.error('Error al eliminar el archivo temporal:', unlinkErr)
+        }
+      })
+    })
+  } catch (error) {
+    console.error('Error al generar plantilla:', error)
+    return res.status(500).json({ 
+      error: 'Error interno', 
+      mensaje: 'Ocurrió un error al generar la plantilla' 
+    })
+  }
+}
+
 // POST /docentes/import - Importar docentes desde archivo CSV/XLSX
 export async function importarDocentes(req: Request, res: Response) {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No se ha proporcionado ningún archivo' })
     }
-
+    
+    // Procesar el archivo
     const filePath = req.file.path
     const fileExtension = path.extname(req.file.originalname).toLowerCase()
+    
+    console.log('Procesando archivo:', req.file.originalname, 'Extensión:', fileExtension)
     
     // Procesar archivo según su extensión
     let rawData: any[] = []

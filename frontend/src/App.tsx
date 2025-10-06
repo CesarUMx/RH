@@ -8,11 +8,14 @@ import { AreaProvider } from './context/AreaContext';
 
 // Páginas
 import { Login } from './pages/Login';
-import { Home } from './pages/Home';
 import { Usuarios } from './pages/Usuarios';
 import { Areas } from './pages/Areas';
 import { Docentes } from './pages/Docentes';
 import { Periodos } from './pages/Periodos';
+import { CargaHoras } from './pages/CargaHoras';
+
+// Componentes
+import { RedireccionInicio } from './components/RedireccionInicio';
 
 // Crear cliente de consulta
 const queryClient = new QueryClient({
@@ -65,7 +68,7 @@ function App() {
               path="/"
               element={
                 <ProtectedRoute>
-                  <Home />
+                  <RedireccionInicio />
                 </ProtectedRoute>
               }
             />
@@ -96,8 +99,16 @@ function App() {
             <Route
               path="/periodos"
               element={
-                <ProtectedRoute requiredRoles={['ADMIN', 'RH', 'COORD']}>
+                <ProtectedRoute requiredRoles={['ADMIN', 'RH']}>
                   <Periodos />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/carga-horas"
+              element={
+                <ProtectedRoute requiredRoles={['COORD']}>
+                  <CargaHoras />
                 </ProtectedRoute>
               }
             />

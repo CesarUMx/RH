@@ -4,7 +4,8 @@ import {
   crearDocente,
   actualizarDocente,
   eliminarDocente,
-  importarDocentes
+  importarDocentes,
+  descargarPlantilla
 } from './controller'
 import { requireAuth, requireRole } from '../../middlewares/auth'
 import { requireAreaPermission } from '../../middlewares/areaPermissions'
@@ -20,6 +21,14 @@ docentesRouter.get('/', requireAuth, requireRole(['ADMIN', 'RH', 'COORD']), list
 docentesRouter.post('/', requireAuth, requireRole(['ADMIN', 'RH']), crearDocente)
 docentesRouter.put('/:id', requireAuth, requireRole(['ADMIN', 'RH']), actualizarDocente)
 docentesRouter.delete('/:id', requireAuth, requireRole(['ADMIN', 'RH']), eliminarDocente)
+
+// Ruta para descargar plantilla
+docentesRouter.get(
+  '/plantilla',
+  requireAuth,
+  requireRole(['ADMIN', 'RH']),
+  descargarPlantilla
+)
 
 // Ruta para importación masiva
 docentesRouter.post(

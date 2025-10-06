@@ -8,6 +8,7 @@ import { useArea } from '../context/AreaContext';
 
 import { MainLayout } from '../layouts/MainLayout';
 import { DataTable } from '../components/ui/DataTable';
+import { Pagination } from '../components/ui/Pagination';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
@@ -69,23 +70,59 @@ export const Docentes = () => {
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [isImporting, setIsImporting] = useState(false);
 
-  // Efecto para resetear la página cuando cambia el área seleccionada
+  // Efecto para forzar una recarga de los datos al montar el componente
   useEffect(() => {
-    if (hasRole('COORD') && selectedArea) {
-      setCurrentPage(1);
-      queryClient.invalidateQueries({ queryKey: ['docentes'] });
-    }
-  }, [selectedArea?.id, hasRole, queryClient]);
+    console.log('Docentes - Componente montado, forzando recarga de datos');
+    queryClient.invalidateQueries({ queryKey: ['docentes'] });
+  }, [queryClient]);
+
+  console.log('Componente Docentes - Estado inicial:', { hasRole: hasRole('COORD'), selectedArea });
 
   // Consulta para obtener docentes paginados
-  const { data: docentesPaginados, isLoading } = useQuery({
-    queryKey: ['docentes', searchQuery, currentPage, pageSize, selectedArea?.id],
-    queryFn: () => docentesService.getAll(
-      searchQuery, 
-      currentPage, 
-      pageSize, 
-      hasRole('COORD') && selectedArea ? selectedArea.id : undefined
-    ),
+  const { data: docentesPaginados, isLoading, error } = useQuery({
+    queryKey: ['docentes', searchQuery, currentPage, pageSize],
+    queryFn: async () => {
+      try {
+        // Usar valores fijos para evitar NaN
+        const page = Number.isInteger(currentPage) && currentPage > 0 ? currentPage : 1;
+        const size = Number.isInteger(pageSize) && pageSize > 0 ? pageSize : 10;
+        
+        console.log('Fetching docentes with params:', { searchQuery, page, size, rol: hasRole('COORD') ? 'COORD' : 'ADMIN/RH' });
+        
+        // Usar el servicio de docentes
+        console.log('Usando docentesService.getAll');
+        const result = await docentesService.getAll(searchQuery, page, size);
+        console.log('API response data:', result);
+        
+        // Validar la respuesta
+        if (!result || !result.data) {
+          throw new Error('Invalid response from API');
+        }
+        
+        return {
+          data: result.data || [],
+          pagination: {
+            total: Number(result.pagination?.total) || 0,
+            page: Number(result.pagination?.page) || page,
+            pageSize: Number(result.pagination?.pageSize) || size,
+            totalPages: Number(result.pagination?.totalPages) || 1
+          }
+        };
+      } catch (error) {
+        console.error('Error fetching docentes:', error);
+        return {
+          data: [],
+          pagination: {
+            total: 0,
+            page: currentPage || 1,
+            pageSize: pageSize || 10,
+            totalPages: 1
+          }
+        };
+      }
+    },
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Mutación para crear docente
@@ -296,8 +333,26 @@ export const Docentes = () => {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Gestión de Docentes</h1>
-            {hasRole('COORD') && selectedArea && (
-              <p className="text-gray-600 mt-1">Área: <span className="font-medium">{selectedArea.nombre}</span></p>
+            {hasRole('COORD') && (
+              <div>
+                <p className="text-gray-600 mt-1">
+                  Mostrando todos los docentes disponibles
+                  {selectedArea && (
+                    <span className="ml-2 text-sm text-blue-600">
+                      (El área seleccionada solo afecta a la carga de horas)
+                    </span>
+                  )}
+                </p>
+                <button 
+                  onClick={() => {
+                    queryClient.invalidateQueries({ queryKey: ['docentes'] });
+                    toast.success('Recargando datos...');
+                  }}
+                  className="text-blue-600 text-sm underline mt-1"
+                >
+                  Recargar datos
+                </button>
+              </div>
             )}
           </div>
           
@@ -312,7 +367,18 @@ export const Docentes = () => {
                 <FaUpload className="mr-2" /> Importar
               </Button>
               <Button
-                onClick={() => docentesService.downloadTemplate()}
+                onClick={async () => {
+                  try {
+                    toast.loading('Descargando plantilla...');
+                    await docentesService.downloadTemplate();
+                    toast.dismiss();
+                    toast.success('Plantilla descargada correctamente');
+                  } catch (error) {
+                    toast.dismiss();
+                    toast.error('Error al descargar la plantilla');
+                    console.error('Error al descargar plantilla:', error);
+                  }
+                }}
                 className="flex items-center"
                 variant="outline"
               >
@@ -351,19 +417,52 @@ export const Docentes = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
           </div>
         ) : (
-          <DataTable 
-            columns={columns} 
-            data={docentesPaginados?.data || []} 
-            pagination={{
-              pageIndex: currentPage - 1,
-              pageSize,
-              pageCount: docentesPaginados?.pagination.totalPages || 1,
-              onPaginationChange: ({ pageIndex }) => {
-                setCurrentPage(pageIndex + 1);
-              },
-              serverSide: true,
-            }}
-          />
+          <>
+            {console.log('Renderizando tabla de docentes:', { 
+              docentesPaginados, 
+              isLoading, 
+              error,
+              dataLength: docentesPaginados?.data?.length || 0 
+            })}
+            {/* Si hay un error o no hay datos, mostrar un mensaje */}
+            {(!docentesPaginados || docentesPaginados.data.length === 0) && !isLoading ? (
+              <div className="bg-white rounded-lg shadow p-6 text-center">
+                <p className="text-gray-500 mb-4">No se encontraron docentes con los criterios de búsqueda actuales.</p>
+                {searchQuery && (
+                  <Button 
+                    onClick={() => {
+                      setSearchQuery('');
+                      setCurrentPage(1);
+                    }}
+                    variant="outline"
+                  >
+                    Limpiar filtros
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <>
+                <DataTable 
+                  columns={columns} 
+                  data={docentesPaginados?.data || []} 
+                />
+                
+                {/* Componente de paginación personalizado */}
+                {docentesPaginados && docentesPaginados.pagination && (
+                  <Pagination
+                    currentPage={docentesPaginados.pagination.page}
+                    pageCount={docentesPaginados.pagination.totalPages}
+                    totalItems={docentesPaginados.pagination.total}
+                    pageSize={docentesPaginados.pagination.pageSize}
+                    onPageChange={(page) => {
+                      console.log(`Changing to page ${page}`);
+                      setCurrentPage(page);
+                    }}
+                  />
+                )}
+              </>
+            )}
+          </>
         )}
 
         {/* Modal para crear docente */}
@@ -536,7 +635,18 @@ export const Docentes = () => {
                       <div className="mt-3 flex justify-end">
                         <button 
                           type="button"
-                          onClick={() => docentesService.downloadTemplate()}
+                          onClick={async () => {
+                            try {
+                              toast.loading('Descargando plantilla...');
+                              await docentesService.downloadTemplate();
+                              toast.dismiss();
+                              toast.success('Plantilla descargada correctamente');
+                            } catch (error) {
+                              toast.dismiss();
+                              toast.error('Error al descargar la plantilla');
+                              console.error('Error al descargar plantilla:', error);
+                            }
+                          }}
                           className="text-primary hover:text-primary-dark text-sm font-medium flex items-center"
                         >
                           <FaDownload className="mr-1" /> Descargar plantilla

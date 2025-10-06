@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useArea } from '../context/AreaContext';
 import { MainLayout } from '../layouts/MainLayout';
-import { FaUsers, FaBuilding, FaUserTie, FaCalendarAlt } from 'react-icons/fa';
+import { FaUsers, FaBuilding, FaUserTie, FaCalendarAlt, FaClock } from 'react-icons/fa';
 import { AreaSelector } from '../components/AreaSelector';
 import { useQuery } from '@tanstack/react-query';
 import { periodosService } from '../services/periodos.service';
@@ -46,6 +46,13 @@ export const Home = () => {
       icon: <FaCalendarAlt className="h-10 w-10 text-primary" />,
       path: '/periodos',
       roles: ['ADMIN', 'RH'],
+    },
+    {
+      title: 'Carga de Horas',
+      description: 'Registro de horas para docentes',
+      icon: <FaClock className="h-10 w-10 text-primary" />,
+      path: '/carga-horas',
+      roles: ['COORD'],
     },
   ];
 

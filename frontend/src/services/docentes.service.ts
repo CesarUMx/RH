@@ -47,10 +47,40 @@ export interface ImportResult {
 
 export const docentesService = {
   getAll: async (query = '', page = 1, pageSize = 10, areaId?: number): Promise<DocentePaginado> => {
-    const response = await api.get('/docentes', {
-      params: { query, page, pageSize, ...(areaId ? { areaId } : {}) }
-    });
-    return response.data;
+    // Asegurarse de que page sea un número válido
+    const validPage = isNaN(Number(page)) || Number(page) < 1 ? 1 : Number(page);
+    
+    // Construir parámetros de consulta
+    const params = { 
+      query, 
+      page: validPage, 
+      pageSize
+    };
+    
+    // Añadir areaId solo si es un número válido
+    if (areaId !== undefined && !isNaN(Number(areaId))) {
+      Object.assign(params, { areaId: Number(areaId) });
+    }
+    
+    console.log('Sending API request with params:', params);
+    
+    try {
+      const response = await api.get('/docentes', { params });
+      console.log('API response status:', response.status);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching docentes:', error);
+      // Devolver un objeto vacío con estructura válida en caso de error
+      return {
+        data: [],
+        pagination: {
+          total: 0,
+          page: validPage,
+          pageSize,
+          totalPages: 0
+        }
+      };
+    }
   },
 
   getById: async (id: number): Promise<Docente> => {
@@ -86,37 +116,43 @@ export const docentesService = {
   },
 
   // Función para descargar la plantilla de carga masiva
-  downloadTemplate: () => {
-    // Crear un archivo CSV con las columnas requeridas y un ejemplo
-    const headers = ['codigo_interno', 'nombre', 'rfc', 'activo'];
-    const exampleRow = ['DOC001', 'Juan Pérez García', 'PEGJ800101ABC', 'true'];
-    
-    // Crear el contenido del CSV con encabezados y ejemplo
-    let csvContent = headers.join(',') + '\n' + exampleRow.join(',');
-    
-    // Añadir BOM para que Excel reconozca correctamente los caracteres UTF-8
-    const BOM = '\uFEFF';
-    csvContent = BOM + csvContent;
-    
-    // Crear un blob con el contenido CSV
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    
-    // Crear un enlace para descargar el archivo
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'plantilla_docentes.csv');
-    link.style.visibility = 'hidden';
-    
-    // Añadir el enlace al DOM, hacer clic en él y luego eliminarlo
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    // Liberar el objeto URL
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
-    }, 100);
+  downloadTemplate: async (): Promise<void> => {
+    try {
+      // Hacer una solicitud a la API para obtener la plantilla
+      const response = await api.get('/docentes/plantilla', {
+        responseType: 'blob', // Importante para recibir un archivo binario
+      });
+      
+      // Crear un objeto URL para el blob
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      
+      // Crear un elemento <a> temporal
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Obtener el nombre del archivo del header Content-Disposition o usar uno predeterminado
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = 'plantilla_docentes.xlsx';
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+        if (filenameMatch && filenameMatch.length === 2) {
+          filename = filenameMatch[1];
+        }
+      }
+      
+      link.setAttribute('download', filename);
+      
+      // Agregar el enlace al DOM, hacer clic en él y luego eliminarlo
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Liberar el objeto URL
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error al descargar la plantilla:', error);
+      throw error;
+    }
   },
 };

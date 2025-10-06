@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaUsers, FaBuilding, FaUserTie, FaBars, FaTimes, FaSignOutAlt, FaUser, FaCalendarAlt, FaHome } from 'react-icons/fa';
+import { FaUsers, FaBuilding, FaUserTie, FaBars, FaTimes, FaSignOutAlt, FaUser, FaCalendarAlt, FaClock } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { AreaSelector } from '../components/AreaSelector';
+import { PeriodoInfo } from '../components/PeriodoInfo';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -24,12 +25,6 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
 
   const navItems: NavItem[] = [
     {
-      name: 'Inicio',
-      path: '/',
-      icon: <FaHome className="mr-3 h-5 w-5" />,
-      roles: ['ADMIN', 'RH', 'COORD'],
-    },
-    {
       name: 'Usuarios',
       path: '/usuarios',
       icon: <FaUsers className="mr-3 h-5 w-5" />,
@@ -40,6 +35,12 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       path: '/areas',
       icon: <FaBuilding className="mr-3 h-5 w-5" />,
       roles: ['ADMIN', 'RH'],
+    },
+    {
+      name: 'Carga de Horas',
+      path: '/carga-horas',
+      icon: <FaClock className="mr-3 h-5 w-5" />,
+      roles: ['ADMIN', 'RH', 'COORD'],
     },
     {
       name: 'Docentes',
@@ -78,10 +79,11 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             <h1 className="ml-3 text-xl font-bold text-white">UMx RH</h1>
           </div>
           <div className="mt-8 flex-1 flex flex-col">
-            {/* Área Selector para usuarios COORD */}
+            {/* Área Selector y Periodo Info para usuarios COORD */}
             {hasRole('COORD') && (
               <div className="px-2 mb-4">
                 <AreaSelector />
+                <PeriodoInfo />
               </div>
             )}
             <nav className="flex-1 px-2 pb-4 space-y-1">
@@ -165,10 +167,11 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               />
               <h1 className="ml-3 text-xl font-bold text-white">UMx RH</h1>
             </div>
-            {/* Área Selector para usuarios COORD en mobile */}
+            {/* Área Selector y Periodo Info para usuarios COORD en mobile */}
             {hasRole('COORD') && (
               <div className="mb-4">
                 <AreaSelector />
+                <PeriodoInfo />
               </div>
             )}
             <nav className="flex-1 space-y-1">

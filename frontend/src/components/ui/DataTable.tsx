@@ -46,8 +46,8 @@ export function DataTable<TData>({
       sorting,
       ...(pagination && {
         pagination: {
-          pageIndex: pagination.pageIndex,
-          pageSize: pagination.pageSize,
+          pageIndex: pagination.pageIndex >= 0 ? pagination.pageIndex : 0,
+          pageSize: pagination.pageSize > 0 ? pagination.pageSize : 10,
         },
       }),
     },
@@ -57,12 +57,20 @@ export function DataTable<TData>({
   if (pagination) {
     tableConfig.getPaginationRowModel = pagination.serverSide ? undefined : getPaginationRowModel();
     tableConfig.manualPagination = pagination.serverSide;
-    tableConfig.pageCount = pagination.pageCount;
+    tableConfig.pageCount = pagination.pageCount > 0 ? pagination.pageCount : 1;
     
     // Usar any para evitar problemas de tipo con onPaginationChange
     if (pagination.onPaginationChange) {
       tableConfig.onPaginationChange = pagination.onPaginationChange;
     }
+    
+    // Agregar logs para depuración
+    console.log('DataTable pagination config:', {
+      pageIndex: pagination.pageIndex,
+      pageSize: pagination.pageSize,
+      pageCount: pagination.pageCount,
+      serverSide: pagination.serverSide
+    });
   }
   
   const table = useReactTable(tableConfig);
@@ -129,13 +137,22 @@ export function DataTable<TData>({
       {pagination && (
         <div className="flex items-center justify-between px-2 py-3 mt-2">
           <div className="flex-1 text-sm text-gray-700">
-            Mostrando {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} a{' '}
-            {Math.min(
-              (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-              pagination.serverSide ? pagination.pageCount * pagination.pageSize : data.length
-            )}{' '}
-            de{' '}
-            {pagination.serverSide ? pagination.pageCount * pagination.pageSize : data.length} registros
+            {data.length > 0 ? (
+              <>
+                Mostrando {' '}
+                {Math.min(table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1, data.length)} a{' '}
+                {Math.min(
+                  (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                  pagination.serverSide ? (pagination.pageCount || 1) * pagination.pageSize : data.length
+                )}{' '}
+                de{' '}
+                {pagination.serverSide && pagination.pageCount > 0 ? 
+                  (pagination.pageCount * pagination.pageSize) : 
+                  data.length} registros
+              </>
+            ) : (
+              <>No hay registros para mostrar</>
+            )}
           </div>
           <div className="flex items-center space-x-2">
             <Button
@@ -148,7 +165,7 @@ export function DataTable<TData>({
             </Button>
             <span className="text-sm text-gray-700">
               Página {table.getState().pagination.pageIndex + 1} de{' '}
-              {pagination.pageCount}
+              {pagination.pageCount || 1}
             </span>
             <Button
               variant="outline"
