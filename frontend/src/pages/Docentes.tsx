@@ -54,6 +54,14 @@ const updateDocenteSchema = z.object({
 type CreateDocenteForm = z.infer<typeof createDocenteSchema>;
 type UpdateDocenteForm = z.infer<typeof updateDocenteSchema>;
 
+// Función para formatear el código interno a 6 dígitos
+const formatCodigoInterno = (codigo: string | number): string => {
+  // Convertir a string si es un número
+  const codigoStr = String(codigo);
+  // Rellenar con ceros a la izquierda hasta completar 6 dígitos
+  return codigoStr.padStart(6, '0');
+};
+
 export const Docentes = () => {
   const queryClient = useQueryClient();
   const { hasRole } = useAuth();
@@ -227,15 +235,27 @@ export const Docentes = () => {
 
   // Función para manejar la creación de docente
   const handleCreateSubmit = (data: CreateDocenteForm) => {
-    createDocenteMutation.mutate(data);
+    // Formatear el código interno a 6 dígitos
+    const formattedData = {
+      ...data,
+      codigoInterno: formatCodigoInterno(data.codigoInterno)
+    };
+    console.log('Creando docente con código formateado:', formattedData);
+    createDocenteMutation.mutate(formattedData);
   };
 
   // Función para manejar la actualización de docente
   const handleEditSubmit = (data: UpdateDocenteForm) => {
     if (selectedDocente) {
+      // Formatear el código interno a 6 dígitos
+      const formattedData = {
+        ...data,
+        codigoInterno: formatCodigoInterno(data.codigoInterno)
+      };
+      console.log('Actualizando docente con código formateado:', formattedData);
       updateDocenteMutation.mutate({
         id: selectedDocente.id,
-        data,
+        data: formattedData,
       });
     }
   };
@@ -275,7 +295,7 @@ export const Docentes = () => {
   const columns: any[] = [
     columnHelper.accessor('codigoInterno', {
       header: 'Código Interno',
-      cell: (info) => info.getValue(),
+      cell: (info) => formatCodigoInterno(info.getValue()),
     }),
     columnHelper.accessor('nombre', {
       header: 'Nombre',
@@ -333,27 +353,6 @@ export const Docentes = () => {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Gestión de Docentes</h1>
-            {hasRole('COORD') && (
-              <div>
-                <p className="text-gray-600 mt-1">
-                  Mostrando todos los docentes disponibles
-                  {selectedArea && (
-                    <span className="ml-2 text-sm text-blue-600">
-                      (El área seleccionada solo afecta a la carga de horas)
-                    </span>
-                  )}
-                </p>
-                <button 
-                  onClick={() => {
-                    queryClient.invalidateQueries({ queryKey: ['docentes'] });
-                    toast.success('Recargando datos...');
-                  }}
-                  className="text-blue-600 text-sm underline mt-1"
-                >
-                  Recargar datos
-                </button>
-              </div>
-            )}
           </div>
           
           {/* Mostrar botones de acción solo para ADMIN y RH */}

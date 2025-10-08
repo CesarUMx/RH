@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaUsers, FaBuilding, FaUserTie, FaBars, FaTimes, FaSignOutAlt, FaUser, FaCalendarAlt, FaClock } from 'react-icons/fa';
+import { FaUsers, FaBuilding, FaUserTie, FaBars, FaTimes, FaSignOutAlt, FaUser, FaCalendarAlt, FaClock, FaFileInvoiceDollar } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { AreaSelector } from '../components/AreaSelector';
 import { PeriodoInfo } from '../components/PeriodoInfo';
@@ -40,7 +40,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       name: 'Carga de Horas',
       path: '/carga-horas',
       icon: <FaClock className="mr-3 h-5 w-5" />,
-      roles: ['ADMIN', 'RH', 'COORD'],
+      roles: ['COORD'],
     },
     {
       name: 'Docentes',
@@ -52,6 +52,12 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       name: 'Periodos',
       path: '/periodos',
       icon: <FaCalendarAlt className="mr-3 h-5 w-5" />,
+      roles: ['ADMIN', 'RH'],
+    },
+    {
+      name: 'Gestión de Pagos',
+      path: '/gestion-pagos',
+      icon: <FaFileInvoiceDollar className="mr-3 h-5 w-5" />,
       roles: ['ADMIN', 'RH'],
     },
   ];

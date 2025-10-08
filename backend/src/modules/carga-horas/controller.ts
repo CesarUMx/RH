@@ -7,6 +7,17 @@ import * as fs from 'fs'
 import multer from 'multer'
 import { z } from 'zod'
 
+// Definir la interfaz para el mapeo de campos
+interface FieldMapping {
+  internal: string;
+  display: string;
+}
+
+// Extender el objeto global para incluir fieldMapping
+declare global {
+  var fieldMapping: FieldMapping[];
+}
+
 // Configuración de multer para subida de archivos
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -177,22 +188,28 @@ export async function generarPlantilla(req: Request, res: Response) {
       }));
     }
     
-    // Crear la hoja de cálculo con encabezados
+    // Definir los nombres de campo internos y sus encabezados descriptivos
+    const fieldMapping = [
+      { internal: 'codigo_interno', display: 'Código Interno' },
+      { internal: 'nombre', display: 'Nombre del Docente' },
+      { internal: 'rfc', display: 'RFC' },
+      { internal: 'materia', display: 'Materia' },
+      { internal: 'horas', display: 'Horas' },
+      { internal: 'costo_hora', display: 'Costo por Hora' },
+      { internal: 'pagable', display: 'Pagable (1=Sí, 0=No)' }
+    ];
+    
+    // Guardar el mapeo en una variable global para usarlo en el procesamiento
+    global.fieldMapping = fieldMapping as FieldMapping[];
+    
+    // Crear la hoja de cálculo con encabezados internos
     const worksheet = XLSX.utils.json_to_sheet(data, {
-      header: ['codigo_interno', 'nombre', 'rfc', 'materia', 'horas', 'costo_hora', 'pagable'],
+      header: fieldMapping.map(f => f.internal),
       skipHeader: false
     })
     
-    // Establecer encabezados más descriptivos
-    const headers = [
-      { v: 'Código Interno', t: 's' },
-      { v: 'Nombre del Docente', t: 's' },
-      { v: 'RFC', t: 's' },
-      { v: 'Materia', t: 's' },
-      { v: 'Horas', t: 's' },
-      { v: 'Costo por Hora', t: 's' },
-      { v: 'Pagable (1=Sí, 0=No)', t: 's' }
-    ];
+    // Establecer encabezados descriptivos
+    const headers = fieldMapping.map(f => ({ v: f.display, t: 's' }));
     
     // Reemplazar encabezados
     XLSX.utils.sheet_add_aoa(worksheet, [headers.map(h => h.v)], { origin: 'A1' });
@@ -420,15 +437,94 @@ export async function procesarArchivo(req: Request, res: Response) {
         const worksheet = sheetName ? workbook.Sheets[sheetName] : undefined
         
         if (worksheet) {
-          // Convertir a JSON
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false })
+          // Usar los mismos nombres de campo que se usaron al generar la plantilla
+          const fieldMapping: FieldMapping[] = global.fieldMapping || [
+            { internal: 'codigo_interno', display: 'Código Interno' },
+            { internal: 'nombre', display: 'Nombre del Docente' },
+            { internal: 'rfc', display: 'RFC' },
+            { internal: 'materia', display: 'Materia' },
+            { internal: 'horas', display: 'Horas' },
+            { internal: 'costo_hora', display: 'Costo por Hora' },
+            { internal: 'pagable', display: 'Pagable (1=Sí, 0=No)' }
+          ];
+          
+          // Convertir a JSON usando los encabezados descriptivos
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+            raw: false,
+            defval: '', // Valor por defecto para celdas vacías
+            header: fieldMapping.map((f: FieldMapping) => f.display), // Usar encabezados descriptivos
+            range: 1 // Comenzar desde la segunda fila (saltar encabezados)
+          });
+          
+          console.log('Datos leídos del Excel:', jsonData.slice(0, 3));
+          
+          // Crear un mapa de encabezados descriptivos a nombres de campo internos
+          const headerMap: {[key: string]: string} = {};
+          fieldMapping.forEach((f: FieldMapping) => {
+            headerMap[f.display] = f.internal;
+          });
+          
+          console.log('Mapeo de encabezados:', headerMap);
+          
+          console.log('Mapeo de encabezados:', headerMap);
+          
+          console.log('Datos leídos (sin encabezados):', jsonData.slice(0, 3));
           
           // Validar cada fila
-          jsonData.forEach((row: any, index) => {
+          jsonData.forEach((rawRow: any, index) => {
             try {
+              // Convertir fila con encabezados descriptivos a nombres de campo internos
+              const row: any = {};
+              
+              // Procesar cada campo usando el mapeo de encabezados
+              Object.entries(rawRow).forEach(([key, value]) => {
+                // Buscar el nombre de campo interno correspondiente
+                const internalField = headerMap[key];
+                if (internalField) {
+                  // Convertir valores numéricos directamente
+                  if (internalField === 'horas' || internalField === 'costo_hora') {
+                    // Intentar convertir a número
+                    const numValue = Number(value);
+                    row[internalField] = isNaN(numValue) ? value : numValue;
+                  } else {
+                    row[internalField] = value;
+                  }
+                } else {
+                  // Si no hay mapeo, usar el nombre original
+                  row[key] = value;
+                }
+              });
+              
+              // Asegurar que todos los campos internos existan
+              fieldMapping.forEach((f: FieldMapping) => {
+                if (row[f.internal] === undefined) {
+                  row[f.internal] = '';
+                }
+              });
+              
+              // Verificar si la fila tiene materia - si no, ignorarla silenciosamente
+              if (!row.materia || row.materia.toString().trim() === '') {
+                // Ignorar esta fila sin reportar error
+                return;
+              }
+              
+              // Solo mostrar logs para las primeras filas
+              if (index < 2) {
+                console.log(`Procesando fila ${index + 2}:`, 
+                  `Código: ${row.codigo_interno}, ` +
+                  `Materia: ${row.materia}, ` +
+                  `Horas: ${row.horas} (${typeof row.horas}), ` +
+                  `Costo: ${row.costo_hora} (${typeof row.costo_hora})`);
+              }
+              
+              // Forzar conversión de valores numéricos para todas las filas
+              if (row.horas) row.horas = Number(String(row.horas).replace(/\s+/g, ''));
+              if (row.costo_hora) row.costo_hora = Number(String(row.costo_hora).replace(/\s+/g, ''));
+              
               validateRowData(row, index + 2) // +2 porque Excel empieza en 1 y hay encabezado
               data.push(row)
             } catch (error: any) {
+              console.error(`Error en fila ${index + 2}:`, error.message);
               errores.push({ linea: index + 2, mensaje: error.message })
             }
           })
@@ -724,6 +820,349 @@ export async function confirmarCarga(req: Request, res: Response) {
   }
 }
 
+/**
+ * GET / - Obtiene las cargas de horas registradas
+ * 
+ * Query params:
+ * - periodoId: ID del periodo
+ * - areaId: ID del área
+ * - page: Número de página (default: 1)
+ * - pageSize: Tamaño de página (default: 10)
+ * - query: Consulta de búsqueda (opcional)
+ * 
+ * Devuelve una lista paginada de cargas de horas
+ */
+export async function obtenerCargas(req: Request, res: Response) {
+  try {
+    // Obtener usuario autenticado
+    const user = req.user as JwtPayload;
+    if (!user) {
+      return res.status(401).json({ error: 'Usuario no autenticado' });
+    }
+
+    // Obtener parámetros de consulta
+    const periodoId = Number(req.query.periodoId);
+    const areaId = Number(req.query.areaId);
+    const page = Number(req.query.page) || 1;
+    const pageSize = Number(req.query.pageSize) || 10;
+    const query = (req.query.query as string) || '';
+
+    // Validar parámetros requeridos
+    if (!periodoId || isNaN(periodoId)) {
+      return res.status(400).json({ error: 'El ID del periodo es requerido y debe ser un número' });
+    }
+
+    if (!areaId || isNaN(areaId)) {
+      return res.status(400).json({ error: 'El ID del área es requerido y debe ser un número' });
+    }
+
+    // Verificar que el periodo exista
+    const periodo = await prisma.periodo.findUnique({
+      where: { id: periodoId }
+    });
+
+    if (!periodo) {
+      return res.status(404).json({ error: 'Periodo no encontrado' });
+    }
+
+    // Verificar que el área exista
+    const area = await prisma.area.findUnique({
+      where: { id: areaId }
+    });
+
+    if (!area) {
+      return res.status(404).json({ error: 'Área no encontrada' });
+    }
+
+    // Si el usuario no es ADMIN o RH, verificar que sea coordinador del área
+    if (!user.roles.includes('ADMIN') && !user.roles.includes('RH')) {
+      const coordArea = await prisma.coordArea.findFirst({
+        where: {
+          userId: user.id,
+          areaId
+        }
+      });
+
+      if (!coordArea) {
+        return res.status(403).json({ error: 'No tienes permiso para ver las cargas de esta área' });
+      }
+    }
+
+    // Calcular el offset para la paginación
+    const skip = (page - 1) * pageSize;
+
+    // Construir la condición de búsqueda
+    const whereCondition: any = {
+      periodoId,
+      areaId
+    };
+
+    // Si hay una consulta de búsqueda, buscar por nombre de docente o materia
+    if (query) {
+      whereCondition.OR = [
+        {
+          docente: {
+            nombre: {
+              contains: query,
+              mode: 'insensitive'
+            }
+          }
+        },
+        {
+          materiaText: {
+            contains: query,
+            mode: 'insensitive'
+          }
+        }
+      ];
+    }
+
+    // Obtener el total de registros
+    const total = await prisma.cargaHoras.count({
+      where: whereCondition
+    });
+
+    // Calcular el total de páginas
+    const totalPages = Math.ceil(total / pageSize);
+
+    // Obtener los registros paginados
+    const cargas = await prisma.cargaHoras.findMany({
+      where: whereCondition,
+      include: {
+        docente: {
+          select: {
+            id: true,
+            codigoInterno: true,
+            nombre: true,
+            rfc: true
+          }
+        }
+      },
+      orderBy: [
+        { docente: { nombre: 'asc' } },
+        { materiaText: 'asc' }
+      ],
+      skip,
+      take: pageSize
+    });
+
+    // Devolver los resultados
+    return res.json({
+      data: cargas,
+      pagination: {
+        total,
+        page,
+        pageSize,
+        totalPages
+      }
+    });
+  } catch (error) {
+    console.error('Error al obtener cargas de horas:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+}
+
+/**
+ * POST /procesar-individual - Procesa una carga individual de horas
+ * 
+ * Body:
+ * - dato: Objeto con los datos de la carga individual
+ * - periodoId: ID del periodo
+ * - areaId: ID del área
+ * 
+ * Valida los datos y devuelve la vista previa para confirmar
+ */
+export async function procesarIndividual(req: Request, res: Response) {
+  try {
+    // Obtener usuario autenticado
+    const user = req.user as JwtPayload
+    if (!user) {
+      return res.status(401).json({ error: 'Usuario no autenticado' })
+    }
+
+    // Verificar que el usuario tenga rol COORD
+    if (!user.roles.includes('COORD')) {
+      return res.status(403).json({ 
+        error: 'Acceso denegado', 
+        mensaje: 'Solo los coordinadores pueden procesar cargas de horas' 
+      })
+    }
+
+    // Validar esquema de datos
+    const procesarIndividualSchema = z.object({
+      dato: z.object({
+        codigo_interno: z.string().min(1, 'Código interno requerido'),
+        nombre: z.string().min(1, 'Nombre requerido'),
+        rfc: z.string().min(1, 'RFC requerido'),
+        materia: z.string().min(1, 'Materia requerida'),
+        horas: z.union([
+          z.string().regex(/^\d+$/, 'Horas debe ser un número'),
+          z.number().min(1, 'Horas debe ser mayor a 0')
+        ]),
+        costo_hora: z.union([
+          z.string().regex(/^\d+(\.\d+)?$/, 'Costo por hora debe ser un número'),
+          z.number().min(0, 'Costo por hora no puede ser negativo')
+        ]),
+        pagable: z.union([
+          z.string().regex(/^[01]$/, 'Pagable debe ser 0 o 1'),
+          z.number().min(0).max(1),
+          z.boolean()
+        ])
+      }),
+      periodoId: z.number(),
+      areaId: z.number()
+    })
+
+    const validacion = procesarIndividualSchema.safeParse(req.body)
+    if (!validacion.success) {
+      return res.status(400).json({ 
+        error: 'Datos inválidos', 
+        detalles: validacion.error.format() 
+      })
+    }
+
+    const { dato, periodoId, areaId } = validacion.data
+
+    // Verificar que el periodo exista y esté ABIERTO
+    const periodo = await prisma.periodo.findUnique({
+      where: { id: periodoId }
+    })
+    
+    if (!periodo) {
+      return res.status(404).json({ 
+        error: 'Periodo no encontrado', 
+        mensaje: `No existe un periodo con ID ${periodoId}` 
+      })
+    }
+    
+    if (periodo.estado !== EstadoPeriodo.ABIERTO) {
+      return res.status(403).json({ 
+        error: 'Periodo no disponible', 
+        mensaje: `El periodo debe estar en estado ABIERTO, estado actual: ${periodo.estado}` 
+      })
+    }
+
+    // Verificar que el área exista
+    const area = await prisma.area.findUnique({
+      where: { id: areaId }
+    })
+    
+    if (!area) {
+      return res.status(404).json({ 
+        error: 'Área no encontrada', 
+        mensaje: `No existe un área con ID ${areaId}` 
+      })
+    }
+
+    // Verificar que el usuario sea coordinador del área
+    const coordArea = await prisma.coordArea.findFirst({
+      where: {
+        userId: user.id,
+        areaId
+      }
+    })
+    
+    if (!coordArea) {
+      return res.status(403).json({ 
+        error: 'Acceso denegado', 
+        mensaje: 'No eres coordinador de esta área' 
+      })
+    }
+
+    // Buscar el docente por código interno
+    const docente = await prisma.docente.findUnique({
+      where: { codigoInterno: dato.codigo_interno }
+    })
+
+    if (!docente) {
+      return res.status(404).json({ 
+        error: 'Docente no encontrado', 
+        mensaje: `No existe un docente con código interno ${dato.codigo_interno}` 
+      })
+    }
+
+    // Verificar que el RFC coincida con el docente
+    if (docente.rfc !== dato.rfc) {
+      return res.status(400).json({ 
+        error: 'RFC no coincide', 
+        mensaje: `El RFC proporcionado no coincide con el docente de código interno ${dato.codigo_interno}` 
+      })
+    }
+
+    // Verificar que el nombre coincida con el docente (puede haber variaciones menores)
+    if (docente.nombre.toLowerCase() !== dato.nombre.toLowerCase()) {
+      // Solo advertir, no bloquear
+      console.warn(`Advertencia: El nombre proporcionado (${dato.nombre}) no coincide exactamente con el docente (${docente.nombre})`)
+    }
+
+    // Validar los datos
+    try {
+      validateRowData(dato, 1)
+    } catch (error: any) {
+      return res.status(400).json({ 
+        error: 'Datos inválidos', 
+        mensaje: error.message 
+      })
+    }
+
+    // Convertir valores a números
+    const horas = typeof dato.horas === 'string' ? parseInt(dato.horas) : dato.horas
+    const costoHora = typeof dato.costo_hora === 'string' ? parseFloat(dato.costo_hora) : dato.costo_hora
+    const pagable = typeof dato.pagable === 'string' ? dato.pagable === '1' : !!dato.pagable
+
+    // Verificar si ya existe una carga para este docente, materia, periodo y área
+    const cargaExistente = await prisma.cargaHoras.findFirst({
+      where: {
+        docenteId: docente.id,
+        periodoId,
+        areaId,
+        materiaText: dato.materia
+      }
+    })
+
+    // Preparar datos para la vista previa
+    const datosProcesados = [{
+      codigo_interno: docente.codigoInterno,
+      nombre: docente.nombre,
+      rfc: docente.rfc,
+      materia: dato.materia,
+      horas: horas,
+      costo_hora: costoHora,
+      pagable: pagable ? 1 : 0,
+      importe: horas * costoHora,
+      existe: !!cargaExistente
+    }]
+
+    // Registrar en auditoría
+    await prisma.auditoria.create({
+      data: {
+        userId: user.id,
+        accion: 'PROCESAR_INDIVIDUAL_CARGA',
+        entidad: 'CargaHoras',
+        payload: {
+          periodoId,
+          areaId,
+          docenteId: docente.id,
+          materia: dato.materia,
+          timestamp: new Date().toISOString()
+        }
+      }
+    })
+
+    // Devolver los datos procesados
+    return res.json({
+      datos: datosProcesados,
+      errores: undefined
+    })
+  } catch (error) {
+    console.error('Error al procesar carga individual:', error)
+    return res.status(500).json({ 
+      error: 'Error interno', 
+      mensaje: 'Ocurrió un error al procesar la carga individual' 
+    })
+  }
+}
+
 // Función auxiliar para validar los datos de una fila
 function validateRowData(row: any, lineNumber: number) {
   // Validar campos requeridos
@@ -731,25 +1170,452 @@ function validateRowData(row: any, lineNumber: number) {
     throw new Error(`Falta el código interno`)
   }
   
-  if (!row.materia) {
-    throw new Error(`Falta la materia`)
-  }
+  // Ya no validamos materia aquí, se filtra antes
   
-  // Validar horas
-  const horas = row.horas !== undefined ? row.horas : ''
-  if (!horas || isNaN(Number(horas)) || Number(horas) <= 0) {
+  // Validar horas - Simplificado
+  let horas = row.horas;
+  if (horas === undefined || horas === null) horas = 0;
+  
+  // Asegurar que horas sea un número
+  const horasNum = typeof horas === 'number' ? horas : Number(String(horas).trim().replace(/\s+/g, ''));
+  
+  if (isNaN(horasNum) || horasNum <= 0) {
     throw new Error(`Las horas deben ser un número mayor a 0`)
   }
   
-  // Validar costo por hora
-  const costoHora = row.costo_hora !== undefined ? row.costo_hora : ''
-  if (!costoHora || isNaN(Number(costoHora)) || Number(costoHora) <= 0) {
-    throw new Error(`El costo por hora debe ser un número mayor a 0`)
+  // Validar costo por hora - Simplificado
+  let costoHora = row.costo_hora;
+  if (costoHora === undefined || costoHora === null) costoHora = 0;
+  
+  // Asegurar que costo_hora sea un número
+  const costoNum = typeof costoHora === 'number' ? costoHora : Number(String(costoHora).trim().replace(/\s+/g, ''));
+  
+  if (isNaN(costoNum) || costoNum < 0) {
+    throw new Error(`El costo por hora debe ser un número no negativo`)
   }
   
-  // Validar pagable (0 o 1)
-  const pagable = row.pagable !== undefined ? row.pagable : ''
-  if (pagable !== '0' && pagable !== '1' && pagable !== 0 && pagable !== 1) {
+  // Validar pagable (0 o 1) - Simplificado
+  let pagable = row.pagable;
+  if (pagable === undefined || pagable === null) pagable = 1; // Por defecto es pagable
+  
+  // Convertir a string para validación
+  const pagableStr = String(pagable).trim().toLowerCase();
+  
+  // Aceptar varios formatos para pagable
+  const pagableValido = [
+    '0', '1', 0, 1, true, false, 'true', 'false', 'yes', 'no', 'si', 'sí', 'y', 'n', 't', 'f'
+  ].includes(pagableStr);
+  
+  if (!pagableValido) {
     throw new Error(`Pagable debe ser 0 o 1`)
+  }
+  
+  // Actualizar los valores en el objeto row con los valores convertidos
+  row.horas = horasNum;
+  row.costo_hora = costoNum;
+  row.pagable = ['1', 'true', 'yes', 'si', 'sí', 'y', 't', true, 1].includes(pagableStr) ? 1 : 0;
+}
+
+/**
+ * GET / - Obtiene las cargas de horas
+ * 
+ * Query params:
+ * - periodoId: ID del periodo
+ * - areaId: ID del área
+ * - page: Número de página (default: 1)
+ * - pageSize: Tamaño de página (default: 10)
+ * - query: Consulta de búsqueda (opcional)
+ * 
+ * Devuelve una lista paginada de cargas de horas
+ */
+export async function getCargasHoras(req: Request, res: Response) {
+  try {
+    // Obtener usuario autenticado
+    const user = req.user as JwtPayload
+    if (!user) {
+      return res.status(401).json({ error: 'Usuario no autenticado' })
+    }
+
+    // Validar parámetros
+    const { periodoId, areaId, page = '1', pageSize = '10', query = '' } = req.query
+    
+    if (!periodoId || !areaId) {
+      return res.status(400).json({ 
+        error: 'Parámetros incompletos', 
+        mensaje: 'Se requieren periodoId y areaId' 
+      })
+    }
+    
+    const periodoIdNum = parseInt(periodoId as string)
+    const areaIdNum = parseInt(areaId as string)
+    const pageNum = parseInt(page as string)
+    const pageSizeNum = parseInt(pageSize as string)
+    
+    if (isNaN(periodoIdNum) || isNaN(areaIdNum) || isNaN(pageNum) || isNaN(pageSizeNum)) {
+      return res.status(400).json({ 
+        error: 'Parámetros inválidos', 
+        mensaje: 'periodoId, areaId, page y pageSize deben ser números' 
+      })
+    }
+
+    // Verificar que el periodo exista
+    const periodo = await prisma.periodo.findUnique({
+      where: { id: periodoIdNum }
+    })
+    
+    if (!periodo) {
+      return res.status(404).json({ 
+        error: 'Periodo no encontrado', 
+        mensaje: `No existe un periodo con ID ${periodoIdNum}` 
+      })
+    }
+
+    // Verificar que el área exista
+    const area = await prisma.area.findUnique({
+      where: { id: areaIdNum }
+    })
+    
+    if (!area) {
+      return res.status(404).json({ 
+        error: 'Área no encontrada', 
+        mensaje: `No existe un área con ID ${areaIdNum}` 
+      })
+    }
+
+    // Si el usuario es COORD, verificar que sea coordinador del área
+    // Los usuarios ADMIN y RH pueden acceder a cualquier área
+    if (user.roles.includes('COORD') && !user.roles.includes('ADMIN') && !user.roles.includes('RH')) {
+      const coordArea = await prisma.coordArea.findFirst({
+        where: {
+          userId: user.id,
+          areaId: areaIdNum
+        }
+      })
+      
+      if (!coordArea) {
+        return res.status(403).json({ 
+          error: 'Acceso denegado', 
+          mensaje: 'No eres coordinador de esta área' 
+        })
+      }
+    }
+
+    // Construir condiciones de búsqueda
+    const whereCondition: any = {
+      periodoId: periodoIdNum,
+      areaId: areaIdNum
+    }
+
+    // Si hay consulta de búsqueda, buscar por nombre de docente o materia
+    if (query) {
+      whereCondition.OR = [
+        {
+          docente: {
+            nombre: {
+              contains: query,
+              mode: 'insensitive'
+            }
+          }
+        },
+        {
+          materiaText: {
+            contains: query,
+            mode: 'insensitive'
+          }
+        }
+      ]
+    }
+
+    // Obtener el total de registros
+    const total = await prisma.cargaHoras.count({
+      where: whereCondition
+    })
+
+    // Calcular el total de páginas
+    const totalPages = Math.ceil(total / pageSizeNum)
+
+    // Obtener los registros paginados
+    const cargas = await prisma.cargaHoras.findMany({
+      where: whereCondition,
+      include: {
+        docente: {
+          select: {
+            id: true,
+            codigoInterno: true,
+            nombre: true,
+            rfc: true
+          }
+        }
+      },
+      skip: (pageNum - 1) * pageSizeNum,
+      take: pageSizeNum,
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+
+    // Devolver los resultados
+    return res.json({
+      data: cargas,
+      pagination: {
+        total,
+        page: pageNum,
+        pageSize: pageSizeNum,
+        totalPages
+      }
+    })
+  } catch (error) {
+    console.error('Error al obtener cargas de horas:', error)
+    return res.status(500).json({ 
+      error: 'Error interno', 
+      mensaje: 'Ocurrió un error al obtener las cargas de horas' 
+    })
+  }
+}
+
+/**
+ * PUT /:id - Actualiza una carga de horas
+ * 
+ * Params:
+ * - id: ID de la carga de horas
+ * 
+ * Body:
+ * - materia: Nombre de la materia
+ * - horas: Número de horas
+ * - costo_hora: Costo por hora
+ * - pagable: Si es pagable o no (0 o 1)
+ * 
+ * Actualiza una carga de horas existente
+ */
+export async function updateCargaHora(req: Request, res: Response) {
+  try {
+    // Obtener usuario autenticado
+    const user = req.user as JwtPayload
+    if (!user) {
+      return res.status(401).json({ error: 'Usuario no autenticado' })
+    }
+
+    // Verificar que el usuario tenga rol COORD
+    if (!user.roles.includes('COORD')) {
+      return res.status(403).json({ 
+        error: 'Acceso denegado', 
+        mensaje: 'Solo los coordinadores pueden actualizar cargas de horas' 
+      })
+    }
+
+    // Validar ID
+    const { id } = req.params
+    const cargaId = parseInt(id || '0')
+    
+    if (isNaN(cargaId)) {
+      return res.status(400).json({ 
+        error: 'ID inválido', 
+        mensaje: 'El ID debe ser un número' 
+      })
+    }
+
+    // Verificar que la carga exista
+    const carga = await prisma.cargaHoras.findUnique({
+      where: { id: cargaId },
+      include: {
+        docente: true
+      }
+    })
+    
+    if (!carga) {
+      return res.status(404).json({ 
+        error: 'Carga no encontrada', 
+        mensaje: `No existe una carga de horas con ID ${cargaId}` 
+      })
+    }
+
+    // Verificar que el usuario sea coordinador del área de la carga
+    const coordArea = await prisma.coordArea.findFirst({
+      where: {
+        userId: user.id,
+        areaId: carga.areaId
+      }
+    })
+    
+    if (!coordArea) {
+      return res.status(403).json({ 
+        error: 'Acceso denegado', 
+        mensaje: 'No eres coordinador del área de esta carga' 
+      })
+    }
+
+    // Validar datos
+    const { materia, horas, costo_hora, pagable } = req.body
+    
+    if (!materia || materia.trim() === '') {
+      return res.status(400).json({ 
+        error: 'Datos inválidos', 
+        mensaje: 'La materia es requerida' 
+      })
+    }
+    
+    const horasNum = parseFloat(horas)
+    if (isNaN(horasNum) || horasNum <= 0) {
+      return res.status(400).json({ 
+        error: 'Datos inválidos', 
+        mensaje: 'Las horas deben ser un número mayor a 0' 
+      })
+    }
+    
+    const costoHoraNum = parseFloat(costo_hora)
+    if (isNaN(costoHoraNum) || costoHoraNum < 0) {
+      return res.status(400).json({ 
+        error: 'Datos inválidos', 
+        mensaje: 'El costo por hora debe ser un número no negativo' 
+      })
+    }
+    
+    const pagableValue = pagable === true || pagable === 1 || pagable === '1'
+
+    // Actualizar la carga
+    const cargaActualizada = await prisma.cargaHoras.update({
+      where: { id: cargaId },
+      data: {
+        materiaText: materia.trim(),
+        horas: horasNum,
+        costoHora: costoHoraNum,
+        pagable: pagableValue
+      },
+      include: {
+        docente: {
+          select: {
+            id: true,
+            codigoInterno: true,
+            nombre: true,
+            rfc: true
+          }
+        }
+      }
+    })
+
+    // Registrar en auditoría
+    await prisma.auditoria.create({
+      data: {
+        userId: user.id,
+        accion: 'ACTUALIZAR_CARGA',
+        entidad: 'CargaHoras',
+        payload: {
+          id: cargaId,
+          docenteId: carga.docenteId,
+          periodoId: carga.periodoId,
+          areaId: carga.areaId,
+          materia,
+          horas: horasNum,
+          costoHora: costoHoraNum,
+          pagable: pagableValue,
+          timestamp: new Date().toISOString()
+        }
+      }
+    })
+
+    // Devolver la carga actualizada
+    return res.json(cargaActualizada)
+  } catch (error) {
+    console.error('Error al actualizar carga de horas:', error)
+    return res.status(500).json({ 
+      error: 'Error interno', 
+      mensaje: 'Ocurrió un error al actualizar la carga de horas' 
+    })
+  }
+}
+
+/**
+ * DELETE /:id - Elimina una carga de horas
+ * 
+ * Params:
+ * - id: ID de la carga de horas
+ * 
+ * Elimina una carga de horas existente
+ */
+export async function deleteCargaHora(req: Request, res: Response) {
+  try {
+    // Obtener usuario autenticado
+    const user = req.user as JwtPayload
+    if (!user) {
+      return res.status(401).json({ error: 'Usuario no autenticado' })
+    }
+
+    // Verificar que el usuario tenga rol COORD
+    if (!user.roles.includes('COORD')) {
+      return res.status(403).json({ 
+        error: 'Acceso denegado', 
+        mensaje: 'Solo los coordinadores pueden eliminar cargas de horas' 
+      })
+    }
+
+    // Validar ID
+    const { id } = req.params
+    const cargaId = parseInt(id || '0')
+    
+    if (isNaN(cargaId)) {
+      return res.status(400).json({ 
+        error: 'ID inválido', 
+        mensaje: 'El ID debe ser un número' 
+      })
+    }
+
+    // Verificar que la carga exista
+    const carga = await prisma.cargaHoras.findUnique({
+      where: { id: cargaId }
+    })
+    
+    if (!carga) {
+      return res.status(404).json({ 
+        error: 'Carga no encontrada', 
+        mensaje: `No existe una carga de horas con ID ${cargaId}` 
+      })
+    }
+
+    // Verificar que el usuario sea coordinador del área de la carga
+    const coordArea = await prisma.coordArea.findFirst({
+      where: {
+        userId: user.id,
+        areaId: carga.areaId
+      }
+    })
+    
+    if (!coordArea) {
+      return res.status(403).json({ 
+        error: 'Acceso denegado', 
+        mensaje: 'No eres coordinador del área de esta carga' 
+      })
+    }
+
+    // Eliminar la carga
+    await prisma.cargaHoras.delete({
+      where: { id: cargaId }
+    })
+
+    // Registrar en auditoría
+    await prisma.auditoria.create({
+      data: {
+        userId: user.id,
+        accion: 'ELIMINAR_CARGA',
+        entidad: 'CargaHoras',
+        payload: {
+          id: cargaId,
+          docenteId: carga.docenteId,
+          periodoId: carga.periodoId,
+          areaId: carga.areaId,
+          timestamp: new Date().toISOString()
+        }
+      }
+    })
+
+    // Devolver respuesta exitosa
+    return res.json({ 
+      mensaje: 'Carga de horas eliminada correctamente' 
+    })
+  } catch (error) {
+    console.error('Error al eliminar carga de horas:', error)
+    return res.status(500).json({ 
+      error: 'Error interno', 
+      mensaje: 'Ocurrió un error al eliminar la carga de horas' 
+    })
   }
 }

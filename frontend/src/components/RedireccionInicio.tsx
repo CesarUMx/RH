@@ -11,7 +11,7 @@ export const RedireccionInicio = () => {
     if (hasRole(['ADMIN'])) {
       navigate('/usuarios');
     } else if (hasRole(['RH'])) {
-      navigate('/docentes');
+      navigate('/gestion-pagos');
     } else if (hasRole(['COORD'])) {
       navigate('/carga-horas');
     } else {

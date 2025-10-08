@@ -13,6 +13,7 @@ import { Areas } from './pages/Areas';
 import { Docentes } from './pages/Docentes';
 import { Periodos } from './pages/Periodos';
 import { CargaHoras } from './pages/CargaHoras';
+import { GestionPagos } from './pages/GestionPagos';
 
 // Componentes
 import { RedireccionInicio } from './components/RedireccionInicio';
@@ -109,6 +110,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={['COORD']}>
                   <CargaHoras />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/gestion-pagos"
+              element={
+                <ProtectedRoute requiredRoles={['ADMIN', 'RH']}>
+                  <GestionPagos />
                 </ProtectedRoute>
               }
             />

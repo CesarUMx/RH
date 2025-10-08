@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { generarPlantilla, procesarArchivo, confirmarCarga, upload } from './controller'
+import { generarPlantilla, procesarArchivo, confirmarCarga, procesarIndividual, obtenerCargas, upload } from './controller'
 import { requireAuth, requireRole } from '../../middlewares/auth'
 
 export const cargaHorasRouter = Router()
@@ -12,3 +12,9 @@ cargaHorasRouter.post('/procesar', requireAuth, requireRole(['COORD']), upload.s
 
 // Ruta para confirmar carga de horas
 cargaHorasRouter.post('/confirmar', requireAuth, requireRole(['COORD']), confirmarCarga)
+
+// Ruta para procesar carga individual de horas
+cargaHorasRouter.post('/procesar-individual', requireAuth, requireRole(['COORD']), procesarIndividual)
+
+// Ruta para obtener cargas de horas
+cargaHorasRouter.get('/', requireAuth, requireRole(['ADMIN', 'RH', 'COORD']), obtenerCargas)

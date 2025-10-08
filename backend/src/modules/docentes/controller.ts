@@ -12,7 +12,9 @@ const prisma = new PrismaClient()
 
 // Esquema de validación para RFC (formato simplificado)
 // En un caso real, se usaría una expresión regular más precisa
-const rfcRegex = /^[A-Z&Ñ]{3,4}[0-9]{6}[A-Z0-9]{3}$/
+// Versión original: /^[A-Z&Ñ]{3,4}[0-9]{6}[A-Z0-9]{3}$/
+// Versión más permisiva para importación:
+const rfcRegex = /^[A-Z&Ñ]{3,4}[0-9]{6}[A-Z0-9]{0,3}$/
 
 // Esquemas de validación
 const docenteSchema = z.object({
@@ -464,6 +466,15 @@ function normalizarDatoDocente(row: Record<string, any>): DatoDocente {
     }
   }
 
+  // Formatear el código interno a 6 dígitos
+  if (codigoInterno) {
+    // Convertir a string y eliminar espacios
+    const codigoStr = codigoInterno.toString().trim();
+    // Rellenar con ceros a la izquierda hasta completar 6 dígitos
+    codigoInterno = codigoStr.padStart(6, '0');
+    console.log(`Código interno formateado a 6 dígitos: ${codigoInterno}`);
+  }
+
   // Validar campos requeridos
   if (!codigoInterno) {
     return { codigoInterno, nombre, rfc, activo, error: 'Código interno requerido' }
@@ -494,13 +505,13 @@ export async function descargarPlantilla(req: Request, res: Response) {
     // Datos de ejemplo
     const data = [
       {
-        codigo_interno: '12345',
+        codigo_interno: '012345',
         nombre: 'DOCENTE EJEMPLO',
         rfc: 'XAXX010101000',
         activo: '1'
       },
       {
-        codigo_interno: '67890',
+        codigo_interno: '067890',
         nombre: 'OTRO DOCENTE EJEMPLO',
         rfc: 'XEXX010101000',
         activo: '1'
