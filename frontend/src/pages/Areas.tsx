@@ -29,7 +29,7 @@ type AreaForm = z.infer<typeof areaSchema>;
 export const Areas = () => {
   const queryClient = useQueryClient();
   const { hasRole } = useAuth();
-  const isAdmin = hasRole('ADMIN');
+  const isAdmin = hasRole('ADMIN') || hasRole('RH');
   
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -254,7 +254,7 @@ export const Areas = () => {
       header: 'Acciones',
       cell: (info) => (
         <div className="flex space-x-2">
-          {(isAdmin || hasRole('RH')) && (
+          {isAdmin && (
             <Button
               variant="outline"
               size="sm"

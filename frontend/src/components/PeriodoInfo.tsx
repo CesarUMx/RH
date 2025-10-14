@@ -22,7 +22,7 @@ export const PeriodoInfo = () => {
     return (
       <div className="flex items-center px-3 py-2 text-sm text-white bg-yellow-600 rounded-md mt-2">
         <FaCalendarAlt className="mr-2" />
-        <span>No hay periodo activo</span>
+        <span className='text-lg'>No hay periodo activo</span>
       </div>
     );
   }
@@ -31,7 +31,7 @@ export const PeriodoInfo = () => {
     <div className="flex items-center px-3 py-2 text-sm text-white bg-green-600 rounded-md mt-2">
       <FaCalendarAlt className="mr-2" />
       <div>
-        <span className="font-medium">{activePeriodo.nombre}</span>
+        <span className="font-medium text-lg">{activePeriodo.nombre}</span>
         <span className="ml-2 text-xs">
           {new Date(activePeriodo.fechaInicio).toLocaleDateString('es-ES')} - {new Date(activePeriodo.fechaFin).toLocaleDateString('es-ES')}
         </span>

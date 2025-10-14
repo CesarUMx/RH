@@ -42,8 +42,8 @@ export const AreaSelector = () => {
         className="flex items-center justify-between w-full px-3 py-2 text-sm text-white bg-primary-light hover:bg-primary-dark rounded-md transition-colors duration-200"
       >
         <div className="flex items-center">
-          <FaBuilding className="mr-2" />
-          <span>{selectedArea.nombre}</span>
+          <FaBuilding className="mr-3" />
+          <span className='text-lg'>{selectedArea.nombre}</span>
         </div>
         <FaChevronDown className={`ml-2 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''}`} />
       </button>

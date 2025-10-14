@@ -19,9 +19,9 @@ areasRouter.get('/mis-areas', requireAuth, requireRole(['COORD']), misAreas)
 
 // Rutas para gestión de áreas (solo ADMIN)
 areasRouter.get('/', requireAuth, listarAreas)
-areasRouter.post('/', requireAuth, requireRole(['ADMIN']), crearArea)
-areasRouter.put('/:id', requireAuth, requireRole(['ADMIN']), actualizarArea)
-areasRouter.delete('/:id', requireAuth, requireRole(['ADMIN']), eliminarArea)
+areasRouter.post('/', requireAuth, requireRole(['ADMIN', 'RH']), crearArea)
+areasRouter.put('/:id', requireAuth, requireRole(['ADMIN', 'RH']), actualizarArea)
+areasRouter.delete('/:id', requireAuth, requireRole(['ADMIN', 'RH']), eliminarArea)
 
 // Rutas para coordinadores (ADMIN y RH)
 // IMPORTANTE: Las rutas específicas deben ir antes de las rutas con parámetros
