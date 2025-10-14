@@ -23,19 +23,15 @@ export const AreaProvider = ({ children }: { children: ReactNode }) => {
 
   // Función para obtener las áreas asignadas al usuario
   const fetchAreas = async () => {
-    console.log('fetchAreas - Iniciando...', { token, isCoord: hasRole('COORD') });
     if (!token || !hasRole('COORD')) {
-      console.log('fetchAreas - No se cumplen las condiciones', { token: !!token, isCoord: hasRole('COORD') });
       return;
     }
 
     setIsLoading(true);
     setError(null);
-    console.log('fetchAreas - Obteniendo áreas...');
 
     try {
       const areasData = await areasService.getMisAreas();
-      console.log('fetchAreas - Áreas obtenidas:', areasData);
 
       setAreas(areasData);
       
@@ -78,7 +74,6 @@ export const AreaProvider = ({ children }: { children: ReactNode }) => {
   // Efecto para cargar áreas cuando el componente se monta o cambia el rol
   useEffect(() => {
     if (token && hasRole('COORD')) {
-      console.log('AreaContext - useEffect - Cargando áreas para COORD');
       fetchAreas();
     }
   }, [token, hasRole]);

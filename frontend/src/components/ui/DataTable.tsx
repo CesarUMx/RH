@@ -63,14 +63,6 @@ export function DataTable<TData>({
     if (pagination.onPaginationChange) {
       tableConfig.onPaginationChange = pagination.onPaginationChange;
     }
-    
-    // Agregar logs para depuración
-    console.log('DataTable pagination config:', {
-      pageIndex: pagination.pageIndex,
-      pageSize: pagination.pageSize,
-      pageCount: pagination.pageCount,
-      serverSide: pagination.serverSide
-    });
   }
   
   const table = useReactTable(tableConfig);

@@ -59,16 +59,9 @@ export const CargaHoras = () => {
     queryKey: ['cargasHoras', selectedArea?.id, activePeriodo?.id, currentPage, pageSize, searchQuery],
     queryFn: async () => {
       if (!selectedArea?.id || !activePeriodo?.id) {
-        console.log('No hay área o periodo seleccionado');
+        console.error('No hay área o periodo seleccionado');
         return { data: [], pagination: { total: 0, page: 1, pageSize: 10, totalPages: 1 } };
       }
-      console.log('Consultando cargas con parámetros:', {
-        periodoId: activePeriodo.id,
-        areaId: selectedArea.id,
-        page: currentPage,
-        pageSize,
-        query: searchQuery
-      });
       try {
         const result = await cargaHorasService.getCargas(
           activePeriodo.id,
@@ -77,7 +70,6 @@ export const CargaHoras = () => {
           pageSize,
           searchQuery
         );
-        console.log('Resultado de la consulta de cargas:', result);
         return result;
       } catch (error) {
         console.error('Error en la consulta de cargas:', error);
@@ -236,7 +228,6 @@ export const CargaHoras = () => {
             formattedItem.codigo_interno = String(formattedItem.codigo_interno);
           }
 
-          console.log(`Código original: ${item.codigo_interno}, Código formateado: ${formattedItem.codigo_interno}`);
           return formattedItem;
         });
       }
@@ -284,7 +275,6 @@ export const CargaHoras = () => {
         return formattedItem;
       });
 
-      console.log('Enviando datos formateados:', formattedData);
       const result = await cargaHorasService.confirmarCarga(formattedData, activePeriodo.id, selectedArea.id);
       toast.success(result.mensaje || 'Carga de horas registrada correctamente');
       setUploadedFile(null);
@@ -873,7 +863,6 @@ export const CargaHoras = () => {
                           totalItems={cargasData.pagination.total}
                           pageSize={cargasData.pagination.pageSize}
                           onPageChange={(page) => {
-                            console.log(`Cambiando a página ${page}`);
                             setCurrentPage(page);
                           }}
                         />

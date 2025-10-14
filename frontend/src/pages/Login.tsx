@@ -29,13 +29,10 @@ export const Login = () => {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      console.log('Iniciando sesión...');
       const response = await login(data.correo, data.password);
-      console.log('Login exitoso, respuesta:', response);
       toast.success('Inicio de sesión exitoso');
       
       // Forzar la redirección usando window.location en lugar de navigate
-      console.log('Redirigiendo con window.location...');
       window.location.href = '/';
     } catch (error) {
       console.error('Error al iniciar sesión:', error);

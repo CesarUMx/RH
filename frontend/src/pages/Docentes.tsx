@@ -80,11 +80,8 @@ export const Docentes = () => {
 
   // Efecto para forzar una recarga de los datos al montar el componente
   useEffect(() => {
-    console.log('Docentes - Componente montado, forzando recarga de datos');
     queryClient.invalidateQueries({ queryKey: ['docentes'] });
   }, [queryClient]);
-
-  console.log('Componente Docentes - Estado inicial:', { hasRole: hasRole('COORD'), selectedArea });
 
   // Consulta para obtener docentes paginados
   const { data: docentesPaginados, isLoading, error } = useQuery({
@@ -95,12 +92,8 @@ export const Docentes = () => {
         const page = Number.isInteger(currentPage) && currentPage > 0 ? currentPage : 1;
         const size = Number.isInteger(pageSize) && pageSize > 0 ? pageSize : 10;
         
-        console.log('Fetching docentes with params:', { searchQuery, page, size, rol: hasRole('COORD') ? 'COORD' : 'ADMIN/RH' });
-        
         // Usar el servicio de docentes
-        console.log('Usando docentesService.getAll');
         const result = await docentesService.getAll(searchQuery, page, size);
-        console.log('API response data:', result);
         
         // Validar la respuesta
         if (!result || !result.data) {
@@ -240,7 +233,6 @@ export const Docentes = () => {
       ...data,
       codigoInterno: formatCodigoInterno(data.codigoInterno)
     };
-    console.log('Creando docente con código formateado:', formattedData);
     createDocenteMutation.mutate(formattedData);
   };
 
@@ -252,7 +244,6 @@ export const Docentes = () => {
         ...data,
         codigoInterno: formatCodigoInterno(data.codigoInterno)
       };
-      console.log('Actualizando docente con código formateado:', formattedData);
       updateDocenteMutation.mutate({
         id: selectedDocente.id,
         data: formattedData,
@@ -417,12 +408,6 @@ export const Docentes = () => {
           </div>
         ) : (
           <>
-            {console.log('Renderizando tabla de docentes:', { 
-              docentesPaginados, 
-              isLoading, 
-              error,
-              dataLength: docentesPaginados?.data?.length || 0 
-            })}
             {/* Si hay un error o no hay datos, mostrar un mensaje */}
             {(!docentesPaginados || docentesPaginados.data.length === 0) && !isLoading ? (
               <div className="bg-white rounded-lg shadow p-6 text-center">
@@ -454,7 +439,6 @@ export const Docentes = () => {
                     totalItems={docentesPaginados.pagination.total}
                     pageSize={docentesPaginados.pagination.pageSize}
                     onPageChange={(page) => {
-                      console.log(`Changing to page ${page}`);
                       setCurrentPage(page);
                     }}
                   />

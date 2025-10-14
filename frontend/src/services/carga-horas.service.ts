@@ -169,12 +169,6 @@ export const cargaHorasService = {
         codigo_interno: codigoFormateado
       };
 
-      console.log('Enviando datos para carga individual:', {
-        dato: datoFormateado,
-        periodoId,
-        areaId
-      });
-
       // Enviar al servidor para validación
       const response = await api.post('/carga-horas/procesar-individual', {
         dato: datoFormateado,
@@ -182,7 +176,6 @@ export const cargaHorasService = {
         areaId,
       });
 
-      console.log('Respuesta del servidor:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error al procesar la carga individual:', error);
@@ -201,7 +194,6 @@ export const cargaHorasService = {
    */
   getCargas: async (periodoId: number, areaId: number, page = 1, pageSize = 10, query = ''): Promise<CargaHorasPaginadas> => {
     try {
-      console.log('Llamando a API con parámetros:', { periodoId, areaId, page, pageSize, query });
       
       const response = await api.get('/carga-horas', {
         params: {
@@ -213,9 +205,6 @@ export const cargaHorasService = {
         }
       });
 
-      console.log('Respuesta de API:', response.status, response.statusText);
-      console.log('Datos recibidos:', response.data);
-      
       return response.data;
     } catch (error: any) {
       console.error('Error al obtener cargas de horas:', error);

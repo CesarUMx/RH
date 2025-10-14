@@ -28,19 +28,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const initAuth = async () => {
-      console.log('AuthContext - initAuth - token:', token ? 'Existe token' : 'No hay token');
       if (token) {
         try {
-          console.log('AuthContext - Intentando obtener datos del usuario con token');
           const userData = await authService.me();
-          console.log('AuthContext - Datos del usuario obtenidos:', userData);
           setUser(userData.user);
         } catch (error) {
           console.error('AuthContext - Error al obtener datos del usuario:', error);
           logout();
         }
       } else {
-        console.log('AuthContext - No hay token, no se intenta obtener datos del usuario');
       }
       setIsLoading(false);
     };
@@ -51,22 +47,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (correo: string, password: string) => {
     setIsLoading(true);
     try {
-      console.log('AuthContext - login - Iniciando sesión...');
       const response = await authService.login({ correo, password });
-      console.log('AuthContext - login - Respuesta:', response);
       
       // Guardar token y datos de usuario en localStorage
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
-      console.log('AuthContext - login - Token guardado en localStorage');
       
       // Actualizar estado
       setToken(response.token);
       setUser(response.user);
-      console.log('AuthContext - login - Estado actualizado:', { token: response.token, user: response.user });
-      
-      // Verificar inmediatamente si el usuario está autenticado
-      console.log('AuthContext - login - isAuthenticated:', !!response.user);
       
       return response; // Devolver la respuesta para uso posterior
     } catch (error) {

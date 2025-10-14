@@ -56,13 +56,11 @@ app.get('/health', (_, res) => {
 
 // Ruta para obtener datos del usuario autenticado
 app.get('/api/me', requireAuth, (req, res) => {
-    console.log('Backend - /api/me - Usuario autenticado:', req.user);
     res.json({ user: req.user })
 })
 
 // Ruta alternativa sin prefijo /api para compatibilidad
 app.get('/me', requireAuth, (req, res) => {
-    console.log('Backend - /me - Usuario autenticado:', req.user);
     res.json({ user: req.user })
 })
 

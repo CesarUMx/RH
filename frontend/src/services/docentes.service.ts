@@ -72,11 +72,8 @@ export const docentesService = {
       Object.assign(params, { areaId: Number(areaId) });
     }
     
-    console.log('Sending API request with params:', params);
-    
     try {
       const response = await api.get('/docentes', { params });
-      console.log('API response status:', response.status);
       return response.data;
     } catch (error) {
       console.error('Error fetching docentes:', error);
@@ -172,7 +169,6 @@ export const docentesService = {
       codigoInterno: formatCodigoInterno(docente.codigoInterno)
     };
     
-    console.log('Enviando docente con código formateado:', formattedDocente);
     const response = await api.post('/docentes', formattedDocente);
     return response.data;
   },
@@ -184,7 +180,6 @@ export const docentesService = {
       formattedDocente.codigoInterno = formatCodigoInterno(formattedDocente.codigoInterno);
     }
     
-    console.log('Actualizando docente con código formateado:', formattedDocente);
     const response = await api.put(`/docentes/${id}`, formattedDocente);
     return response.data;
   },

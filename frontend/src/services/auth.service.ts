@@ -23,10 +23,7 @@ export const authService = {
 
   me: async () => {
     try {
-      console.log('Obteniendo datos del usuario...');
-      // La ruta debe ser /api/me, pero como baseURL ya incluye /api, usamos solo /me
       const response = await api.get('/me');
-      console.log('Respuesta:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error al obtener datos del usuario:', error);

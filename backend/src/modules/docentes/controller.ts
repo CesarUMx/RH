@@ -334,13 +334,8 @@ function procesarXLSX(filePath: string): Record<string, any>[] {
     return [];
   }
   
-  // Inspeccionar los encabezados del archivo
-  console.log('Procesando archivo Excel:', filePath);
-  console.log('Hoja de cálculo:', sheetName);
-  
   // Obtener el rango de la hoja
   const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:A1');
-  console.log('Rango de la hoja:', worksheet['!ref']);
   
   // Obtener los encabezados (primera fila)
   const headers = [];
@@ -353,7 +348,6 @@ function procesarXLSX(filePath: string): Record<string, any>[] {
       });
     }
   }
-  console.log('Encabezados detectados:', headers);
   
   // Convertir a JSON con opciones para manejar mejor los encabezados
   const data = XLSX.utils.sheet_to_json(worksheet, {
@@ -361,11 +355,6 @@ function procesarXLSX(filePath: string): Record<string, any>[] {
     defval: '',   // Valor por defecto para celdas vacías
     header: 'A'    // Usar letras de columna como encabezados si no hay encabezados
   }) as Record<string, any>[];
-  
-  // Mostrar la primera fila para depuración
-  if (data.length > 0) {
-    console.log('Primera fila de datos:', data[0]);
-  }
   
   return data
 }
@@ -381,9 +370,6 @@ interface DatoDocente {
 
 // Función para normalizar datos de importación
 function normalizarDatoDocente(row: Record<string, any>): DatoDocente {
-  // Imprimir la fila completa para depuración
-  console.log('Normalizando fila:', row);
-  
   // Extraer campos del registro - intentar diferentes nombres de campo posibles
   // Para código interno, buscar diferentes variantes y formatos
   let codigoInterno = '';
@@ -394,7 +380,6 @@ function normalizarDatoDocente(row: Record<string, any>): DatoDocente {
   for (const campo of posiblesCamposCodigo) {
     if (row[campo] !== undefined && row[campo] !== null) {
       codigoInterno = row[campo].toString().trim();
-      console.log(`Encontrado código interno en campo '${campo}': ${codigoInterno}`);
       break;
     }
   }
@@ -408,7 +393,6 @@ function normalizarDatoDocente(row: Record<string, any>): DatoDocente {
           (typeof value === 'number' || (typeof value === 'string' && /^\d+$/.test(value.toString().trim()))) && 
           !['nombre', 'rfc', 'activo', 'B', 'C', 'D'].includes(key.toLowerCase())) {
         codigoInterno = value.toString().trim();
-        console.log(`Encontrado código interno en campo genérico '${key}': ${codigoInterno}`);
         break;
       }
     }
@@ -421,7 +405,6 @@ function normalizarDatoDocente(row: Record<string, any>): DatoDocente {
   for (const campo of posiblesCamposNombre) {
     if (row[campo] !== undefined && row[campo] !== null) {
       nombre = row[campo].toString().trim();
-      console.log(`Encontrado nombre en campo '${campo}': ${nombre}`);
       break;
     }
   }
@@ -429,7 +412,6 @@ function normalizarDatoDocente(row: Record<string, any>): DatoDocente {
   // Si no se encontró el nombre, intentar con la segunda columna (B)
   if (!nombre && row['B'] !== undefined) {
     nombre = row['B'].toString().trim();
-    console.log(`Usando segunda columna como nombre: ${nombre}`);
   }
   
   // Buscar el campo de RFC con diferentes nombres posibles
@@ -439,7 +421,6 @@ function normalizarDatoDocente(row: Record<string, any>): DatoDocente {
   for (const campo of posiblesCamposRFC) {
     if (row[campo] !== undefined && row[campo] !== null) {
       rfc = row[campo].toString().trim().toUpperCase();
-      console.log(`Encontrado RFC en campo '${campo}': ${rfc}`);
       break;
     }
   }
@@ -447,11 +428,7 @@ function normalizarDatoDocente(row: Record<string, any>): DatoDocente {
   // Si no se encontró el RFC, intentar con la tercera columna (C)
   if (!rfc && row['C'] !== undefined) {
     rfc = row['C'].toString().trim().toUpperCase();
-    console.log(`Usando tercera columna como RFC: ${rfc}`);
   }
-  
-  // Imprimir para depuración
-  console.log('Datos de fila:', { rowKeys: Object.keys(row), rowValues: Object.values(row), codigoInterno, nombre, rfc });
   
   // Normalizar campo activo
   let activo = true
@@ -472,7 +449,6 @@ function normalizarDatoDocente(row: Record<string, any>): DatoDocente {
     const codigoStr = codigoInterno.toString().trim();
     // Rellenar con ceros a la izquierda hasta completar 6 dígitos
     codigoInterno = codigoStr.padStart(6, '0');
-    console.log(`Código interno formateado a 6 dígitos: ${codigoInterno}`);
   }
 
   // Validar campos requeridos
@@ -602,8 +578,6 @@ export async function importarDocentes(req: Request, res: Response) {
     // Procesar el archivo
     const filePath = req.file.path
     const fileExtension = path.extname(req.file.originalname).toLowerCase()
-    
-    console.log('Procesando archivo:', req.file.originalname, 'Extensión:', fileExtension)
     
     // Procesar archivo según su extensión
     let rawData: any[] = []

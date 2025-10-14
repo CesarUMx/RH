@@ -243,12 +243,10 @@ export async function generarPlantilla(req: Request, res: Response) {
     // Escribir el archivo
     try {
       XLSX.writeFile(workbook, filePath)
-      console.log(`Archivo Excel creado correctamente en: ${filePath}`)
       
       // Verificar que el archivo existe antes de enviarlo
       if (fs.existsSync(filePath)) {
         const stats = fs.statSync(filePath)
-        console.log(`Tamaño del archivo: ${stats.size} bytes`)
         
         if (stats.size === 0) {
           throw new Error('El archivo generado está vacío')
@@ -455,20 +453,12 @@ export async function procesarArchivo(req: Request, res: Response) {
             header: fieldMapping.map((f: FieldMapping) => f.display), // Usar encabezados descriptivos
             range: 1 // Comenzar desde la segunda fila (saltar encabezados)
           });
-          
-          console.log('Datos leídos del Excel:', jsonData.slice(0, 3));
-          
+                    
           // Crear un mapa de encabezados descriptivos a nombres de campo internos
           const headerMap: {[key: string]: string} = {};
           fieldMapping.forEach((f: FieldMapping) => {
             headerMap[f.display] = f.internal;
           });
-          
-          console.log('Mapeo de encabezados:', headerMap);
-          
-          console.log('Mapeo de encabezados:', headerMap);
-          
-          console.log('Datos leídos (sin encabezados):', jsonData.slice(0, 3));
           
           // Validar cada fila
           jsonData.forEach((rawRow: any, index) => {
