@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { FaFileInvoiceDollar, FaLock, FaSave, FaTimesCircle, FaFileExcel } from 'react-icons/fa';
+import { FaFileInvoiceDollar, FaLock, FaFileExcel } from 'react-icons/fa';
+
+import { DescargaReportesArea } from '../components/reportes/DescargaReportesArea';
 
 import { MainLayout } from '../layouts/MainLayout';
 import { Button } from '../components/ui/Button';
@@ -13,18 +15,13 @@ import { gestionPagosService } from '../services/gestion-pagos.service';
 export const GestionPagos = () => {
   // Estados
   const [isClosePeriodModalOpen, setIsClosePeriodModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedPeriodo, setSelectedPeriodo] = useState<any>(null);
   const [selectedArea, setSelectedArea] = useState<any>(null);
-  const [selectedDocente, setSelectedDocente] = useState<any>(null);
+  const [docenteDetalles, setDocenteDetalles] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
-  const [editFormData, setEditFormData] = useState({
-    materiaText: '',
-    horas: 0,
-    costoHora: 0
-  });
   // El tipo de reporte ya no es necesario con la nueva visualización
   
   // Consulta para obtener periodos
@@ -105,19 +102,7 @@ export const GestionPagos = () => {
     }
   });
 
-  // Mutación para editar carga
-  const editCargaMutation = useMutation({
-    mutationFn: (data: any) => gestionPagosService.updateCarga(selectedDocente.id, data),
-    onSuccess: () => {
-      toast.success('Carga actualizada correctamente');
-      setIsEditModalOpen(false);
-      refetchReporte();
-    },
-    onError: (error: any) => {
-      console.error('Error al actualizar carga:', error);
-      toast.error(error.response?.data?.mensaje || 'Error al actualizar la carga');
-    }
-  });
+  // Ya no necesitamos la mutación para editar carga
 
   // Función para manejar la búsqueda
   const handleSearch = (e: React.FormEvent) => {
@@ -139,11 +124,41 @@ export const GestionPagos = () => {
     }
   };
 
-  // Ya no necesitamos la función handleEditClick porque no estamos editando cargas individuales en esta vista
+  // Ya no necesitamos funciones de edición porque no estamos editando cargas individuales en esta vista
 
-  // Función para guardar los cambios de la edición
-  const handleSaveEdit = () => {
-    editCargaMutation.mutate(editFormData);
+  // Función para mostrar detalles del docente
+  const handleShowDetails = async (docenteId: number, nombreDocente: string) => {
+    try {
+      if (!selectedPeriodo?.id) return;
+      
+      // Mostrar mensaje de carga
+      toast.loading('Cargando detalles...', { id: 'loading-details' });
+      
+      // Obtener todas las cargas del docente en este periodo
+      const response = await gestionPagosService.getDocenteDetalles(selectedPeriodo.id, docenteId);
+      
+      // Si no hay datos, mostrar mensaje
+      if (!response.data || response.data.length === 0) {
+        toast.error('No se encontraron detalles para este docente');
+        toast.dismiss('loading-details');
+        return;
+      }
+      
+      // Agregar el nombre del docente a los detalles para asegurar que se muestre correctamente
+      const detallesConNombre = {
+        ...response,
+        nombreDocente: nombreDocente
+      };
+      
+      // Guardar los detalles y abrir el modal
+      setDocenteDetalles(detallesConNombre);
+      setIsDetailModalOpen(true);
+      toast.dismiss('loading-details');
+    } catch (error) {
+      console.error('Error al obtener detalles del docente:', error);
+      toast.error('Error al obtener detalles del docente');
+      toast.dismiss('loading-details');
+    }
   };
 
 
@@ -351,6 +366,12 @@ export const GestionPagos = () => {
               >
                 <FaFileExcel className="mr-2" /> Exportar Excel
               </Button>
+              {selectedPeriodo && (
+                <DescargaReportesArea 
+                  periodoId={selectedPeriodo.id} 
+                  periodoNombre={selectedPeriodo.nombre} 
+                />
+              )}
             </div>
           </div>
         </div>
@@ -399,6 +420,7 @@ export const GestionPagos = () => {
                             </th>
                           ))}
                           <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ minWidth: '100px' }}>Total</th>
+                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ minWidth: '100px' }}>Acciones</th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
@@ -415,6 +437,15 @@ export const GestionPagos = () => {
                             <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">
                               {formatCurrency(docente.total)}
                             </td>
+                            <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
+                              <Button 
+                                onClick={() => handleShowDetails(docente.id, docente.nombre)}
+                                variant="outline"
+                                size="sm"
+                              >
+                                Detalles
+                              </Button>
+                            </td>
                           </tr>
                         ))}
                         {/* Fila de totales */}
@@ -430,6 +461,7 @@ export const GestionPagos = () => {
                           <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
                             {formatCurrency(totalGeneral)}
                           </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900"></td>
                         </tr>
                       </tbody>
                     </table>
@@ -472,76 +504,76 @@ export const GestionPagos = () => {
         </div>
       </Modal>
 
-      {/* Modal para editar carga */}
+      {/* El modal de edición de carga ha sido eliminado ya que no se utiliza */}
+
+      {/* Modal de detalles del docente */}
       <Modal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        title="Editar Carga"
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        title={docenteDetalles?.nombreDocente ? `Detalles de ${docenteDetalles.nombreDocente}` : 'Detalles del Docente'}
+        size="lg"
       >
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Docente
-            </label>
-            <Input
-              value={selectedDocente?.nombreDocente || ''}
-              disabled
-            />
+        {docenteDetalles ? (
+          <div className="space-y-4">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Área</th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Materia</th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horas</th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Costo/Hora</th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Importe</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {docenteDetalles.data?.map((carga: any, index: number) => (
+                    <tr key={carga.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{carga.area}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{carga.materiaText}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{carga.horas}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{formatCurrency(carga.costoHora)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {formatCurrency(
+                          carga.importe ? 
+                            Number(carga.importe) : 
+                            (Number(carga.horas) * Number(carga.costoHora))
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {/* Fila de total */}
+                  <tr className="bg-gray-100 font-bold">
+                    <td colSpan={4} className="px-3 py-2 text-right text-sm text-gray-900">Total:</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                      {formatCurrency(
+                        docenteDetalles.data?.reduce(
+                          (acc: number, carga: any) => {
+                            // Asegurarnos de que usamos números para el cálculo
+                            const horas = Number(carga.horas);
+                            const costoHora = Number(carga.costoHora);
+                            const importe = carga.importe ? Number(carga.importe) : (horas * costoHora);
+                            return acc + importe;
+                          }, 
+                          0
+                        ) || 0
+                      )}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div className="flex justify-end pt-4">
+              <Button onClick={() => setIsDetailModalOpen(false)}>
+                Cerrar
+              </Button>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Materia
-            </label>
-            <Input
-              value={editFormData.materiaText}
-              onChange={(e) => setEditFormData({...editFormData, materiaText: e.target.value})}
-            />
+        ) : (
+          <div className="py-4 text-center">
+            <p>Cargando detalles...</p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Horas
-            </label>
-            <Input
-              type="number"
-              value={editFormData.horas}
-              onChange={(e) => setEditFormData({...editFormData, horas: Number(e.target.value)})}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Costo por Hora
-            </label>
-            <Input
-              type="number"
-              step="0.01"
-              value={editFormData.costoHora}
-              onChange={(e) => setEditFormData({...editFormData, costoHora: Number(e.target.value)})}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Importe Total
-            </label>
-            <Input
-              value={formatCurrency(editFormData.horas * editFormData.costoHora)}
-              disabled
-            />
-          </div>
-          <div className="flex justify-end space-x-2">
-            <Button
-              variant="outline"
-              onClick={() => setIsEditModalOpen(false)}
-            >
-              <FaTimesCircle className="mr-2" /> Cancelar
-            </Button>
-            <Button
-              onClick={handleSaveEdit}
-              isLoading={editCargaMutation.isPending}
-            >
-              <FaSave className="mr-2" /> Guardar Cambios
-            </Button>
-          </div>
-        </div>
+        )}
       </Modal>
     </MainLayout>
   );

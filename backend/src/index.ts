@@ -10,7 +10,7 @@ import { docentesRouter } from './modules/docentes/router'
 import { periodosRouter } from './modules/periodos/router'
 import { cargaHorasRouter } from './modules/carga-horas/router'
 import { pagosRouter } from './modules/pagos/router'
-import { requireAuth, requireRole } from './middlewares/auth'
+import { requireAuth } from './middlewares/auth'
 import { PrismaClient } from '@prisma/client'
 
 // Crear aplicación Express
