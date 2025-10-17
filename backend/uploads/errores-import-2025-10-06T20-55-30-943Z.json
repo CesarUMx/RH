@@ -1,0 +1,242 @@
+[
+  {
+    "codigoInterno": "000000",
+    "nombre": "Alejandro Estrada Vela",
+    "rfc": "EAVA130828",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 2
+  },
+  {
+    "codigoInterno": "000021",
+    "nombre": "Nancy Alejandra Cruz",
+    "rfc": "CRNA790728",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 23
+  },
+  {
+    "codigoInterno": "000230",
+    "nombre": "Jeanette Gutierrez Moras",
+    "rfc": "GUGJ740916",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 227
+  },
+  {
+    "codigoInterno": "100102",
+    "nombre": "Jose Pablo Ramírez Orozco",
+    "rfc": "RAOP991230",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 329
+  },
+  {
+    "codigoInterno": "100118",
+    "nombre": "Natalia Guadalupe Bárcena Osornio",
+    "rfc": "BAON991230",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 345
+  },
+  {
+    "codigoInterno": "100303",
+    "nombre": "Mario Alberto  Franco  Guzmán",
+    "rfc": "FAGM850815",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 512
+  },
+  {
+    "codigoInterno": "300003",
+    "nombre": "Marisol Pérez Avila",
+    "rfc": "PEAM781019",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1028
+  },
+  {
+    "codigoInterno": "500102",
+    "nombre": "Carlos Fernando Franco Ramirez",
+    "rfc": "FARC801103",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1037
+  },
+  {
+    "codigoInterno": "600357",
+    "nombre": "Zacarías Moreno Sánchez",
+    "rfc": "MOSZ110125",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1051
+  },
+  {
+    "codigoInterno": "600563",
+    "nombre": "Enrique Valdés Ortega",
+    "rfc": "VAOE630618",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1071
+  },
+  {
+    "codigoInterno": "600961",
+    "nombre": "Silvia Helena Navia Jaramillo",
+    "rfc": "NAJS101129",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1127
+  },
+  {
+    "codigoInterno": "601003",
+    "nombre": "Ramon Olvera Mejia",
+    "rfc": "OEMR650909",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1138
+  },
+  {
+    "codigoInterno": "601008",
+    "nombre": "Roberto Enrique Garcia Campa",
+    "rfc": "GACR110524",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1140
+  },
+  {
+    "codigoInterno": "601013",
+    "nombre": "Maria Sonia Chinolla Rey",
+    "rfc": "CIRS610429",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1142
+  },
+  {
+    "codigoInterno": "601073",
+    "nombre": "Germán Padilla Rodríguez",
+    "rfc": "PARG130528",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1160
+  },
+  {
+    "codigoInterno": "601079",
+    "nombre": "Carolina Espinoza Marquez",
+    "rfc": "EIMC120525",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1164
+  },
+  {
+    "codigoInterno": "601084",
+    "nombre": "Pablo Pérez Castillo",
+    "rfc": "PECP780428",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1165
+  },
+  {
+    "codigoInterno": "601092",
+    "nombre": "Pablo Moreno Briseño",
+    "rfc": "MOBP810131",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1169
+  },
+  {
+    "codigoInterno": "601102",
+    "nombre": "Sylvia Adriana Piña Rodriguez",
+    "rfc": "PIRS130129",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1175
+  },
+  {
+    "codigoInterno": "601110",
+    "nombre": "Paulina Mondragón Azuara",
+    "rfc": "MOAP130528",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1179
+  },
+  {
+    "codigoInterno": "601111",
+    "nombre": "Adán Gardiazábal García",
+    "rfc": "GAGA130527",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1180
+  },
+  {
+    "codigoInterno": "601117",
+    "nombre": "Manuel Elguea Solís",
+    "rfc": "EUSM130527",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1184
+  },
+  {
+    "codigoInterno": "601118",
+    "nombre": "Verónica Iliana Munguía Jenis",
+    "rfc": "MUJV130528",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1185
+  },
+  {
+    "codigoInterno": "601122",
+    "nombre": "Ricardo Castro  Arcos",
+    "rfc": "CAAR130527",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1188
+  },
+  {
+    "codigoInterno": "601123",
+    "nombre": "Carlos Rodríguez Di Bella",
+    "rfc": "RODC781004",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1189
+  },
+  {
+    "codigoInterno": "601125",
+    "nombre": "Silvia Alejandra Córdoba Mora",
+    "rfc": "COMS130528",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1191
+  },
+  {
+    "codigoInterno": "601138",
+    "nombre": "Luis Alberto Pérez González",
+    "rfc": "PEGL800617",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1202
+  },
+  {
+    "codigoInterno": "601140",
+    "nombre": "Tania Guadalupe Stringhini González",
+    "rfc": "SIGT880511",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1204
+  },
+  {
+    "codigoInterno": "601143",
+    "nombre": "Sergio Ernesto Vásquez Pratz",
+    "rfc": "VAPS840713",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1207
+  },
+  {
+    "codigoInterno": "601146",
+    "nombre": "Jaime Robledo Castellanos",
+    "rfc": "RO-J581001BB5",
+    "activo": true,
+    "error": "Formato de RFC inválido",
+    "linea": 1210
+  }
+]

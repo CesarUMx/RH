@@ -1,0 +1,48 @@
+/* Clases de Tailwind que queremos usar */
+.bg-primary {
+  background-color: #004987;
+}
+
+.bg-primary-light {
+  background-color: #0066b3;
+}
+
+.bg-primary-dark {
+  background-color: #003b6e;
+}
+
+.bg-secondary {
+  background-color: #FF4D00;
+}
+
+.bg-secondary-light {
+  background-color: #ff7033;
+}
+
+.bg-secondary-dark {
+  background-color: #cc3e00;
+}
+
+.text-primary {
+  color: #004987;
+}
+
+.text-secondary {
+  color: #FF4D00;
+}
+
+.ring-primary {
+  --tw-ring-color: #004987;
+}
+
+.border-primary {
+  border-color: #004987;
+}
+
+.focus\:ring-primary:focus {
+  --tw-ring-color: #004987;
+}
+
+.focus\:border-primary:focus {
+  border-color: #004987;
+}

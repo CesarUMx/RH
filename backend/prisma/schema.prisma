@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int          @id @default(autoincrement())
+  nombre        String
+  correo        String       @unique
+  password      String
+  activo        Boolean      @default(true)
+  roles         UserRole[]
+  coordAreas    CoordArea[]
+  // lado opuesto de CargaHoras.creadoPor
+  cargasCreadas CargaHoras[] @relation("CargasCreadasPorUsuario")
+  // lado opuesto de Auditoria.user
+  auditorias    Auditoria[]  @relation("AuditoriasDeUsuario")
+  createdAt     DateTime     @default(now())
+}
+
+model Role {
+  id     Int        @id @default(autoincrement())
+  nombre String     @unique
+  users  UserRole[]
+}
+
+model UserRole {
+  id     Int  @id @default(autoincrement())
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+  role   Role @relation(fields: [roleId], references: [id])
+  roleId Int
+
+  @@unique([userId, roleId])
+}
+
+model Area {
+  id         Int          @id @default(autoincrement())
+  nombre     String       @unique
+  activo     Boolean      @default(true)
+  coordAreas CoordArea[]
+  cargas     CargaHoras[]
+}
+
+model CoordArea {
+  id     Int  @id @default(autoincrement())
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+  area   Area @relation(fields: [areaId], references: [id])
+  areaId Int
+
+  @@unique([userId, areaId])
+}
+
+model Docente {
+  id            Int          @id @default(autoincrement())
+  codigoInterno String       @unique
+  nombre        String
+  rfc           String       @unique
+  activo        Boolean      @default(true)
+  cargas        CargaHoras[]
+}
+
+model Periodo {
+  id          Int           @id @default(autoincrement())
+  nombre      String        @unique
+  fechaInicio DateTime
+  fechaFin    DateTime
+  estado      EstadoPeriodo @default(BORRADOR)
+  cargas      CargaHoras[]
+}
+
+model CargaHoras {
+  id          Int     @id @default(autoincrement())
+  periodo     Periodo @relation(fields: [periodoId], references: [id])
+  periodoId   Int
+  area        Area    @relation(fields: [areaId], references: [id])
+  areaId      Int
+  docente     Docente @relation(fields: [docenteId], references: [id])
+  docenteId   Int
+  materiaText String
+  horas       Decimal @db.Decimal(10, 2)
+  costoHora   Decimal @db.Decimal(10, 2)
+  pagable     Boolean @default(true)
+  version     Int     @default(1)
+
+  // relación con User con nombre explícito y lado opuesto declarado en User.cargasCreadas
+  creadoPor   User @relation("CargasCreadasPorUsuario", fields: [creadoPorId], references: [id])
+  creadoPorId Int
+
+  createdAt DateTime @default(now())
+
+  @@index([periodoId, areaId, docenteId])
+}
+
+model Auditoria {
+  id        Int      @id @default(autoincrement())
+  // relación opcional hacia User con lado opuesto en User.auditorias
+  user      User?    @relation("AuditoriasDeUsuario", fields: [userId], references: [id])
+  userId    Int?
+  accion    String
+  entidad   String
+  entidadId Int?
+  payload   Json
+  ts        DateTime @default(now())
+}
+
+enum EstadoPeriodo {
+  BORRADOR
+  ABIERTO
+  CERRADO
+  REPORTADO
+}
