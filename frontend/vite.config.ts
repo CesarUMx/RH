@@ -8,4 +8,8 @@ export default defineConfig({
   css: {
     devSourcemap: true,
   },
+  server: {
+    host: '0.0.0.0', // Permite conexiones desde cualquier IP
+    port: 5173, // Puerto por defecto de Vite
+  },
 })

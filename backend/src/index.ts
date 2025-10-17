@@ -19,7 +19,7 @@ const prisma = new PrismaClient()
 
 // Middlewares
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'], // Orígenes permitidos (puerto por defecto de Vite)
+    origin: env.cors.allowedOrigins, // Orígenes permitidos (puerto por defecto de Vite)
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true // Permite enviar cookies entre orígenes

@@ -8,13 +8,14 @@ dotenv.config()
 const envSchema = z.object({
   // Base de datos
   DATABASE_URL: z.string().min(1),
-  
+
   // JWT
   JWT_SECRET: z.string().min(1),
-  
+
   // Servidor
   PORT: z.string().default('3000'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  CORS_ALLOWED_ORIGINS: z.string().default('http://localhost:5173'),
 })
 
 // Intentar validar las variables de entorno
@@ -39,5 +40,8 @@ export const env = {
     isDev: _env.data.NODE_ENV === 'development',
     isProd: _env.data.NODE_ENV === 'production',
     isTest: _env.data.NODE_ENV === 'test',
+  },
+  cors: {
+    allowedOrigins: _env.data.CORS_ALLOWED_ORIGINS.split(','),
   },
 }
