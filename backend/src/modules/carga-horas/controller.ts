@@ -461,7 +461,7 @@ export async function procesarArchivo(req: Request, res: Response) {
           });
           
           // Validar cada fila
-          jsonData.forEach((rawRow: any, index) => {
+          jsonData.forEach((rawRow: any, index: number) => {
             try {
               // Convertir fila con encabezados descriptivos a nombres de campo internos
               const row: any = {};

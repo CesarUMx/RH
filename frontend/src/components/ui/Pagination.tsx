@@ -40,7 +40,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         pageCount={validPageCount}
         marginPagesDisplayed={2}
         pageRangeDisplayed={3}
-        onPageChange={(data) => onPageChange(data.selected + 1)}
+        onPageChange={(data: { selected: number }) => onPageChange(data.selected + 1)}
         containerClassName="flex items-center gap-2"
         pageClassName="hidden md:block"
         pageLinkClassName="px-3 py-1 border rounded hover:bg-gray-100 text-gray-700"

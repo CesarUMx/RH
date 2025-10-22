@@ -221,7 +221,7 @@ export async function exportarReporteExcel(req: Request, res: Response) {
     // Obtener todas las áreas activas
     const areas = await prisma.area.findMany({
       where: { activo: true },
-      orderBy: { nombre: 'asc' }
+      orderBy: { id: 'asc' }
     })
 
     // Obtener todas las cargas del periodo
@@ -445,7 +445,7 @@ export async function exportarReportesPorAreaZIP(req: Request, res: Response) {
     // Obtener todas las áreas activas
     const areas = await prisma.area.findMany({
       where: { activo: true },
-      orderBy: { nombre: 'asc' }
+      orderBy: { id: 'asc' }
     })
 
     // Obtener todas las cargas del periodo
@@ -684,7 +684,7 @@ export async function exportarReportesPorAreaExcelMultihojas(req: Request, res: 
     // Obtener todas las áreas activas
     const areas = await prisma.area.findMany({
       where: { activo: true },
-      orderBy: { nombre: 'asc' }
+      orderBy: { id: 'asc' }
     })
 
     // Obtener todas las cargas del periodo

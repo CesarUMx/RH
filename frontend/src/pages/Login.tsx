@@ -29,7 +29,7 @@ export const Login = () => {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      const response = await login(data.correo, data.password);
+      await login(data.correo, data.password);
       toast.success('Inicio de sesión exitoso');
       
       // Forzar la redirección usando window.location en lugar de navigate

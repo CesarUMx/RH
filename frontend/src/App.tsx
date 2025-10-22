@@ -30,7 +30,7 @@ const queryClient = new QueryClient({
 
 // Componente para rutas protegidas
 const ProtectedRoute = ({ children, requiredRoles }: { children: React.ReactNode; requiredRoles?: string[] }) => {
-  const { isAuthenticated, isLoading, hasRole, user } = useAuth();
+  const { isAuthenticated, isLoading, hasRole } = useAuth();
 
   if (isLoading) {
     return (

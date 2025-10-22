@@ -39,7 +39,8 @@ export async function listarAreas(_req: Request, res: Response) {
             }
           }
         }
-      }
+      },
+      orderBy: { id: 'asc' }
     })
 
     // Transformar la respuesta para simplificar la estructura

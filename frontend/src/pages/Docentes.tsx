@@ -65,7 +65,7 @@ const formatCodigoInterno = (codigo: string | number): string => {
 export const Docentes = () => {
   const queryClient = useQueryClient();
   const { hasRole } = useAuth();
-  const { selectedArea } = useArea();
+  useArea();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -84,7 +84,7 @@ export const Docentes = () => {
   }, [queryClient]);
 
   // Consulta para obtener docentes paginados
-  const { data: docentesPaginados, isLoading, error } = useQuery({
+  const { data: docentesPaginados, isLoading } = useQuery({
     queryKey: ['docentes', searchQuery, currentPage, pageSize],
     queryFn: async () => {
       try {

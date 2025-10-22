@@ -12,4 +12,15 @@ export default defineConfig({
     host: '0.0.0.0', // Permite conexiones desde cualquier IP
     port: 5173, // Puerto por defecto de Vite
   },
+  preview: {
+    host: '0.0.0.0',
+    port: 4173,
+    strictPort: true,
+    allowedHosts: [
+      'rh.mondragonmexico.edu.mx',
+      'localhost',
+      '127.0.0.1',
+      '172.18.0.99'
+    ]
+  },
 })
