@@ -265,9 +265,9 @@ export const docentesService = {
       let filename = 'plantilla_docentes.xlsx';
       
       if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
-        if (filenameMatch && filenameMatch.length === 2) {
-          filename = filenameMatch[1];
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=(['"]?)([^'"\n]*?)\1/);
+        if (filenameMatch && filenameMatch.length >= 3) {
+          filename = filenameMatch[2];
         }
       }
       
