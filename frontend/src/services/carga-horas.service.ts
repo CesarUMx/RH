@@ -51,6 +51,7 @@ export interface CargaHorasPaginadas {
     pageSize: number;
     totalPages: number;
   };
+  totalImporte?: number;
 }
 
 export const cargaHorasService = {
