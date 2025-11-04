@@ -462,59 +462,66 @@ export async function procesarArchivo(req: Request, res: Response) {
           
           // Validar cada fila
           jsonData.forEach((rawRow: any, index: number) => {
-            try {
-              // Convertir fila con encabezados descriptivos a nombres de campo internos
-              const row: any = {};
-              
-              // Procesar cada campo usando el mapeo de encabezados
-              Object.entries(rawRow).forEach(([key, value]) => {
-                // Buscar el nombre de campo interno correspondiente
-                const internalField = headerMap[key];
-                if (internalField) {
-                  // Convertir valores numéricos directamente
-                  if (internalField === 'horas' || internalField === 'costo_hora') {
-                    // Intentar convertir a número
-                    const numValue = Number(value);
-                    row[internalField] = isNaN(numValue) ? value : numValue;
-                  } else {
-                    row[internalField] = value;
-                  }
+            // Convertir fila con encabezados descriptivos a nombres de campo internos
+            const row: any = {};
+            
+            // Procesar cada campo usando el mapeo de encabezados
+            Object.entries(rawRow).forEach(([key, value]) => {
+              // Buscar el nombre de campo interno correspondiente
+              const internalField = headerMap[key];
+              if (internalField) {
+                // Convertir valores numéricos directamente
+                if (internalField === 'horas' || internalField === 'costo_hora') {
+                  // Intentar convertir a número
+                  const numValue = Number(value);
+                  row[internalField] = isNaN(numValue) ? value : numValue;
                 } else {
-                  // Si no hay mapeo, usar el nombre original
-                  row[key] = value;
+                  row[internalField] = value;
                 }
-              });
-              
-              // Asegurar que todos los campos internos existan
-              fieldMapping.forEach((f: FieldMapping) => {
-                if (row[f.internal] === undefined) {
-                  row[f.internal] = '';
-                }
-              });
-              
-              // Verificar si la fila tiene materia - si no, ignorarla silenciosamente
-              if (!row.materia || row.materia.toString().trim() === '') {
-                // Ignorar esta fila sin reportar error
-                return;
+              } else {
+                // Si no hay mapeo, usar el nombre original
+                row[key] = value;
               }
-              
-              // Solo mostrar logs para las primeras filas
-              if (index < 2) {
-                console.log(`Procesando fila ${index + 2}:`, 
-                  `Código: ${row.codigo_interno}, ` +
-                  `Materia: ${row.materia}, ` +
-                  `Horas: ${row.horas} (${typeof row.horas}), ` +
-                  `Costo: ${row.costo_hora} (${typeof row.costo_hora})`);
+            });
+            
+            // Asegurar que todos los campos internos existan
+            fieldMapping.forEach((f: FieldMapping) => {
+              if (row[f.internal] === undefined) {
+                row[f.internal] = '';
               }
-              
-              // Forzar conversión de valores numéricos para todas las filas
-              if (row.horas) row.horas = Number(String(row.horas).replace(/\s+/g, ''));
-              if (row.costo_hora) row.costo_hora = Number(String(row.costo_hora).replace(/\s+/g, ''));
-              
+            });
+            
+            // Verificar si la fila tiene materia - si no, ignorarla silenciosamente
+            if (!row.materia || row.materia.toString().trim() === '') {
+              // Ignorar esta fila sin reportar error
+              return;
+            }
+            
+            // Solo mostrar logs para las primeras filas
+            if (index < 2) {
+              console.log(`Procesando fila ${index + 2}:`, 
+                `Código: ${row.codigo_interno}, ` +
+                `Materia: ${row.materia}, ` +
+                `Horas: ${row.horas} (${typeof row.horas}), ` +
+                `Costo: ${row.costo_hora} (${typeof row.costo_hora})`);
+            }
+            
+            // Forzar conversión de valores numéricos para todas las filas
+            if (row.horas) row.horas = Number(String(row.horas).replace(/\s+/g, ''));
+            if (row.costo_hora) row.costo_hora = Number(String(row.costo_hora).replace(/\s+/g, ''));
+            
+            // Intentar validar la fila
+            try {
               validateRowData(row, index + 2) // +2 porque Excel empieza en 1 y hay encabezado
+              // Si pasa la validación, agregar sin marca de error
+              row._error = null;
               data.push(row)
             } catch (error: any) {
               console.error(`Error en fila ${index + 2}:`, error.message);
+              // Agregar la fila con marca de error
+              row._error = error.message;
+              row._linea = index + 2;
+              data.push(row);
               errores.push({ linea: index + 2, mensaje: error.message })
             }
           })
@@ -936,6 +943,19 @@ export async function obtenerCargas(req: Request, res: Response) {
       take: pageSize
     });
 
+    // Calcular el total general de importes (todos los registros, no solo la página actual)
+    const todasLasCargas = await prisma.cargaHoras.findMany({
+      where: whereCondition,
+      select: {
+        horas: true,
+        costoHora: true
+      }
+    });
+
+    const totalImporte = todasLasCargas.reduce((sum: number, carga: any) => {
+      return sum + (carga.horas * carga.costoHora);
+    }, 0);
+
     // Devolver los resultados
     return res.json({
       data: cargas,
@@ -944,7 +964,8 @@ export async function obtenerCargas(req: Request, res: Response) {
         page,
         pageSize,
         totalPages
-      }
+      },
+      totalImporte
     });
   } catch (error) {
     console.error('Error al obtener cargas de horas:', error);
@@ -1175,13 +1196,15 @@ function validateRowData(row: any, lineNumber: number) {
   
   // Validar costo por hora - Simplificado
   let costoHora = row.costo_hora;
-  if (costoHora === undefined || costoHora === null) costoHora = 0;
+  if (costoHora === undefined || costoHora === null || costoHora === '') {
+    throw new Error(`El costo por hora es requerido`)
+  }
   
   // Asegurar que costo_hora sea un número
   const costoNum = typeof costoHora === 'number' ? costoHora : Number(String(costoHora).trim().replace(/\s+/g, ''));
   
-  if (isNaN(costoNum) || costoNum < 0) {
-    throw new Error(`El costo por hora debe ser un número no negativo`)
+  if (isNaN(costoNum) || costoNum <= 0) {
+    throw new Error(`El costo por hora debe ser un número mayor a 0`)
   }
   
   // Validar pagable (0 o 1) - Simplificado

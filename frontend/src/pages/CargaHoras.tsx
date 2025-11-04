@@ -259,27 +259,30 @@ export const CargaHoras = () => {
     try {
       setIsUploading(true);
 
-      // Asegurarnos de que todos los códigos internos tengan 6 dígitos antes de enviar
-      const formattedData = previewData.map(item => {
-        // Crear una copia del objeto para no modificar el original
-        const formattedItem = { ...item };
+      // Filtrar solo las filas válidas (sin errores) y formatear
+      const datosValidos = previewData
+        .filter((item: any) => !item._error)
+        .map((item: any) => {
+          // Crear una copia del objeto sin las propiedades internas
+          const { _error, _linea, ...cleanItem } = item;
 
-        // Aplicar formato de 6 dígitos al código interno
-        formattedItem.codigo_interno = formatCodigoInterno(item.codigo_interno);
+          // Aplicar formato de 6 dígitos al código interno
+          cleanItem.codigo_interno = formatCodigoInterno(cleanItem.codigo_interno);
 
-        // Asegurarnos de que el código interno sea un string para preservar los ceros iniciales
-        if (typeof formattedItem.codigo_interno !== 'string') {
-          formattedItem.codigo_interno = String(formattedItem.codigo_interno);
-        }
+          // Asegurarnos de que el código interno sea un string para preservar los ceros iniciales
+          if (typeof cleanItem.codigo_interno !== 'string') {
+            cleanItem.codigo_interno = String(cleanItem.codigo_interno);
+          }
 
-        return formattedItem;
-      });
+          return cleanItem;
+        });
 
-      const result = await cargaHorasService.confirmarCarga(formattedData, activePeriodo.id, selectedArea.id);
+      const result = await cargaHorasService.confirmarCarga(datosValidos, activePeriodo.id, selectedArea.id);
       toast.success(result.mensaje || 'Carga de horas registrada correctamente');
       setUploadedFile(null);
       setPreviewData(null);
       setIsPreviewMode(false);
+      setErrores({});
 
       // Actualizar la tabla de cargas realizadas
       refetchCargas();
@@ -474,8 +477,8 @@ export const CargaHoras = () => {
       return;
     }
 
-    if (individualFormData.costo_hora < 0) {
-      toast.error('El costo por hora no puede ser negativo');
+    if (individualFormData.costo_hora <= 0) {
+      toast.error('El costo por hora debe ser mayor a 0');
       return;
     }
 
@@ -595,24 +598,41 @@ export const CargaHoras = () => {
                       <div className="bg-green-50 p-2 rounded-md border border-green-200 flex items-center">
                         <FaCheck className="text-green-500 mr-2" />
                         <span className="text-sm font-medium">
-                          {previewData ? previewData.length - Object.keys(errores).length : 0} registros válidos
+                          {previewData ? previewData.filter((item: any) => !item._error).length : 0} registros válidos
                         </span>
                       </div>
 
-                      <div className="bg-red-50 p-2 rounded-md border border-red-200 flex items-center">
-                        <FaTimes className="text-red-500 mr-2" />
-                        <span className="text-sm font-medium">
-                          {Object.keys(errores).length} registros con errores
-                        </span>
-                      </div>
+                      {Object.keys(errores).length > 0 && (
+                        <div className="bg-red-50 p-2 rounded-md border border-red-200 flex items-center">
+                          <FaTimes className="text-red-500 mr-2" />
+                          <span className="text-sm font-medium">
+                            {Object.keys(errores).length} registros con errores
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {Object.keys(errores).length > 0 && (
-                      <div className="bg-yellow-50 p-3 rounded-md border border-yellow-200 mb-4">
-                        <p className="text-sm text-yellow-800">
-                          <strong>Atención:</strong> Se encontraron errores en algunos registros.
-                          Debe corregir estos errores en el archivo y volver a subirlo para poder confirmar la carga.
-                        </p>
+                      <div className="bg-red-50 p-4 rounded-md border border-red-300 mb-4">
+                        <div className="flex items-start">
+                          <FaTimes className="text-red-500 mt-1 mr-3 flex-shrink-0" />
+                          <div className="flex-1">
+                            <h4 className="text-sm font-semibold text-red-800 mb-2">
+                              Se encontraron {Object.keys(errores).length} error(es) en el archivo
+                            </h4>
+                            <p className="text-sm text-red-700 mb-3">
+                              Las filas con errores no se pueden cargar. Por favor corrija los siguientes errores y vuelva a subir el archivo:
+                            </p>
+                            <ul className="space-y-1 text-sm text-red-700">
+                              {Object.entries(errores).map(([linea, mensaje]) => (
+                                <li key={linea} className="flex items-start">
+                                  <span className="font-medium mr-2">Línea {linea}:</span>
+                                  <span>{mensaje}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
                       </div>
                     )}
 
@@ -632,34 +652,34 @@ export const CargaHoras = () => {
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          {previewData && previewData.map((item, index) => {
-                            // Verificar si esta fila tiene un error
-                            const tieneError = errores[index + 2]; // +2 porque Excel empieza en 1 y hay encabezado
-
+                          {previewData && previewData.map((item: any, index) => {
+                            const tieneError = item._error;
+                            
                             return (
                               <tr key={index} className={tieneError ? 'bg-red-50' : 'bg-green-50'}>
-                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{formatCodigoInterno(item.codigo_interno)}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{item.nombre}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{item.rfc}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{item.materia}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{item.horas}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${item.costo_hora}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{formatCurrency(item.horas * item.costo_hora)}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
+                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{formatCodigoInterno(item.codigo_interno)}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{item.nombre}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{item.rfc}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{item.materia}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{item.horas || 0}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">${item.costo_hora || 0}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{formatCurrency((item.horas || 0) * (item.costo_hora || 0))}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
                                   {item.pagable ? (
                                     <FaCheck className="text-green-500" />
                                   ) : (
                                     <FaTimes className="text-red-500" />
                                   )}
                                 </td>
-                                <td className="px-3 py-2 whitespace-nowrap text-sm">
+                                <td className="px-3 py-2 text-sm">
                                   {tieneError ? (
-                                    <span className="flex items-center text-red-500">
-                                      <FaTimes className="mr-1" /> {tieneError}
-                                    </span>
+                                    <div className="flex items-start text-red-600">
+                                      <FaTimes className="mr-1 mt-0.5 flex-shrink-0" />
+                                      <span className="break-words">{tieneError}</span>
+                                    </div>
                                   ) : (
-                                    <span className="flex items-center text-green-500">
-                                      <FaCheck className="mr-1" /> Correcto
+                                    <span className="flex items-center text-green-600">
+                                      <FaCheck className="mr-1" /> Válido
                                     </span>
                                   )}
                                 </td>
@@ -678,12 +698,10 @@ export const CargaHoras = () => {
                             </td>
                             <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-700">
                               {formatCurrency(
-                                previewData.reduce((sum, item) => {
-                                  // Solo sumar si no hay error en esta fila
-                                  const index = previewData.indexOf(item);
-                                  const tieneError = errores[index + 2];
-                                  if (!tieneError) {
-                                    return sum + (item.horas * item.costo_hora);
+                                previewData.reduce((sum: number, item: any) => {
+                                  // Solo sumar si no tiene error
+                                  if (!item._error) {
+                                    return sum + ((item.horas || 0) * (item.costo_hora || 0));
                                   }
                                   return sum;
                                 }, 0)
@@ -841,20 +859,26 @@ export const CargaHoras = () => {
                         data={cargasData.data || []}
                       />
 
-                      <div className="mt-4 flex justify-end">
-                        <div className="bg-gray-100 p-3 rounded-md shadow-sm">
-                          <div className="flex items-center">
-                            <span className="font-medium text-gray-700 mr-2">Total de Area:</span>
-                            <span className="font-bold text-primary">
-                              {formatCurrency(
-                                cargasData.data.reduce((sum, item) => {
-                                  return sum + (item.importe || (item.horas * item.costoHora));
-                                }, 0)
-                              )}
-                            </span>
+                      {/* Total de Área como fila extra de la tabla */}
+                      {cargasData && cargasData.totalImporte !== undefined && (
+                        <div className="mt-0 border-t-2 border-gray-300">
+                          <div className="bg-blue-50 px-4 py-3 flex justify-between items-center">
+                            <div className="flex items-center">
+                              <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                                Total de Área
+                              </span>
+                              <span className="ml-3 text-xs text-gray-500">
+                                ({cargasData.pagination?.total || 0} registros)
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-2xl font-bold text-blue-700">
+                                {formatCurrency(cargasData.totalImporte)}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      )}
 
                       {cargasData && cargasData.pagination && (
                         <Pagination
