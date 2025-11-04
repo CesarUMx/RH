@@ -33,7 +33,7 @@ export const PeriodoInfo = () => {
       <div>
         <span className="font-medium text-lg">{activePeriodo.nombre}</span>
         <span className="ml-2 text-xs">
-          {new Date(activePeriodo.fechaInicio).toLocaleDateString('es-ES')} - {new Date(activePeriodo.fechaFin).toLocaleDateString('es-ES')}
+          {new Date(activePeriodo.fechaInicio).toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' })} - {new Date(activePeriodo.fechaFin).toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' })}
         </span>
       </div>
     </div>

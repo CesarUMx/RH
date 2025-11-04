@@ -373,7 +373,7 @@ export async function exportarReporteExcel(req: Request, res: Response) {
     // Agregar información del reporte
     worksheet.insertRow(1, [])
     worksheet.insertRow(1, [`Periodo: ${periodo.nombre}`])
-    worksheet.insertRow(1, [`Fecha: ${new Date().toLocaleDateString()}`])
+    worksheet.insertRow(1, [`Fecha: ${new Date().toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' })}`])
     worksheet.insertRow(1, [`REPORTE DE PAGOS - ${periodo.nombre}`])
     
     // Estilo para el título
@@ -605,7 +605,7 @@ export async function exportarReportesPorAreaZIP(req: Request, res: Response) {
       worksheet.insertRow(1, [])
       worksheet.insertRow(1, [`Periodo: ${periodo.nombre}`])
       worksheet.insertRow(1, [`Área: ${area.nombre}`])
-      worksheet.insertRow(1, [`Fecha: ${new Date().toLocaleDateString()}`])
+      worksheet.insertRow(1, [`Fecha: ${new Date().toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' })}`])
       worksheet.insertRow(1, [`REPORTE DE PAGOS POR ÁREA`])
       
       // Estilo para el título
@@ -854,7 +854,7 @@ export async function exportarReportesPorAreaExcelMultihojas(req: Request, res: 
       worksheet.insertRow(1, [])
       worksheet.insertRow(1, [`Periodo: ${periodo.nombre}`])
       worksheet.insertRow(1, [`Área: ${area.nombre}`])
-      worksheet.insertRow(1, [`Fecha: ${new Date().toLocaleDateString()}`])
+      worksheet.insertRow(1, [`Fecha: ${new Date().toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' })}`])
       worksheet.insertRow(1, [`REPORTE DE PAGOS POR ÁREA`])
       
       // Estilo para el título

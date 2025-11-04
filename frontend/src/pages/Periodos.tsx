@@ -178,11 +178,21 @@ export const Periodos = () => {
     }),
     columnHelper.accessor('fechaInicio', {
       header: 'Fecha de inicio',
-      cell: (info) => new Date(info.getValue()).toLocaleDateString('es-ES'),
+      cell: (info) => {
+        const fecha = info.getValue();
+        // Extraer solo la parte de la fecha (YYYY-MM-DD) y formatear
+        const [year, month, day] = fecha.split('T')[0].split('-');
+        return `${day}/${month}/${year}`;
+      },
     }),
     columnHelper.accessor('fechaFin', {
       header: 'Fecha de fin',
-      cell: (info) => new Date(info.getValue()).toLocaleDateString('es-ES'),
+      cell: (info) => {
+        const fecha = info.getValue();
+        // Extraer solo la parte de la fecha (YYYY-MM-DD) y formatear
+        const [year, month, day] = fecha.split('T')[0].split('-');
+        return `${day}/${month}/${year}`;
+      },
     }),
     columnHelper.accessor('estado', {
       header: 'Estado',
