@@ -127,37 +127,34 @@ export const GestionPagos = () => {
   // Ya no necesitamos funciones de edición porque no estamos editando cargas individuales en esta vista
 
   // Función para mostrar detalles del docente
-  const handleShowDetails = async (docenteId: number, nombreDocente: string) => {
+  const handleShowDetails = (docenteId: number, nombreDocente: string) => {
     try {
-      if (!selectedPeriodo?.id) return;
+      // Los datos ya vienen con la estructura anidada, buscar el docente
+      const docente = reporteData?.data.find((d: any) => d.docenteId === docenteId);
       
-      // Mostrar mensaje de carga
-      toast.loading('Cargando detalles...', { id: 'loading-details' });
-      
-      // Obtener todas las cargas del docente en este periodo
-      const response = await gestionPagosService.getDocenteDetalles(selectedPeriodo.id, docenteId);
-      
-      // Si no hay datos, mostrar mensaje
-      if (!response.data || response.data.length === 0) {
+      if (!docente || !docente.cargas || docente.cargas.length === 0) {
         toast.error('No se encontraron detalles para este docente');
-        toast.dismiss('loading-details');
         return;
       }
       
-      // Agregar el nombre del docente a los detalles para asegurar que se muestre correctamente
+      // Preparar los detalles con el formato esperado por el modal
       const detallesConNombre = {
-        ...response,
-        nombreDocente: nombreDocente
+        data: docente.cargas,
+        nombreDocente: nombreDocente,
+        pagination: {
+          total: docente.cargas.length,
+          page: 1,
+          pageSize: docente.cargas.length,
+          totalPages: 1
+        }
       };
       
       // Guardar los detalles y abrir el modal
       setDocenteDetalles(detallesConNombre);
       setIsDetailModalOpen(true);
-      toast.dismiss('loading-details');
     } catch (error) {
       console.error('Error al obtener detalles del docente:', error);
       toast.error('Error al obtener detalles del docente');
-      toast.dismiss('loading-details');
     }
   };
 
