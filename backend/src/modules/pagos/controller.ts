@@ -41,7 +41,6 @@ export async function getReportePagos(req: Request, res: Response) {
     // Obtener parámetros de consulta
     const periodoId = Number(req.query.periodoId || 0)
     const areaId = req.query.areaId ? Number(req.query.areaId) : undefined
-    const tipo = (req.query.tipo as string) || 'general'
     const page = Number(req.query.page || 1)
     const pageSize = Number(req.query.pageSize || 10)
     const query = (req.query.query as string) || ''
@@ -96,18 +95,7 @@ export async function getReportePagos(req: Request, res: Response) {
       ]
     }
 
-    // Calcular el offset para la paginación
-    const skip = (page - 1) * pageSize
-
-    // Obtener el total de registros
-    const total = await prisma.cargaHoras.count({
-      where: whereCondition
-    })
-
-    // Calcular el total de páginas
-    const totalPages = Math.ceil(total / pageSize)
-
-    // Obtener los registros paginados con la información necesaria
+    // Obtener TODAS las cargas sin paginación
     const cargas = await prisma.cargaHoras.findMany({
       where: whereCondition,
       include: {
@@ -127,36 +115,66 @@ export async function getReportePagos(req: Request, res: Response) {
         }
       },
       orderBy: [
-        { areaId: 'asc' },
         { docente: { nombre: 'asc' } },
+        { areaId: 'asc' },
         { materiaText: 'asc' }
-      ],
-      skip,
-      take: pageSize
+      ]
     })
 
-    // Transformar los datos según el tipo de reporte
-    const reporteData = cargas.map(carga => ({
-      id: carga.id,
-      periodoId: carga.periodoId,
-      areaId: carga.areaId,
-      area: carga.area.nombre,
-      docenteId: carga.docenteId,
-      codigoInterno: carga.docente.codigoInterno,
-      nombreDocente: carga.docente.nombre,
-      rfc: carga.docente.rfc,
-      materiaText: carga.materiaText,
-      horas: Number(carga.horas),
-      costoHora: Number(carga.costoHora),
-      importe: Number(carga.horas) * Number(carga.costoHora),
-      pagable: carga.pagable
-    }))
+    // Agrupar por docente - cada docente tendrá un array con todas sus cargas
+    const docentesMap = new Map()
+    
+    cargas.forEach(carga => {
+      const docenteId = carga.docenteId
+      
+      if (!docentesMap.has(docenteId)) {
+        docentesMap.set(docenteId, {
+          docenteId: carga.docenteId,
+          codigoInterno: carga.docente.codigoInterno,
+          nombreDocente: carga.docente.nombre,
+          rfc: carga.docente.rfc,
+          cargas: [],
+          totalHoras: 0,
+          totalImporte: 0
+        })
+      }
+      
+      const docente = docentesMap.get(docenteId)
+      const importe = Number(carga.horas) * Number(carga.costoHora)
+      
+      // Agregar cada carga al array de cargas del docente
+      docente.cargas.push({
+        id: carga.id,
+        periodoId: carga.periodoId,
+        areaId: carga.areaId,
+        area: carga.area.nombre,
+        materiaText: carga.materiaText,
+        horas: Number(carga.horas),
+        costoHora: Number(carga.costoHora),
+        importe: importe,
+        pagable: carga.pagable
+      })
+      
+      docente.totalHoras += Number(carga.horas)
+      docente.totalImporte += importe
+    })
 
-    // Devolver los resultados
+    // Convertir el Map a un array
+    const allDocentes = Array.from(docentesMap.values())
+    
+    // Calcular paginación sobre los docentes
+    const totalDocentes = allDocentes.length
+    const totalPages = Math.ceil(totalDocentes / pageSize)
+    const skip = (page - 1) * pageSize
+    
+    // Obtener solo los docentes de la página actual
+    const docentesPaginados = allDocentes.slice(skip, skip + pageSize)
+
+    // Devolver los resultados con paginación
     return res.json({
-      data: reporteData,
+      data: docentesPaginados,
       pagination: {
-        total,
+        total: totalDocentes,
         page,
         pageSize,
         totalPages

@@ -9,6 +9,7 @@ import { MainLayout } from '../layouts/MainLayout';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
+import { Pagination } from '../components/ui/Pagination';
 import { periodosService } from '../services/periodos.service';
 import { gestionPagosService } from '../services/gestion-pagos.service';
 
@@ -22,7 +23,6 @@ export const GestionPagos = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
-  // El tipo de reporte ya no es necesario con la nueva visualización
   
   // Consulta para obtener periodos
   const { 
@@ -49,13 +49,13 @@ export const GestionPagos = () => {
     queryKey: ['reportePagos', selectedPeriodo?.id, selectedArea?.id, currentPage, pageSize, searchQuery],
     queryFn: async () => {
       if (!selectedPeriodo?.id) {
-        return { data: [], pagination: { total: 0, page: 1, pageSize: 10, totalPages: 1 } };
+        return { data: [], pagination: { total: 0, page: 1, pageSize: 10, totalPages: 0 } };
       }
       
       return gestionPagosService.getReportePagos(
         selectedPeriodo.id,
         selectedArea?.id || undefined,
-        'general', // Usamos 'general' como valor predeterminado
+        'general',
         currentPage,
         pageSize,
         searchQuery
@@ -203,38 +203,30 @@ export const GestionPagos = () => {
     // Filtrar áreas activas
     const areasActivas = todasAreas.filter((area: any) => area.activo);
     
-    // Agrupar cargas por docente
-    const docentesMap = new Map();
-    
-    reporteData.data.forEach((carga: any) => {
-      const docenteId = carga.docenteId;
-      const areaId = carga.areaId;
-      const importe = carga.importe || (carga.horas * carga.costoHora);
+    // Los datos YA VIENEN AGRUPADOS por docente desde el backend
+    // Estructura: { docenteId, nombreDocente, rfc, cargas: [...], totalImporte }
+    const docentesAgrupados = reporteData.data.map((docente: any) => {
+      // Crear un objeto con los importes por área sumando las cargas
+      const areasPorId: any = {};
       
-      if (!docentesMap.has(docenteId)) {
-        docentesMap.set(docenteId, {
-          id: docenteId,
-          codigo: carga.codigoInterno,
-          nombre: carga.nombreDocente,
-          rfc: carga.rfc || '',
-          areas: {},
-          total: 0
+      if (docente.cargas && Array.isArray(docente.cargas)) {
+        docente.cargas.forEach((carga: any) => {
+          if (!areasPorId[carga.areaId]) {
+            areasPorId[carga.areaId] = 0;
+          }
+          areasPorId[carga.areaId] += carga.importe;
         });
       }
       
-      const docente = docentesMap.get(docenteId);
-      
-      if (!docente.areas[areaId]) {
-        docente.areas[areaId] = 0;
-      }
-      
-      docente.areas[areaId] += importe;
-      docente.total += importe;
+      return {
+        id: docente.docenteId,
+        codigo: docente.codigoInterno,
+        nombre: docente.nombreDocente,
+        rfc: docente.rfc || '',
+        areas: areasPorId,
+        total: docente.totalImporte || 0
+      };
     });
-
-    // Convertir el mapa a un array y ordenar por nombre
-    const docentesAgrupados = Array.from(docentesMap.values())
-      .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
     return { docentesAgrupados, areasActivas };
   };
@@ -467,7 +459,16 @@ export const GestionPagos = () => {
                     </table>
                   </div>
                   
-                  {/* La paginación ya no es necesaria con la vista agrupada */}
+                  {/* Componente de paginación */}
+                  {reporteData?.pagination && reporteData.pagination.totalPages > 1 && (
+                    <Pagination
+                      currentPage={reporteData.pagination.page}
+                      pageCount={reporteData.pagination.totalPages}
+                      onPageChange={setCurrentPage}
+                      totalItems={reporteData.pagination.total}
+                      pageSize={reporteData.pagination.pageSize}
+                    />
+                  )}
                 </>
               )}
             </>

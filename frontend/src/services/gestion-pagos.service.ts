@@ -65,8 +65,8 @@ export const gestionPagosService = {
         data: [],
         pagination: {
           total: 0,
-          page,
-          pageSize,
+          page: 1,
+          pageSize: 10,
           totalPages: 0
         }
       };
@@ -178,23 +178,37 @@ export const gestionPagosService = {
    */
   getDocenteDetalles: async (periodoId: number, docenteId: number) => {
     try {
-      // Primero obtenemos todas las cargas del periodo
+      // Obtenemos todos los docentes del periodo
       const response = await api.get('/pagos/reporte', {
         params: {
-          periodoId,
-          tipo: 'general', // Usamos 'general' para obtener todos los datos sin filtrar
-          page: 1,
-          pageSize: 1000 // Un número grande para obtener todas las cargas
+          periodoId
         }
       });
 
-      // Filtramos manualmente por el ID del docente para asegurar que obtenemos los datos correctos
-      const filteredData = response.data.data.filter((carga: any) => carga.docenteId === docenteId);
+      // Los datos vienen agrupados por docente, buscamos el docente específico
+      const docente = response.data.data.find((d: any) => d.docenteId === docenteId);
       
-      // Devolvemos los datos filtrados con la misma estructura que la respuesta original
+      if (!docente) {
+        return {
+          data: [],
+          pagination: {
+            total: 0,
+            page: 1,
+            pageSize: 0,
+            totalPages: 0
+          }
+        };
+      }
+      
+      // Devolvemos las cargas del docente (ya vienen en docente.cargas)
       return {
-        data: filteredData,
-        pagination: response.data.pagination
+        data: docente.cargas || [],
+        pagination: {
+          total: docente.cargas?.length || 0,
+          page: 1,
+          pageSize: docente.cargas?.length || 0,
+          totalPages: 1
+        }
       };
     } catch (error) {
       console.error('Error al obtener detalles del docente:', error);
