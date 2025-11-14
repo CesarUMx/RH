@@ -11,6 +11,7 @@ import { Login } from './pages/Login';
 import { Usuarios } from './pages/Usuarios';
 import { Areas } from './pages/Areas';
 import { Docentes } from './pages/Docentes';
+import { SolicitudesPendientes } from './pages/SolicitudesPendientes';
 import { Periodos } from './pages/Periodos';
 import { CargaHoras } from './pages/CargaHoras';
 import { GestionPagos } from './pages/GestionPagos';
@@ -112,6 +113,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={['ADMIN', 'RH']}>
                   <GestionPagos />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/solicitudes-pendientes"
+              element={
+                <ProtectedRoute requiredRoles={['ADMIN', 'RH']}>
+                  <SolicitudesPendientes />
                 </ProtectedRoute>
               }
             />

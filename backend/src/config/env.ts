@@ -16,6 +16,13 @@ const envSchema = z.object({
   PORT: z.string().default('3000'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   CORS_ALLOWED_ORIGINS: z.string().default('http://localhost:5173'),
+  
+  // Correo electrónico
+  EMAIL_HOST: z.string().default('smtp.gmail.com'),
+  EMAIL_PORT: z.string().default('587'),
+  EMAIL_SECURE: z.string().default('false'),
+  EMAIL_USER: z.string().default(''),
+  EMAIL_PASSWORD: z.string().default(''),
 })
 
 // Intentar validar las variables de entorno
@@ -43,5 +50,12 @@ export const env = {
   },
   cors: {
     allowedOrigins: _env.data.CORS_ALLOWED_ORIGINS.split(','),
+  },
+  email: {
+    host: _env.data.EMAIL_HOST,
+    port: parseInt(_env.data.EMAIL_PORT),
+    secure: _env.data.EMAIL_SECURE === 'true',
+    user: _env.data.EMAIL_USER,
+    password: _env.data.EMAIL_PASSWORD,
   },
 }

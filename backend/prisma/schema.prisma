@@ -8,18 +8,22 @@ datasource db {
 }
 
 model User {
-  id            Int          @id @default(autoincrement())
-  nombre        String
-  correo        String       @unique
-  password      String
-  activo        Boolean      @default(true)
-  roles         UserRole[]
-  coordAreas    CoordArea[]
+  id                Int             @id @default(autoincrement())
+  nombre            String
+  correo            String          @unique
+  password          String
+  activo            Boolean         @default(true)
+  roles             UserRole[]
+  coordAreas        CoordArea[]
   // lado opuesto de CargaHoras.creadoPor
-  cargasCreadas CargaHoras[] @relation("CargasCreadasPorUsuario")
+  cargasCreadas     CargaHoras[]    @relation("CargasCreadasPorUsuario")
   // lado opuesto de Auditoria.user
-  auditorias    Auditoria[]  @relation("AuditoriasDeUsuario")
-  createdAt     DateTime     @default(now())
+  auditorias        Auditoria[]     @relation("AuditoriasDeUsuario")
+  // lado opuesto de SolicitudAlta.creador
+  solicitudesCreadas SolicitudAlta[]
+  // lado opuesto de SolicitudBaja.creador
+  solicitudesBaja   SolicitudBaja[]
+  createdAt         DateTime        @default(now())
 }
 
 model Role {
@@ -57,13 +61,15 @@ model CoordArea {
 }
 
 model Docente {
-  id            Int          @id @default(autoincrement())
-  codigoInterno String       @unique
+  id            Int             @id @default(autoincrement())
+  codigoInterno String          @unique
   nombre        String
-  rfc           String       @unique
-  activo        Boolean      @default(true)
+  rfc           String          @unique
+  activo        Boolean         @default(true)
   cargas        CargaHoras[]
+  solicitudesBaja SolicitudBaja[]
 }
+
 
 model Periodo {
   id          Int           @id @default(autoincrement())
@@ -114,4 +120,53 @@ enum EstadoPeriodo {
   ABIERTO
   CERRADO
   REPORTADO
+}
+
+enum EstadoAlta {
+  PENDIENTE
+  COMPLETO
+  RECHAZADO
+}
+
+enum EstadoBaja {
+  PENDIENTE
+  PROCESADO
+  CANCELADO
+}
+
+model SolicitudAlta {
+  id                    Int                   @id @default(autoincrement())
+  nombre                String
+  estadoAlta            EstadoAlta            @default(PENDIENTE)
+  motivoRechazo         String?
+  documentos            SolicitudDocumentos?
+  creador               User?                 @relation(fields: [creadorId], references: [id])
+  creadorId             Int?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime?             @updatedAt
+}
+
+model SolicitudDocumentos {
+  id                    Int           @id @default(autoincrement())
+  solicitud             SolicitudAlta @relation(fields: [solicitudId], references: [id], onDelete: Cascade)
+  solicitudId           Int           @unique
+  constanciaFiscal      String?
+  comprobanteDomicilio  String?
+  cv                    String?
+  cuentaBancaria        String?
+  ine                   String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime?     @updatedAt
+}
+
+model SolicitudBaja {
+  id                    Int           @id @default(autoincrement())
+  docente               Docente       @relation(fields: [docenteId], references: [id])
+  docenteId             Int
+  motivoBaja            String
+  estadoBaja            EstadoBaja    @default(PENDIENTE)
+  creador               User          @relation(fields: [creadorId], references: [id])
+  creadorId             Int
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime?     @updatedAt
 }
