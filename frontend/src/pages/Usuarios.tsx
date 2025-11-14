@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { FaEdit, FaTrash, FaPlus, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaCheck, FaTimes, FaKey } from 'react-icons/fa';
 import { createColumnHelper } from '@tanstack/react-table';
 
 import { MainLayout } from '../layouts/MainLayout';
@@ -31,13 +31,24 @@ const updateUsuarioSchema = z.object({
   activo: z.boolean().default(true)
 });
 
+// Esquema de validación para cambiar contraseña
+const changePasswordSchema = z.object({
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  confirmPassword: z.string().min(6, 'La confirmación debe tener al menos 6 caracteres')
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'Las contraseñas no coinciden',
+  path: ['confirmPassword']
+});
+
 type CreateUsuarioForm = z.infer<typeof createUsuarioSchema>;
 type UpdateUsuarioForm = z.infer<typeof updateUsuarioSchema>;
+type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
 export const Usuarios = () => {
   const queryClient = useQueryClient();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [selectedUsuario, setSelectedUsuario] = useState<Usuario | null>(null);
 
   // Consulta para obtener usuarios
@@ -96,6 +107,21 @@ export const Usuarios = () => {
     },
   });
 
+  // Mutación para cambiar contraseña
+  const changePasswordMutation = useMutation({
+    mutationFn: ({ id, password }: { id: number; password: string }) => 
+      usuariosService.updatePassword(id, password),
+    onSuccess: () => {
+      setIsPasswordModalOpen(false);
+      toast.success('Contraseña actualizada correctamente');
+      passwordForm.reset();
+    },
+    onError: (error) => {
+      console.error('Error al cambiar contraseña:', error);
+      toast.error('Error al cambiar contraseña');
+    },
+  });
+
   // Formulario para crear usuario
   const createForm = useForm({
     resolver: zodResolver(createUsuarioSchema),
@@ -118,6 +144,15 @@ export const Usuarios = () => {
     },
   });
 
+  // Formulario para cambiar contraseña
+  const passwordForm = useForm({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
+      password: '',
+      confirmPassword: '',
+    },
+  });
+
   // Función para abrir modal de edición
   const handleEdit = (usuario: Usuario) => {
     setSelectedUsuario(usuario);
@@ -133,6 +168,13 @@ export const Usuarios = () => {
   const handleDelete = (usuario: Usuario) => {
     setSelectedUsuario(usuario);
     setIsDeleteModalOpen(true);
+  };
+
+  // Función para abrir modal de cambio de contraseña
+  const handleChangePassword = (usuario: Usuario) => {
+    setSelectedUsuario(usuario);
+    passwordForm.reset();
+    setIsPasswordModalOpen(true);
   };
 
   // Función para manejar la creación de usuario
@@ -154,6 +196,16 @@ export const Usuarios = () => {
   const handleDeleteConfirm = () => {
     if (selectedUsuario) {
       deleteUsuarioMutation.mutate(selectedUsuario.id);
+    }
+  };
+
+  // Función para manejar el cambio de contraseña
+  const handlePasswordSubmit = (data: ChangePasswordForm) => {
+    if (selectedUsuario) {
+      changePasswordMutation.mutate({
+        id: selectedUsuario.id,
+        password: data.password,
+      });
     }
   };
 
@@ -193,13 +245,23 @@ export const Usuarios = () => {
             variant="outline"
             size="sm"
             onClick={() => handleEdit(info.row.original)}
+            title="Editar usuario"
           >
             <FaEdit className="text-primary" />
           </Button>
           <Button
             variant="outline"
             size="sm"
+            onClick={() => handleChangePassword(info.row.original)}
+            title="Cambiar contraseña"
+          >
+            <FaKey className="text-blue-500" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => handleDelete(info.row.original)}
+            title="Eliminar usuario"
           >
             <FaTrash className="text-red-500" />
           </Button>
@@ -430,6 +492,52 @@ export const Usuarios = () => {
               </Button>
             </div>
           </div>
+        </Modal>
+
+        {/* Modal para cambiar contraseña */}
+        <Modal
+          isOpen={isPasswordModalOpen}
+          onClose={() => setIsPasswordModalOpen(false)}
+          title="Cambiar Contraseña"
+          size="sm"
+        >
+          <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)} className="space-y-4">
+            <div>
+              <p className="text-sm text-gray-600 mb-4">
+                Cambiar contraseña para: <span className="font-semibold">{selectedUsuario?.nombre}</span>
+              </p>
+            </div>
+            
+            <Input
+              label="Nueva Contraseña"
+              type="password"
+              {...passwordForm.register('password')}
+              error={passwordForm.formState.errors.password?.message}
+            />
+            
+            <Input
+              label="Confirmar Contraseña"
+              type="password"
+              {...passwordForm.register('confirmPassword')}
+              error={passwordForm.formState.errors.confirmPassword?.message}
+            />
+            
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsPasswordModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                isLoading={changePasswordMutation.isPending}
+              >
+                Cambiar Contraseña
+              </Button>
+            </div>
+          </form>
         </Modal>
       </div>
     </MainLayout>
