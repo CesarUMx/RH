@@ -95,7 +95,12 @@ export async function crearSolicitudBaja(req: Request, res: Response) {
 // PUT /solicitudes/baja/:id/estado - Actualizar el estado de una solicitud de baja
 export async function actualizarEstadoSolicitudBaja(req: Request, res: Response) {
   try {
-    const solicitudId = parseInt(req.params.id)
+    const idParam = req.params.id
+    if (!idParam) {
+      return res.status(400).json({ error: 'ID de solicitud inválido' })
+    }
+
+    const solicitudId = parseInt(idParam, 10)
     if (isNaN(solicitudId)) {
       return res.status(400).json({ error: 'ID de solicitud inválido' })
     }

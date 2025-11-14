@@ -1,8 +1,11 @@
 import axios from 'axios';
 
+// Base URL de la API
+export const API_BASE_URL = '/api';
+
 // Crear instancia de axios con configuración base
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },

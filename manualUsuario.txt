@@ -1,0 +1,2136 @@
+================================================================================
+                    MANUAL DE USUARIO
+           SISTEMA DE RECURSOS HUMANOS - UNIVERSIDAD MONDRAGÓN MÉXICO
+================================================================================
+
+Versión: 1.0
+Fecha: Noviembre 2024
+
+================================================================================
+                              ÍNDICE
+================================================================================
+
+1. INTRODUCCIÓN Y ACCESO AL SISTEMA
+   1.1 Descripción General
+   1.2 Roles de Usuario
+   1.3 Inicio de Sesión
+   1.4 Navegación General
+
+2. MÓDULO DE USUARIOS (ROL: ADMINISTRADOR)
+   2.1 Visualizar Lista de Usuarios
+   2.2 Crear Nuevo Usuario
+   2.3 Editar Usuario
+   2.4 Eliminar Usuario
+   2.5 Gestión de Roles
+
+3. MÓDULO DE ÁREAS (ROL: ADMINISTRADOR Y RH)
+   3.1 Visualizar Lista de Áreas
+   3.2 Crear Nueva Área
+   3.3 Editar Área
+   3.4 Eliminar Área
+   3.5 Asignar Coordinadores a Áreas
+   3.6 Eliminar Coordinadores de Áreas
+
+4. MÓDULO DE DOCENTES (ROL: ADMINISTRADOR, RH Y COORDINADOR)
+   4.1 Visualizar Lista de Docentes
+   4.2 Buscar Docentes
+   4.3 Crear Nuevo Docente
+   4.4 Editar Docente
+   4.5 Eliminar Docente
+   4.6 Importación Masiva de Docentes
+   4.7 Descargar Plantilla de Importación
+   4.8 Manejo de Errores en Importación
+
+5. MÓDULO DE PERIODOS (ROL: ADMINISTRADOR Y RH)
+   5.1 Visualizar Lista de Periodos
+   5.2 Crear Nuevo Periodo
+   5.3 Estados de Periodo
+   5.4 Abrir Periodo
+   5.5 Cerrar Periodo
+   5.6 Reportar Periodo
+
+6. MÓDULO DE CARGA DE HORAS (ROL: COORDINADOR)
+   6.1 Selección de Área
+   6.2 Verificar Periodo Activo
+   6.3 Descargar Plantilla de Carga
+   6.4 Carga Masiva desde Archivo
+   6.5 Previsualización de Datos
+   6.6 Confirmar Carga Masiva
+   6.7 Carga Individual de Horas
+   6.8 Visualizar Cargas Realizadas
+   6.9 Buscar Cargas
+   6.10 Eliminar Carga
+
+7. MÓDULO DE GESTIÓN DE PAGOS (ROL: ADMINISTRADOR Y RH)
+   7.1 Seleccionar Periodo
+   7.2 Filtrar por Área
+   7.3 Visualizar Reporte de Pagos
+   7.4 Ver Detalles por Docente
+   7.5 Exportar Reporte a Excel
+   7.6 Descargar Reportes por Área
+   7.7 Cerrar Periodo de Pagos
+
+8. SOLUCIÓN DE PROBLEMAS COMUNES
+
+9. GLOSARIO DE TÉRMINOS
+
+================================================================================
+
+
+================================================================================
+                    1. INTRODUCCIÓN Y ACCESO AL SISTEMA
+================================================================================
+
+1.1 DESCRIPCIÓN GENERAL
+--------------------------------------------------------------------------------
+
+El Sistema de Recursos Humanos de la Universidad Mondragón México es una
+plataforma web diseñada para gestionar el registro de horas de docentes,
+la administración de áreas académicas, y la generación de reportes de pagos.
+
+El sistema permite:
+- Gestionar usuarios y sus roles de acceso
+- Administrar áreas académicas y sus coordinadores
+- Mantener un catálogo de docentes
+- Controlar periodos académicos
+- Registrar cargas de horas por docente y materia
+- Generar reportes de pagos por periodo
+
+[SUGERENCIA DE CAPTURA: Vista del sistema mostrando la barra lateral con
+el logo y los módulos disponibles]
+
+
+1.2 ROLES DE USUARIO
+--------------------------------------------------------------------------------
+
+El sistema cuenta con tres roles principales:
+
+• ADMIN (Administrador)
+  - Acceso completo al sistema
+  - Módulos disponibles:
+    * Usuarios
+    * Áreas
+    * Docentes
+    * Periodos
+    * Gestión de Pagos
+
+• RH (Recursos Humanos)
+  - Gestión operativa del sistema
+  - Módulos disponibles:
+    * Áreas
+    * Docentes
+    * Periodos
+    * Gestión de Pagos
+  - NO puede gestionar usuarios
+
+• COORD (Coordinador)
+  - Registro de horas de docentes
+  - Módulos disponibles:
+    * Carga de Horas (principal)
+    * Docentes (solo lectura)
+  - Requiere asignación a una o más áreas
+  - Solo puede trabajar con sus áreas asignadas
+
+• MÚLTIPLES ROLES
+  - Un usuario puede tener varios roles simultáneamente
+  - Ejemplo: Un usuario puede ser RH y COORD
+  - Tendrá acceso a todos los módulos de sus roles combinados
+  - Los permisos se suman (no se restan)
+
+
+1.3 INICIO DE SESIÓN
+--------------------------------------------------------------------------------
+
+Pasos para acceder al sistema:
+
+1. Abrir el navegador web (Chrome, Firefox, Edge o Safari)
+
+2. Ingresar la URL del sistema proporcionada por el administrador
+
+3. En la pantalla de inicio de sesión, ingresar:
+   - Correo electrónico: Su dirección de correo institucional
+   - Contraseña: La contraseña asignada o creada
+
+4. Hacer clic en el botón "Iniciar sesión"
+
+5. Si las credenciales son correctas:
+   - Aparecerá una pantalla de carga breve
+   - Será redirigido automáticamente a su módulo principal según su rol:
+     * ADMIN → Usuarios
+     * RH → Gestión de Pagos
+     * COORD → Carga de Horas
+
+[SUGERENCIA DE CAPTURA: Pantalla de login con los campos de correo y
+contraseña resaltados]
+
+NOTAS IMPORTANTES:
+- La contraseña debe tener al menos 6 caracteres
+- El correo electrónico debe ser válido
+- Si olvida su contraseña, contacte al administrador del sistema
+- Por seguridad, la sesión expirará después de un periodo de inactividad
+- No hay página principal, la redirección es automática según su rol
+
+
+1.4 NAVEGACIÓN GENERAL
+--------------------------------------------------------------------------------
+
+Una vez dentro del sistema:
+
+• REDIRECCIÓN AUTOMÁTICA AL INICIAR SESIÓN
+  El sistema NO tiene una página principal general. Al iniciar sesión, será
+  redirigido automáticamente al módulo principal según su rol:
+
+  - ADMIN → Módulo de Usuarios
+  - RH → Módulo de Gestión de Pagos
+  - COORD → Módulo de Carga de Horas
+  - Otros roles → Módulo de Docentes
+
+  Esta redirección es automática e inmediata.
+
+[SUGERENCIA DE CAPTURA: Pantalla de carga durante la redirección automática]
+
+• BARRA LATERAL
+  - Ubicada a la izquierda de la pantalla
+  - Siempre visible (no hay menú hamburguesa)
+  - En la parte superior muestra:
+    * Logo de la universidad (logo.svg)
+    * Título "UMx RH" en blanco
+  - Para coordinadores: Selector de Área y Periodo Activo (debajo del logo)
+  - Lista los módulos disponibles según su rol en este orden:
+    * Usuarios (solo ADMIN)
+    * Áreas (ADMIN y RH)
+    * Carga de Horas (solo COORD)
+    * Docentes (ADMIN, RH y COORD)
+    * Periodos (ADMIN y RH)
+    * Gestión de Pagos (ADMIN y RH)
+  - El módulo activo se resalta con:
+    * Fondo secundario
+    * Borde blanco del lado izquierdo (4px)
+    * Texto en blanco
+  - En la parte inferior: Información del usuario y botón de cerrar sesión
+
+[SUGERENCIA DE CAPTURA: Vista completa de la barra lateral mostrando logo,
+menús y sección de usuario]
+
+• INFORMACIÓN DE USUARIO (Parte inferior de la barra lateral)
+  - Muestra su nombre completo
+  - Muestra su correo electrónico
+  - Botón de "Cerrar sesión" con ícono de salida
+
+[SUGERENCIA DE CAPTURA: Sección inferior de la barra lateral mostrando
+la información del usuario y el botón de cerrar sesión]
+
+• SELECTOR DE ÁREA (Solo para Coordinadores)
+  - Ubicado en la parte superior de la barra lateral (debajo del logo)
+  - Muestra el nombre del área seleccionada con un ícono de edificio
+  - Al hacer clic se despliega una lista de áreas asignadas
+  - Permite cambiar entre las áreas asignadas
+  - Todas las operaciones se realizan sobre el área seleccionada
+  - Si no tiene áreas asignadas, muestra "Sin áreas asignadas"
+
+[SUGERENCIA DE CAPTURA: Selector de área en la barra lateral mostrando
+el área actual y el botón desplegable]
+
+[SUGERENCIA DE CAPTURA: Selector de área desplegado mostrando la lista
+de áreas disponibles]
+
+• INFORMACIÓN DE PERIODO ACTIVO (Solo para Coordinadores)
+  - Ubicado en la barra lateral, debajo del selector de área
+  - Si HAY periodo activo:
+    * Fondo verde
+    * Muestra el nombre del periodo
+    * Muestra las fechas de inicio y fin
+  - Si NO hay periodo activo:
+    * Fondo amarillo
+    * Mensaje: "No hay periodo activo"
+  - Si está cargando:
+    * Muestra un spinner de carga
+
+[SUGERENCIA DE CAPTURA: Componente de periodo activo en la barra lateral
+con fondo verde mostrando el periodo actual]
+
+[SUGERENCIA DE CAPTURA: Componente de periodo activo con fondo amarillo
+cuando no hay periodo]
+
+• NAVEGACIÓN ENTRE MÓDULOS
+  - Hacer clic en cualquier opción del menú lateral para cambiar de módulo
+  - El módulo actual siempre está resaltado
+  - No es necesario volver a una página principal
+  - Puede navegar directamente entre cualquier módulo disponible
+
+• CERRAR SESIÓN
+  1. Desplazarse a la parte inferior de la barra lateral
+  2. Hacer clic en el botón "Cerrar sesión" (con ícono de salida)
+  3. Será redirigido a la pantalla de inicio de sesión
+  4. Su sesión quedará cerrada de forma segura
+
+[SUGERENCIA DE CAPTURA: Botón de cerrar sesión en la parte inferior de
+la barra lateral]
+
+
+================================================================================
+                    FIN DEL MÓDULO 1
+================================================================================
+
+
+================================================================================
+                    2. MÓDULO DE USUARIOS
+                        (ROL: ADMINISTRADOR)
+================================================================================
+
+Este módulo permite al administrador gestionar los usuarios del sistema,
+asignar roles y controlar el acceso a las diferentes funcionalidades.
+
+SOLO los usuarios con rol ADMIN pueden acceder a este módulo.
+
+
+2.1 VISUALIZAR LISTA DE USUARIOS
+--------------------------------------------------------------------------------
+
+Pasos:
+
+1. Desde la página principal, hacer clic en la tarjeta "Usuarios" o
+   seleccionar "Usuarios" en el menú lateral
+
+2. Se mostrará una tabla con todos los usuarios registrados:
+   - Nombre completo
+   - Correo electrónico
+   - Roles asignados
+   - Estado (Activo/Inactivo)
+   - Botones de acción (Editar/Eliminar)
+
+[SUGERENCIA DE CAPTURA: Vista de la tabla de usuarios con varios registros]
+
+NOTA: Los usuarios inactivos aparecen con una X roja en la columna "Activo"
+
+
+2.2 CREAR NUEVO USUARIO
+--------------------------------------------------------------------------------
+
+Pasos:
+
+1. En la página de Usuarios, hacer clic en el botón "+ Nuevo Usuario"
+   (esquina superior derecha)
+
+2. Se abrirá un modal con el formulario de creación
+
+3. Completar los campos obligatorios:
+   • Nombre: Nombre completo del usuario
+   • Correo electrónico: Dirección de correo institucional (debe ser única)
+   • Contraseña: Mínimo 6 caracteres
+   • Roles: Seleccionar al menos un rol (puede seleccionar múltiples)
+     - ADMIN: Administrador del sistema
+     - RH: Recursos Humanos
+     - COORD: Coordinador de área
+   • Activo: Marcar si el usuario estará activo inmediatamente
+
+[SUGERENCIA DE CAPTURA: Modal de creación de usuario con todos los campos
+visibles y la sección de roles expandida]
+
+4. Hacer clic en el botón "Crear"
+
+5. Si la operación es exitosa:
+   - Aparecerá un mensaje de confirmación
+   - El modal se cerrará
+   - La tabla se actualizará mostrando el nuevo usuario
+
+ERRORES COMUNES:
+- "El correo ya está registrado": Use un correo diferente
+- "Debe seleccionar al menos un rol": Marque al menos una casilla de rol
+- "La contraseña debe tener al menos 6 caracteres": Use una contraseña más larga
+
+
+2.3 EDITAR USUARIO
+--------------------------------------------------------------------------------
+
+Pasos:
+
+1. En la tabla de usuarios, localizar el usuario a editar
+
+2. Hacer clic en el botón de editar (ícono de lápiz) en la columna "Acciones"
+
+3. Se abrirá un modal con los datos actuales del usuario
+
+4. Campos editables:
+   • Nombre: Puede modificarse
+   • Correo electrónico: NO puede modificarse (se muestra en gris)
+   • Roles: Puede modificar la selección
+   • Activo: Puede activar/desactivar el usuario
+
+[SUGERENCIA DE CAPTURA: Modal de edición mostrando que el correo no es
+editable y los demás campos sí]
+
+5. Realizar los cambios necesarios
+
+6. Hacer clic en el botón "Guardar"
+
+7. Si la operación es exitosa:
+   - Aparecerá un mensaje de confirmación
+   - El modal se cerrará
+   - La tabla se actualizará con los cambios
+
+NOTAS IMPORTANTES:
+- El correo electrónico NO puede modificarse por seguridad
+- Si desactiva un usuario, este no podrá iniciar sesión
+- Los cambios en roles se aplican inmediatamente
+- Si un usuario está en sesión, deberá cerrar e iniciar sesión nuevamente
+  para que los cambios de roles surtan efecto
+
+
+2.4 ELIMINAR USUARIO
+--------------------------------------------------------------------------------
+
+Pasos:
+
+1. En la tabla de usuarios, localizar el usuario a eliminar
+
+2. Hacer clic en el botón de eliminar (ícono de basurero rojo) en la
+   columna "Acciones"
+
+3. Se abrirá un modal de confirmación mostrando:
+   - Mensaje de advertencia
+   - Nombre del usuario a eliminar
+
+[SUGERENCIA DE CAPTURA: Modal de confirmación de eliminación con el mensaje
+de advertencia visible]
+
+4. Opciones:
+   • Cancelar: Cierra el modal sin realizar cambios
+   • Eliminar: Confirma la eliminación del usuario
+
+5. Si confirma la eliminación:
+   - El usuario será eliminado permanentemente
+   - Aparecerá un mensaje de confirmación
+   - La tabla se actualizará sin el usuario eliminado
+
+¡ADVERTENCIA!
+- Esta acción NO se puede deshacer
+- Se eliminarán todos los datos asociados al usuario
+- Si el usuario tiene cargas de horas registradas, estas NO se eliminarán
+  pero quedarán sin usuario asociado
+- Se recomienda DESACTIVAR usuarios en lugar de eliminarlos
+
+
+2.5 GESTIÓN DE ROLES
+--------------------------------------------------------------------------------
+
+Roles disponibles en el sistema:
+
+• ADMIN (Administrador)
+  Permisos:
+  - Gestión completa de usuarios
+  - Gestión de áreas y coordinadores
+  - Gestión de docentes
+  - Gestión de periodos académicos
+  - Gestión de pagos y reportes
+  - Acceso a todos los módulos
+
+• RH (Recursos Humanos)
+  Permisos:
+  - Gestión de áreas y coordinadores
+  - Gestión de docentes
+  - Gestión de periodos académicos
+  - Gestión de pagos y reportes
+  - NO puede gestionar usuarios
+
+• COORD (Coordinador)
+  Permisos:
+  - Visualización de docentes (solo lectura)
+  - Carga de horas para áreas asignadas
+  - Consulta de cargas realizadas
+  - Descarga de plantillas
+  - Requiere asignación a un área específica
+
+ASIGNACIÓN DE MÚLTIPLES ROLES:
+- Un usuario puede tener varios roles simultáneamente
+- Ejemplo: Un usuario puede ser RH y COORD al mismo tiempo
+- Tendrá acceso a todas las funciones de ambos roles
+- Los permisos se suman (no se restan)
+
+[SUGERENCIA DE CAPTURA: Ejemplo de un usuario con múltiples roles asignados
+en la tabla principal]
+
+BUENAS PRÁCTICAS:
+- Asignar solo los roles necesarios para cada usuario
+- Revisar periódicamente los roles asignados
+- Desactivar usuarios que ya no requieren acceso
+- Mantener al menos un usuario con rol ADMIN activo
+- Documentar los cambios de roles importantes
+
+
+================================================================================
+                    FIN DEL MÓDULO 2
+================================================================================
+
+
+================================================================================
+                    3. MÓDULO DE ÁREAS
+                    (ROL: ADMINISTRADOR Y RH)
+================================================================================
+
+Este módulo permite gestionar las áreas académicas de la universidad y
+asignar coordinadores responsables de cada área.
+
+Usuarios con rol ADMIN o RH pueden acceder a este módulo.
+
+
+3.1 VISUALIZAR LISTA DE ÁREAS
+--------------------------------------------------------------------------------
+
+Pasos:
+
+1. Desde la página principal, hacer clic en la tarjeta "Áreas" o
+   seleccionar "Áreas" en el menú lateral
+
+2. Se mostrará una tabla con todas las áreas registradas:
+   - Nombre del área
+   - Coordinadores asignados (lista de nombres)
+   - Estado (Activo/Inactivo)
+   - Botones de acción (Gestionar coordinadores/Editar/Eliminar)
+
+[SUGERENCIA DE CAPTURA: Vista de la tabla de áreas mostrando varias áreas
+con sus coordinadores]
+
+NOTA: Las áreas sin coordinadores muestran "Sin coordinadores"
+
+
+3.2 CREAR NUEVA ÁREA
+--------------------------------------------------------------------------------
+
+Pasos:
+
+1. En la página de Áreas, hacer clic en el botón "+ Nueva Área"
+   (esquina superior derecha)
+
+2. Se abrirá un modal con el formulario de creación
+
+3. Completar los campos:
+   • Nombre: Nombre del área académica (ej: "Ingeniería", "Administración")
+   • Activo: Marcar si el área estará activa inmediatamente
+
+[SUGERENCIA DE CAPTURA: Modal de creación de área con los campos visibles]
+
+4. Hacer clic en el botón "Crear"
+
+5. Si la operación es exitosa:
+   - Aparecerá un mensaje de confirmación
+   - El modal se cerrará
+   - La tabla se actualizará mostrando la nueva área
+
+NOTA: Las áreas recién creadas no tienen coordinadores asignados. Debe
+asignarlos posteriormente usando la función "Gestionar coordinadores"
+
+
+3.3 EDITAR ÁREA
+--------------------------------------------------------------------------------
+
+Pasos:
+
+1. En la tabla de áreas, localizar el área a editar
+
+2. Hacer clic en el botón de editar (ícono de lápiz) en la columna "Acciones"
+
+3. Se abrirá un modal con los datos actuales del área
+
+4. Campos editables:
+   • Nombre: Puede modificarse
+   • Activo: Puede activar/desactivar el área
+
+[SUGERENCIA DE CAPTURA: Modal de edición de área]
+
+5. Realizar los cambios necesarios
+
+6. Hacer clic en el botón "Guardar"
+
+7. Si la operación es exitosa:
+   - Aparecerá un mensaje de confirmación
+   - El modal se cerrará
+   - La tabla se actualizará con los cambios
+
+NOTAS IMPORTANTES:
+- Si desactiva un área, los coordinadores asignados no podrán cargar horas
+- Las cargas de horas existentes NO se eliminan
+- Los coordinadores siguen asignados al área aunque esté inactiva
+
+
+3.4 ELIMINAR ÁREA
+--------------------------------------------------------------------------------
+
+Pasos:
+
+1. En la tabla de áreas, localizar el área a eliminar
+
+2. Hacer clic en el botón de eliminar (ícono de basurero rojo) en la
+   columna "Acciones"
+
+3. Se abrirá un modal de confirmación mostrando:
+   - Mensaje de advertencia
+   - Nombre del área a eliminar
+
+[SUGERENCIA DE CAPTURA: Modal de confirmación de eliminación de área]
+
+4. Opciones:
+   • Cancelar: Cierra el modal sin realizar cambios
+   • Eliminar: Confirma la eliminación del área
+
+5. Si confirma la eliminación:
+   - El área será eliminada permanentemente
+   - Aparecerá un mensaje de confirmación
+   - La tabla se actualizará sin el área eliminada
+
+¡ADVERTENCIA!
+- Esta acción NO se puede deshacer
+- Se eliminarán las asignaciones de coordinadores
+- Las cargas de horas asociadas al área NO se eliminarán
+- Se recomienda DESACTIVAR áreas en lugar de eliminarlas
+
+
+3.5 ASIGNAR COORDINADORES A ÁREAS
+--------------------------------------------------------------------------------
+
+Pasos:
+
+1. En la tabla de áreas, localizar el área donde desea asignar coordinadores
+
+2. Hacer clic en el botón de gestionar coordinadores (ícono de usuario con +)
+   en la columna "Acciones"
+
+3. Se abrirá un modal con dos secciones:
+
+   SECCIÓN 1: Coordinadores asignados
+   - Lista de coordinadores actualmente asignados al área
+   - Muestra nombre y correo de cada coordinador
+   - Botón de eliminar (basurero) para cada coordinador
+
+   SECCIÓN 2: Asignar nuevo coordinador
+   - Selector desplegable con usuarios disponibles que tienen rol COORD
+   - Solo muestra usuarios que NO están asignados al área
+   - Botón "Asignar Coordinador"
+
+[SUGERENCIA DE CAPTURA: Modal de gestión de coordinadores mostrando ambas
+secciones con coordinadores asignados y el selector para nuevos]
+
+4. Para asignar un nuevo coordinador:
+   a. En el selector, elegir el usuario deseado
+   b. Hacer clic en "Asignar Coordinador"
+   c. El coordinador aparecerá en la lista de asignados
+   d. Desaparecerá del selector de disponibles
+
+5. Hacer clic en "Cerrar" cuando termine
+
+NOTAS IMPORTANTES:
+- Un coordinador puede estar asignado a múltiples áreas
+- Solo usuarios con rol COORD pueden ser asignados
+- Los coordinadores deben estar activos para aparecer en la lista
+- Los cambios se aplican inmediatamente
+
+
+3.6 ELIMINAR COORDINADORES DE ÁREAS
+--------------------------------------------------------------------------------
+
+Pasos:
+
+1. Abrir el modal de gestión de coordinadores (ver sección 3.5)
+
+2. En la sección "Coordinadores asignados", localizar el coordinador a eliminar
+
+3. Hacer clic en el botón de eliminar (ícono de basurero rojo) junto al
+   coordinador
+
+[SUGERENCIA DE CAPTURA: Modal mostrando la lista de coordinadores con los
+botones de eliminar visibles]
+
+4. El coordinador será eliminado inmediatamente:
+   - Desaparecerá de la lista de asignados
+   - Aparecerá en el selector de disponibles
+   - Aparecerá un mensaje de confirmación
+
+5. El coordinador ya no podrá:
+   - Cargar horas para esa área
+   - Ver las cargas de esa área
+   - Descargar plantillas de esa área
+
+NOTAS IMPORTANTES:
+- La eliminación es inmediata, no requiere confirmación adicional
+- Las cargas de horas realizadas previamente NO se eliminan
+- El usuario mantiene su rol COORD, solo se elimina la asignación al área
+- Puede volver a asignarse al mismo coordinador posteriormente
+
+
+================================================================================
+                    FIN DEL MÓDULO 3
+================================================================================
+
+
+================================================================================
+                    4. MÓDULO DE DOCENTES
+            (ROL: ADMINISTRADOR, RH Y COORDINADOR)
+================================================================================
+
+Este módulo permite gestionar el catálogo de docentes de la universidad.
+Incluye funciones de alta individual e importación masiva desde archivos.
+
+Usuarios con rol ADMIN, RH o COORD pueden acceder a este módulo.
+NOTA: Los coordinadores solo tienen acceso de lectura (no pueden editar).
+
+
+4.1 VISUALIZAR LISTA DE DOCENTES
+--------------------------------------------------------------------------------
+
+Pasos:
+
+1. Desde la página principal, hacer clic en la tarjeta "Docentes" o
+   seleccionar "Docentes" en el menú lateral
+
+2. Se mostrará una tabla paginada con los docentes registrados:
+   - Código Interno (6 dígitos con ceros a la izquierda)
+   - Nombre completo
+   - RFC
+   - Estado (Activo/Inactivo)
+   - Botones de acción (Editar/Eliminar) - Solo para ADMIN y RH
+
+[SUGERENCIA DE CAPTURA: Vista de la tabla de docentes con paginación]
+
+3. La tabla muestra 10 registros por página
+
+4. Use los controles de paginación en la parte inferior para navegar
+
+NOTA: Los coordinadores ven la misma tabla pero SIN botones de edición
+
+
+4.2 BUSCAR DOCENTES
+--------------------------------------------------------------------------------
+
+Pasos:
+
+1. En la página de Docentes, localizar la barra de búsqueda en la parte
+   superior
+
+2. Escribir el término de búsqueda:
+   - Puede buscar por: Código interno, Nombre o RFC
+   - La búsqueda es parcial (no necesita escribir completo)
+
+[SUGERENCIA DE CAPTURA: Barra de búsqueda con un ejemplo de búsqueda activa]
+
+3. Hacer clic en el botón de búsqueda (ícono de lupa) o presionar Enter
+
+4. La tabla se actualizará mostrando solo los resultados que coincidan
+
+5. Para limpiar la búsqueda:
+   - Borrar el texto del campo de búsqueda
+   - Hacer clic en el botón de búsqueda nuevamente
+   - O hacer clic en "Limpiar filtros" si aparece
+
+EJEMPLOS DE BÚSQUEDA:
+- "123" - Encuentra docentes con código que contenga 123
+- "García" - Encuentra docentes con apellido García
+- "GAMA" - Encuentra docentes cuyo RFC contenga GAMA
+
+
+4.3 CREAR NUEVO DOCENTE
+--------------------------------------------------------------------------------
+
+NOTA: Solo disponible para usuarios con rol ADMIN o RH
+
+Pasos:
+
+1. En la página de Docentes, hacer clic en el botón "+ Nuevo Docente"
+   (esquina superior derecha)
+
+2. Se abrirá un modal con el formulario de creación
+
+3. Completar los campos obligatorios:
+   • Código Interno: Número de empleado (se formateará a 6 dígitos)
+     Ejemplo: Si ingresa "123", se guardará como "000123"
+   • Nombre: Nombre completo del docente
+   • RFC: Registro Federal de Contribuyentes (13 caracteres)
+     Formato: AAAA######XXX (4 letras, 6 números, 3 caracteres)
+   • Activo: Marcar si el docente estará activo
+
+[SUGERENCIA DE CAPTURA: Modal de creación de docente con todos los campos]
+
+4. Hacer clic en el botón "Crear"
+
+5. Si la operación es exitosa:
+   - Aparecerá un mensaje de confirmación
+   - El modal se cerrará
+   - La tabla se actualizará mostrando el nuevo docente
+
+VALIDACIONES:
+- Código Interno: Debe ser único en el sistema
+- RFC: Debe cumplir con el formato oficial mexicano
+- Nombre: Mínimo 3 caracteres
+
+ERRORES COMUNES:
+- "El código interno ya existe": Use un código diferente
+- "El RFC debe tener el formato correcto": Verifique el formato
+- "El RFC ya está registrado": Ya existe un docente con ese RFC
+
+
+4.4 EDITAR DOCENTE
+--------------------------------------------------------------------------------
+
+NOTA: Solo disponible para usuarios con rol ADMIN o RH
+
+Pasos:
+
+1. En la tabla de docentes, localizar el docente a editar
+
+2. Hacer clic en el botón de editar (ícono de lápiz) en la columna "Acciones"
+
+3. Se abrirá un modal con los datos actuales del docente
+
+4. Campos editables:
+   • Código Interno: Puede modificarse
+   • Nombre: Puede modificarse
+   • RFC: Puede modificarse
+   • Activo: Puede activar/desactivar el docente
+
+[SUGERENCIA DE CAPTURA: Modal de edición de docente]
+
+5. Realizar los cambios necesarios
+
+6. Hacer clic en el botón "Guardar"
+
+7. Si la operación es exitosa:
+   - Aparecerá un mensaje de confirmación
+   - El modal se cerrará
+   - La tabla se actualizará con los cambios
+
+NOTAS IMPORTANTES:
+- Si desactiva un docente, no aparecerá en nuevas cargas de horas
+- Las cargas de horas existentes NO se eliminan
+- El código interno y RFC deben seguir siendo únicos
+
+
+4.5 ELIMINAR DOCENTE
+--------------------------------------------------------------------------------
+
+NOTA: Solo disponible para usuarios con rol ADMIN o RH
+
+Pasos:
+
+1. En la tabla de docentes, localizar el docente a eliminar
+
+2. Hacer clic en el botón de eliminar (ícono de basurero rojo) en la
+   columna "Acciones"
+
+3. Se abrirá un modal de confirmación mostrando:
+   - Mensaje de advertencia
+   - Nombre del docente a eliminar
+
+[SUGERENCIA DE CAPTURA: Modal de confirmación de eliminación de docente]
+
+4. Opciones:
+   • Cancelar: Cierra el modal sin realizar cambios
+   • Eliminar: Confirma la eliminación del docente
+
+5. Si confirma la eliminación:
+   - El docente será eliminado permanentemente
+   - Aparecerá un mensaje de confirmación
+   - La tabla se actualizará sin el docente eliminado
+
+¡ADVERTENCIA!
+- Esta acción NO se puede deshacer
+- Las cargas de horas asociadas al docente NO se eliminarán
+- Se recomienda DESACTIVAR docentes en lugar de eliminarlos
+
+
+4.6 IMPORTACIÓN MASIVA DE DOCENTES
+--------------------------------------------------------------------------------
+
+NOTA: Solo disponible para usuarios con rol ADMIN o RH
+
+Esta función permite cargar múltiples docentes desde un archivo Excel o CSV.
+
+Pasos:
+
+1. En la página de Docentes, hacer clic en el botón "Importar"
+
+2. Se abrirá un modal con información sobre el formato requerido
+
+3. El archivo debe contener las siguientes columnas:
+   • codigo_interno (obligatorio): Código de empleado
+   • nombre (obligatorio): Nombre completo
+   • rfc (obligatorio): RFC del docente
+   • activo (opcional): true/false o 1/0 (por defecto: true)
+
+[SUGERENCIA DE CAPTURA: Modal de importación mostrando las instrucciones
+y el formato requerido]
+
+4. Hacer clic en "Descargar plantilla" para obtener un archivo de ejemplo
+
+5. Completar la plantilla con los datos de los docentes
+
+6. En el modal, hacer clic en "Selecciona o arrastra un archivo CSV o Excel"
+
+7. Seleccionar el archivo completado desde su computadora
+
+8. El nombre del archivo aparecerá en el área de carga
+
+9. Hacer clic en el botón "Importar"
+
+10. El sistema procesará el archivo y mostrará los resultados:
+    - Total de registros procesados
+    - Registros insertados (nuevos)
+    - Registros actualizados (existentes)
+    - Errores encontrados (si los hay)
+
+[SUGERENCIA DE CAPTURA: Modal mostrando los resultados de una importación
+exitosa con estadísticas]
+
+COMPORTAMIENTO DE LA IMPORTACIÓN:
+- Si el código interno YA existe: Se ACTUALIZA el registro
+- Si el código interno NO existe: Se INSERTA un nuevo registro
+- Si hay errores: Se muestra una tabla con los detalles
+
+
+4.7 DESCARGAR PLANTILLA DE IMPORTACIÓN
+--------------------------------------------------------------------------------
+
+Pasos:
+
+1. Opción A - Desde el botón principal:
+   En la página de Docentes, hacer clic en "Descargar Plantilla"
+
+2. Opción B - Desde el modal de importación:
+   Abrir el modal de importación y hacer clic en "Descargar plantilla"
+
+3. Se descargará un archivo Excel con:
+   - Encabezados correctos
+   - Ejemplos de datos
+   - Formato adecuado
+
+[SUGERENCIA DE CAPTURA: Archivo de plantilla abierto en Excel mostrando
+las columnas y ejemplos]
+
+4. El archivo incluye:
+   - codigo_interno: Ejemplo "000123"
+   - nombre: Ejemplo "Juan Pérez García"
+   - rfc: Ejemplo "PEGJ850101ABC"
+   - activo: Ejemplo "true" o "1"
+
+RECOMENDACIONES:
+- No modificar los nombres de las columnas
+- No eliminar la fila de encabezados
+- Usar el formato de ejemplo para los datos
+- Guardar como .xlsx o .csv antes de importar
+
+
+4.8 MANEJO DE ERRORES EN IMPORTACIÓN
+--------------------------------------------------------------------------------
+
+Cuando hay errores en la importación, el sistema muestra:
+
+1. Resumen de errores:
+   - Número total de errores encontrados
+   - Mensaje de advertencia
+
+2. Tabla detallada de errores con:
+   - Línea: Número de línea en el archivo (incluye encabezado)
+   - Código: Código interno del registro con error
+   - RFC: RFC del registro con error
+   - Error: Descripción del problema
+
+[SUGERENCIA DE CAPTURA: Tabla de errores mostrando varios tipos de errores]
+
+3. Opción de descargar reporte de errores:
+   - Botón "Descargar reporte de errores"
+   - Genera un archivo JSON con los detalles
+
+TIPOS DE ERRORES COMUNES:
+- "El código interno es requerido": Falta el código
+- "El nombre es requerido": Falta el nombre
+- "El RFC debe tener el formato correcto": RFC inválido
+- "El RFC ya está registrado": RFC duplicado en el sistema
+- "Formato de archivo inválido": El archivo no es CSV o Excel
+
+CÓMO CORREGIR ERRORES:
+1. Anotar los errores mostrados en la tabla
+2. Cerrar el modal de resultados
+3. Abrir el archivo original
+4. Corregir las líneas con errores
+5. Guardar el archivo
+6. Repetir el proceso de importación
+
+NOTA IMPORTANTE:
+- Los registros SIN errores SÍ se importan
+- Solo los registros con errores se rechazan
+- Puede corregir y reimportar solo los registros con errores
+
+
+================================================================================
+                    FIN DEL MÓDULO 4
+================================================================================
+
+
+================================================================================
+                    5. MÓDULO DE PERIODOS
+                    (ROL: ADMINISTRADOR Y RH)
+================================================================================
+
+Este módulo permite gestionar los periodos académicos durante los cuales
+se registran las cargas de horas de los docentes.
+
+Usuarios con rol ADMIN o RH pueden acceder a este módulo.
+
+
+5.1 VISUALIZAR LISTA DE PERIODOS
+--------------------------------------------------------------------------------
+
+Pasos:
+
+1. Desde la página principal, hacer clic en la tarjeta "Periodos" o
+   seleccionar "Periodos" en el menú lateral
+
+2. Se mostrará una tabla con todos los periodos registrados:
+   - Nombre del periodo
+   - Fecha de inicio
+   - Fecha de fin
+   - Estado (Borrador/Abierto/Cerrado/Reportado)
+   - Botones de acción según el estado
+
+[SUGERENCIA DE CAPTURA: Vista de la tabla de periodos mostrando diferentes
+estados]
+
+3. Los estados se muestran con colores distintivos:
+   - Borrador: Gris
+   - Abierto: Verde
+   - Cerrado: Amarillo
+   - Reportado: Azul
+
+
+5.2 CREAR NUEVO PERIODO
+--------------------------------------------------------------------------------
+
+Pasos:
+
+1. En la página de Periodos, hacer clic en el botón "+ Nuevo Periodo"
+   (esquina superior derecha)
+
+2. Se abrirá un modal con el formulario de creación
+
+3. Completar los campos obligatorios:
+   • Nombre: Identificador del periodo (ej: "Enero 2025", "Periodo 1-2025")
+   • Fecha de inicio: Fecha de inicio del periodo
+   • Fecha de fin: Fecha de finalización del periodo
+
+[SUGERENCIA DE CAPTURA: Modal de creación de periodo con los campos de fecha]
+
+4. Hacer clic en el botón "Crear"
+
+5. Si la operación es exitosa:
+   - Aparecerá un mensaje de confirmación
+   - El modal se cerrará
+   - La tabla se actualizará mostrando el nuevo periodo
+   - El periodo se creará en estado "BORRADOR"
+
+VALIDACIONES:
+- La fecha de inicio debe ser menor o igual a la fecha de fin
+- El nombre debe tener al menos 3 caracteres
+
+NOTA IMPORTANTE:
+- Los periodos nuevos se crean en estado BORRADOR
+- Deben ser ABIERTOS manualmente para que los coordinadores puedan cargar horas
+- Solo puede haber UN periodo ABIERTO a la vez
+
+
+5.3 ESTADOS DE PERIODO
+--------------------------------------------------------------------------------
+
+Un periodo puede tener cuatro estados diferentes:
+
+• BORRADOR
+  - Estado inicial al crear un periodo
+  - No permite cargas de horas
+  - Puede ser abierto
+  - Color: Gris
+
+• ABIERTO
+  - Periodo activo para cargas de horas
+  - Los coordinadores pueden registrar horas
+  - Solo puede haber UN periodo abierto a la vez
+  - Puede ser cerrado
+  - Color: Verde
+
+• CERRADO
+  - Ya no permite nuevas cargas de horas
+  - Las cargas existentes se mantienen
+  - Puede ser reportado
+  - Color: Amarillo
+
+• REPORTADO
+  - Estado final del periodo
+  - Indica que los reportes han sido generados
+  - No permite más modificaciones
+  - Color: Azul
+
+[SUGERENCIA DE CAPTURA: Diagrama o tabla mostrando el flujo de estados:
+BORRADOR → ABIERTO → CERRADO → REPORTADO]
+
+FLUJO NORMAL:
+1. Crear periodo (BORRADOR)
+2. Abrir periodo (ABIERTO) - Los coordinadores cargan horas
+3. Cerrar periodo (CERRADO) - Se revisan las cargas
+4. Reportar periodo (REPORTADO) - Se generan reportes finales
+
+
+5.4 ABRIR PERIODO
+--------------------------------------------------------------------------------
+
+Esta acción cambia un periodo de BORRADOR a ABIERTO.
+
+Pasos:
+
+1. En la tabla de periodos, localizar un periodo en estado BORRADOR
+
+2. Hacer clic en el botón de abrir (ícono de palomita verde) en la
+   columna "Acciones"
+
+3. Se abrirá un modal de confirmación mostrando:
+   - Mensaje de advertencia: "Solo puede haber un periodo abierto a la vez"
+   - Nombre del periodo a abrir
+
+[SUGERENCIA DE CAPTURA: Modal de confirmación para abrir periodo con la
+advertencia visible]
+
+4. Hacer clic en "Confirmar"
+
+5. Si la operación es exitosa:
+   - El periodo cambiará a estado ABIERTO
+   - Aparecerá un mensaje de confirmación
+   - Los coordinadores podrán comenzar a cargar horas
+
+RESTRICCIONES:
+- Solo puede haber UN periodo abierto a la vez
+- Si intenta abrir un periodo cuando ya hay uno abierto, recibirá un error
+  indicando cuál es el periodo actualmente abierto
+- Debe cerrar el periodo actual antes de abrir otro
+
+NOTA: Una vez abierto un periodo, los coordinadores verán este periodo
+como "Periodo Activo" en su interfaz
+
+
+5.5 CERRAR PERIODO
+--------------------------------------------------------------------------------
+
+Esta acción cambia un periodo de ABIERTO a CERRADO.
+
+Pasos:
+
+1. En la tabla de periodos, localizar el periodo en estado ABIERTO
+
+2. Hacer clic en el botón de cerrar (ícono de candado amarillo) en la
+   columna "Acciones"
+
+3. Se abrirá un modal de confirmación mostrando:
+   - Mensaje de advertencia
+   - Nombre del periodo a cerrar
+
+[SUGERENCIA DE CAPTURA: Modal de confirmación para cerrar periodo]
+
+4. Hacer clic en "Confirmar"
+
+5. Si la operación es exitosa:
+   - El periodo cambiará a estado CERRADO
+   - Aparecerá un mensaje de confirmación
+   - Los coordinadores YA NO podrán cargar más horas
+
+EFECTOS DE CERRAR UN PERIODO:
+- Los coordinadores no podrán agregar nuevas cargas de horas
+- Las cargas existentes se mantienen intactas
+- Se puede proceder a revisar y generar reportes
+- El periodo puede ser reportado posteriormente
+
+¡IMPORTANTE!
+- Esta acción NO se puede deshacer
+- Asegúrese de que todas las cargas necesarias estén registradas
+- Comunique a los coordinadores antes de cerrar el periodo
+
+
+5.6 REPORTAR PERIODO
+--------------------------------------------------------------------------------
+
+Esta acción cambia un periodo de CERRADO a REPORTADO (estado final).
+
+Pasos:
+
+1. En la tabla de periodos, localizar un periodo en estado CERRADO
+
+2. Hacer clic en el botón de reportar (ícono de documento azul) en la
+   columna "Acciones"
+
+3. Se abrirá un modal de confirmación mostrando:
+   - Mensaje de advertencia
+   - Nombre del periodo a reportar
+
+[SUGERENCIA DE CAPTURA: Modal de confirmación para reportar periodo]
+
+4. Hacer clic en "Confirmar"
+
+5. Si la operación es exitosa:
+   - El periodo cambiará a estado REPORTADO
+   - Aparecerá un mensaje de confirmación
+   - El periodo queda marcado como finalizado
+
+SIGNIFICADO DE REPORTADO:
+- Indica que el periodo ha sido procesado completamente
+- Los reportes finales han sido generados
+- Es el estado final del ciclo de vida del periodo
+- No se esperan más cambios en las cargas de este periodo
+
+BUENAS PRÁCTICAS:
+- Generar y descargar todos los reportes necesarios antes de reportar
+- Verificar que todos los pagos estén correctos
+- Archivar los reportes generados
+- Documentar cualquier observación importante del periodo
+
+
+================================================================================
+                    FIN DEL MÓDULO 5
+================================================================================
+
+
+================================================================================
+                    6. MÓDULO DE CARGA DE HORAS
+                        (ROL: COORDINADOR)
+================================================================================
+
+Este módulo permite a los coordinadores registrar las horas trabajadas por
+los docentes en sus áreas asignadas durante el periodo activo.
+
+SOLO usuarios con rol COORD pueden acceder a este módulo.
+
+
+6.1 SELECCIÓN DE ÁREA
+--------------------------------------------------------------------------------
+
+IMPORTANTE: Antes de cargar horas, debe seleccionar el área con la que
+trabajará.
+
+Pasos:
+
+1. Al ingresar al sistema como coordinador, verá el "Selector de Área" en:
+   - La barra lateral izquierda
+   - La página principal
+
+2. Hacer clic en el selector desplegable
+
+3. Seleccionar el área deseada de la lista
+
+[SUGERENCIA DE CAPTURA: Selector de área desplegado mostrando las opciones]
+
+4. El área seleccionada se mostrará en:
+   - La barra lateral
+   - La parte superior de la página de Carga de Horas
+   - Un mensaje de confirmación
+
+5. TODAS las operaciones se realizarán sobre el área seleccionada
+
+NOTAS IMPORTANTES:
+- Solo verá las áreas a las que está asignado
+- Puede cambiar de área en cualquier momento
+- El sistema recordará su última selección
+- Cada área tiene sus propias cargas de horas independientes
+
+
+6.2 VERIFICAR PERIODO ACTIVO
+--------------------------------------------------------------------------------
+
+Antes de cargar horas, verifique que hay un periodo activo.
+
+Pasos:
+
+1. En la barra lateral o página principal, busque el componente
+   "Periodo Activo"
+
+2. Si HAY un periodo activo, verá:
+   - Nombre del periodo (ej: "Enero 2025")
+   - Fechas de inicio y fin
+   - Fondo verde indicando que está activo
+
+[SUGERENCIA DE CAPTURA: Componente de periodo activo mostrando información
+del periodo]
+
+3. Si NO hay periodo activo, verá:
+   - Mensaje: "No hay periodo abierto"
+   - Fondo amarillo de advertencia
+   - Instrucción de contactar a RH
+
+[SUGERENCIA DE CAPTURA: Mensaje de "No hay periodo abierto" con advertencia]
+
+4. Si no hay periodo activo:
+   - NO podrá cargar horas
+   - Debe contactar al departamento de RH
+   - Esperar a que abran un periodo
+
+NOTA: Solo puede haber un periodo activo a la vez en todo el sistema
+
+
+6.3 DESCARGAR PLANTILLA DE CARGA
+--------------------------------------------------------------------------------
+
+La plantilla es un archivo Excel pre-configurado con los docentes de su área.
+
+Pasos:
+
+1. En la página de Carga de Horas, hacer clic en el botón
+   "Descargar Plantilla"
+
+2. El archivo se descargará automáticamente con el nombre:
+   "plantilla-carga-horas-[AREA]-[PERIODO].xlsx"
+
+3. Abrir el archivo en Excel o Google Sheets
+
+4. El archivo contiene:
+   - Columna A: codigo_interno (ya lleno con docentes del área)
+   - Columna B: nombre (ya lleno)
+   - Columna C: rfc (ya lleno)
+   - Columna D: materia (VACÍO - debe llenarlo)
+   - Columna E: horas (VACÍO - debe llenarlo)
+   - Columna F: costo_hora (VACÍO - debe llenarlo)
+   - Columna G: pagable (VACÍO - debe llenarlo: 1 o 0)
+
+[SUGERENCIA DE CAPTURA: Archivo de plantilla abierto en Excel mostrando
+las columnas y algunos datos de ejemplo]
+
+5. Completar SOLO las columnas vacías:
+   - materia: Nombre de la materia impartida
+   - horas: Número de horas trabajadas
+   - costo_hora: Costo por hora en pesos
+   - pagable: 1 (sí pagable) o 0 (no pagable)
+
+RECOMENDACIONES:
+- NO modificar las columnas A, B y C (datos del docente)
+- NO eliminar la fila de encabezados
+- Guardar el archivo antes de subirlo
+- Puede agregar múltiples filas para el mismo docente (diferentes materias)
+
+
+6.4 CARGA MASIVA DESDE ARCHIVO
+--------------------------------------------------------------------------------
+
+Una vez completada la plantilla, puede cargarla al sistema.
+
+Pasos:
+
+1. En la sección "Cargar Plantilla", hacer clic en el área de carga o
+   arrastrar el archivo
+
+2. Seleccionar el archivo Excel completado
+
+3. El nombre del archivo aparecerá en el área de carga
+
+[SUGERENCIA DE CAPTURA: Área de carga mostrando un archivo seleccionado]
+
+4. Hacer clic en el botón "Previsualizar Datos"
+
+5. El sistema procesará el archivo y mostrará una vista previa
+
+FORMATOS ACEPTADOS:
+- Excel (.xlsx, .xls)
+- CSV (.csv)
+
+NOTA: Si hay errores en el archivo, se mostrarán en la vista previa
+
+
+6.5 PREVISUALIZACIÓN DE DATOS
+--------------------------------------------------------------------------------
+
+Antes de confirmar, el sistema muestra una vista previa de los datos.
+
+La vista previa incluye:
+
+1. Resumen en la parte superior:
+   - Número de registros válidos (fondo verde)
+   - Número de registros con errores (fondo rojo)
+
+[SUGERENCIA DE CAPTURA: Resumen de registros válidos y con errores]
+
+2. Tabla detallada con todas las filas:
+   - Código interno del docente
+   - Nombre del docente
+   - RFC
+   - Materia
+   - Horas
+   - Costo por hora
+   - Importe calculado (horas × costo_hora)
+   - Pagable (Sí/No)
+   - Estado (Correcto/Error)
+
+3. Filas con errores:
+   - Fondo rojo
+   - Descripción del error en la columna "Estado"
+
+[SUGERENCIA DE CAPTURA: Tabla de previsualización mostrando filas correctas
+en verde y filas con errores en rojo]
+
+4. Fila de totales al final:
+   - Muestra el importe total de los registros válidos
+
+TIPOS DE ERRORES COMUNES:
+- "Docente no encontrado": El código interno no existe
+- "Materia requerida": Falta el nombre de la materia
+- "Horas inválidas": Las horas deben ser mayores a 0
+- "Costo por hora inválido": El costo debe ser un número válido
+
+IMPORTANTE:
+- Si hay errores, NO podrá confirmar la carga
+- Debe cancelar, corregir el archivo y volver a subirlo
+- Los registros sin errores NO se guardan hasta confirmar
+
+
+6.6 CONFIRMAR CARGA MASIVA
+--------------------------------------------------------------------------------
+
+Una vez revisada la vista previa sin errores, puede confirmar la carga.
+
+Pasos:
+
+1. Revisar cuidadosamente la tabla de vista previa
+
+2. Verificar que:
+   - No hay filas con errores (fondo rojo)
+   - Los importes son correctos
+   - Las materias están bien escritas
+   - Los docentes son los correctos
+
+3. Hacer clic en el botón "Confirmar Carga"
+
+[SUGERENCIA DE CAPTURA: Botón "Confirmar Carga" habilitado cuando no hay
+errores]
+
+4. El sistema guardará todos los registros
+
+5. Si la operación es exitosa:
+   - Aparecerá un mensaje de confirmación
+   - La vista previa se cerrará
+   - La tabla de "Cargas Realizadas" se actualizará
+   - Podrá ver las cargas recién registradas
+
+6. El área de carga volverá a su estado inicial para una nueva carga
+
+NOTA: Una vez confirmada, la carga queda registrada permanentemente en el
+sistema para el periodo activo y el área seleccionada
+
+
+6.7 CARGA INDIVIDUAL DE HORAS
+--------------------------------------------------------------------------------
+
+Además de la carga masiva, puede registrar horas de forma individual.
+
+Pasos:
+
+1. En la página de Carga de Horas, hacer clic en el botón "Carga Individual"
+
+2. Se abrirá un modal con el formulario
+
+3. Buscar el docente:
+   - Escribir el nombre del docente en el campo "Nombre Completo"
+   - Aparecerá una lista de sugerencias mientras escribe
+   - Hacer clic en el docente deseado de la lista
+
+[SUGERENCIA DE CAPTURA: Modal de carga individual mostrando la lista de
+sugerencias de docentes]
+
+4. Los campos se llenarán automáticamente:
+   - Código Interno
+   - Nombre
+   - RFC
+
+5. Completar los campos restantes:
+   - Materia: Nombre de la materia
+   - Horas: Número de horas trabajadas
+   - Costo por Hora: Costo en pesos
+   - Pagable: Marcar si es pagable (por defecto está marcado)
+
+[SUGERENCIA DE CAPTURA: Formulario de carga individual completado]
+
+6. Hacer clic en el botón "Guardar"
+
+7. El sistema procesará la carga individual igual que la masiva:
+   - Mostrará una vista previa
+   - Deberá confirmar la carga
+
+VENTAJAS DE LA CARGA INDIVIDUAL:
+- Rápida para registros únicos
+- Búsqueda inteligente de docentes
+- Validación inmediata
+- No requiere Excel
+
+NOTA: Si necesita cambiar de docente, hacer clic en "Cambiar docente"
+
+
+6.8 VISUALIZAR CARGAS REALIZADAS
+--------------------------------------------------------------------------------
+
+Puede consultar todas las cargas de horas registradas para su área.
+
+Pasos:
+
+1. En la página de Carga de Horas, desplazarse a la sección
+   "Cargas Realizadas"
+
+2. Se mostrará una tabla paginada con:
+   - Código del docente
+   - Nombre del docente
+   - Materia
+   - Horas
+   - Costo por hora
+   - Importe (horas × costo_hora)
+   - Pagable (Sí/No)
+   - Botón de eliminar
+
+[SUGERENCIA DE CAPTURA: Tabla de cargas realizadas con varios registros]
+
+3. La tabla muestra 10 registros por página
+
+4. Use los controles de paginación para navegar
+
+5. En la parte inferior se muestra:
+   - Total del Área: Suma de todos los importes de la página actual
+
+NOTA: Solo verá las cargas del área seleccionada y del periodo activo
+
+
+6.9 BUSCAR CARGAS
+--------------------------------------------------------------------------------
+
+Puede buscar cargas específicas por docente o materia.
+
+Pasos:
+
+1. En la sección "Cargas Realizadas", localizar la barra de búsqueda
+
+2. Escribir el término de búsqueda:
+   - Nombre del docente
+   - Nombre de la materia
+
+[SUGERENCIA DE CAPTURA: Barra de búsqueda en cargas realizadas]
+
+3. Hacer clic en el botón de búsqueda (ícono de lupa) o presionar Enter
+
+4. La tabla se filtrará mostrando solo los resultados coincidentes
+
+5. Para limpiar la búsqueda:
+   - Borrar el texto
+   - Hacer clic en "Limpiar filtros"
+
+EJEMPLOS:
+- "García" - Muestra todas las cargas del docente García
+- "Matemáticas" - Muestra todas las cargas de materias con "Matemáticas"
+
+
+6.10 ELIMINAR CARGA
+--------------------------------------------------------------------------------
+
+Puede eliminar cargas registradas por error.
+
+Pasos:
+
+1. En la tabla de "Cargas Realizadas", localizar la carga a eliminar
+
+2. Hacer clic en el botón de eliminar (ícono de basurero rojo) en la
+   columna "Acciones"
+
+3. Se abrirá un modal de confirmación:
+   - Mensaje de advertencia
+   - "Esta acción no se puede deshacer"
+
+[SUGERENCIA DE CAPTURA: Modal de confirmación de eliminación de carga]
+
+4. Opciones:
+   - Cancelar: Cierra el modal sin eliminar
+   - Eliminar: Confirma la eliminación
+
+5. Si confirma:
+   - La carga será eliminada permanentemente
+   - Aparecerá un mensaje de confirmación
+   - La tabla se actualizará
+   - El total del área se recalculará
+
+¡ADVERTENCIA!
+- Esta acción NO se puede deshacer
+- Solo elimine cargas que sean incorrectas
+- Si necesita modificar una carga, elimínela y créela nuevamente
+
+RESTRICCIÓN:
+- Solo puede eliminar cargas mientras el periodo esté ABIERTO
+- Si el periodo se cierra, ya no podrá eliminar cargas
+
+
+================================================================================
+                    FIN DEL MÓDULO 6
+================================================================================
+
+
+================================================================================
+                    7. MÓDULO DE GESTIÓN DE PAGOS
+                    (ROL: ADMINISTRADOR Y RH)
+================================================================================
+
+Este módulo permite visualizar, analizar y exportar los reportes de pagos
+a docentes basados en las cargas de horas registradas.
+
+Usuarios con rol ADMIN o RH pueden acceder a este módulo.
+
+
+7.1 SELECCIONAR PERIODO
+--------------------------------------------------------------------------------
+
+Antes de visualizar reportes, debe seleccionar el periodo a consultar.
+
+Pasos:
+
+1. En la página de Gestión de Pagos, localizar el selector "Periodo"
+
+2. Hacer clic en el selector desplegable
+
+3. Se mostrarán todos los periodos con su estado:
+   - Nombre del periodo
+   - Estado entre paréntesis (ABIERTO/CERRADO/REPORTADO)
+
+[SUGERENCIA DE CAPTURA: Selector de periodo desplegado mostrando varios
+periodos con sus estados]
+
+4. Seleccionar el periodo deseado
+
+5. El sistema mostrará:
+   - Estado del periodo con un indicador de color
+   - Reporte de pagos para ese periodo
+
+INDICADORES DE ESTADO:
+- Verde: Periodo ABIERTO (aún se pueden cargar horas)
+- Rojo: Periodo CERRADO (no se pueden cargar más horas)
+- Gris: Periodo en otro estado
+
+NOTA: Puede consultar reportes de cualquier periodo, sin importar su estado
+
+
+7.2 FILTRAR POR ÁREA
+--------------------------------------------------------------------------------
+
+Opcionalmente, puede filtrar el reporte por un área específica.
+
+Pasos:
+
+1. Localizar el selector "Área (opcional)"
+
+2. Por defecto muestra "Todas las áreas"
+
+3. Hacer clic en el selector para ver las áreas disponibles
+
+4. Seleccionar un área específica o dejar "Todas las áreas"
+
+[SUGERENCIA DE CAPTURA: Selector de área mostrando las opciones]
+
+5. El reporte se actualizará automáticamente
+
+DIFERENCIAS:
+- "Todas las áreas": Muestra el reporte consolidado de todas las áreas
+- Área específica: Muestra solo las cargas de esa área
+
+NOTA: El filtro por área es útil para revisar cargas específicas o
+generar reportes por departamento
+
+
+7.3 VISUALIZAR REPORTE DE PAGOS
+--------------------------------------------------------------------------------
+
+El reporte muestra un resumen consolidado por docente y área.
+
+La tabla incluye:
+
+COLUMNAS FIJAS:
+- Código: Código interno del docente (6 dígitos)
+- Nombre: Nombre completo del docente
+- RFC: RFC del docente
+
+COLUMNAS DINÁMICAS (una por cada área activa):
+- Nombre del área: Importe total del docente en esa área
+- Si el docente no tiene cargas en un área, muestra "-"
+
+COLUMNA FINAL:
+- Total: Suma de todos los importes del docente en todas las áreas
+- Botón "Detalles": Para ver el desglose completo
+
+[SUGERENCIA DE CAPTURA: Tabla de reporte mostrando varios docentes con
+importes distribuidos en diferentes áreas]
+
+FILA DE TOTALES (al final):
+- Muestra "TOTALES" en la columna de nombre
+- Suma total por cada área
+- Total general de todos los pagos
+
+FORMATO DE MONEDA:
+- Todos los importes se muestran en formato: $X,XXX.XX MXN
+
+ORDENAMIENTO:
+- Los docentes se ordenan alfabéticamente por nombre
+
+
+7.4 VER DETALLES POR DOCENTE
+--------------------------------------------------------------------------------
+
+Puede ver el desglose detallado de las cargas de cada docente.
+
+Pasos:
+
+1. En la tabla de reporte, localizar el docente deseado
+
+2. Hacer clic en el botón "Detalles" en la columna "Acciones"
+
+3. Se abrirá un modal mostrando:
+   - Título: "Detalles de [Nombre del Docente]"
+   - Tabla con todas las cargas del docente
+
+[SUGERENCIA DE CAPTURA: Modal de detalles mostrando las cargas de un docente]
+
+4. La tabla de detalles incluye:
+   - Área: Nombre del área donde se registró la carga
+   - Materia: Nombre de la materia impartida
+   - Horas: Número de horas trabajadas
+   - Costo/Hora: Costo por hora en pesos
+   - Importe: Total calculado (horas × costo/hora)
+
+5. Al final de la tabla:
+   - Fila de total mostrando la suma de todos los importes
+
+6. Hacer clic en "Cerrar" para regresar al reporte principal
+
+UTILIDAD:
+- Verificar el detalle de las cargas de un docente
+- Identificar en qué materias y áreas trabajó
+- Validar los cálculos de importes
+
+
+7.5 EXPORTAR REPORTE A EXCEL
+--------------------------------------------------------------------------------
+
+Puede exportar el reporte completo a un archivo Excel.
+
+Pasos:
+
+1. Asegurarse de tener seleccionado el periodo deseado
+
+2. Hacer clic en el botón "Exportar Excel"
+
+[SUGERENCIA DE CAPTURA: Botón "Exportar Excel" en la barra de herramientas]
+
+3. El sistema generará el archivo Excel
+
+4. El archivo se descargará automáticamente con el nombre:
+   "reporte-pagos-[NOMBRE_PERIODO].xlsx"
+
+5. Abrir el archivo en Excel
+
+CONTENIDO DEL ARCHIVO:
+- Hoja 1: Reporte consolidado (igual a la vista en pantalla)
+  * Columnas de docentes
+  * Columnas por área
+  * Totales
+- Formato profesional con:
+  * Encabezados en negrita
+  * Montos formateados como moneda
+  * Totales resaltados
+
+[SUGERENCIA DE CAPTURA: Archivo Excel exportado abierto mostrando el reporte]
+
+USOS DEL ARCHIVO:
+- Archivo para nómina
+- Respaldo de registros
+- Análisis adicional en Excel
+- Compartir con otras áreas
+
+
+7.6 DESCARGAR REPORTES POR ÁREA
+--------------------------------------------------------------------------------
+
+Además del reporte general, puede descargar reportes organizados por área
+en diferentes formatos.
+
+Pasos:
+
+1. Asegurarse de tener seleccionado el periodo deseado
+
+2. Hacer clic en el botón "Reportes por Área"
+
+3. Se abrirá un modal con el título "Descargar Reportes por Área"
+
+4. El modal muestra dos opciones de formato:
+
+   OPCIÓN 1: Excel con múltiples hojas
+   - Un solo archivo Excel
+   - Cada área en una hoja diferente
+   - Ícono de Excel verde
+   - Ideal para tener todo en un archivo
+
+   OPCIÓN 2: Archivos separados (ZIP)
+   - Archivo comprimido ZIP
+   - Un archivo Excel por cada área
+   - Ícono de archivo comprimido azul
+   - Ideal para distribuir archivos individuales
+
+[SUGERENCIA DE CAPTURA: Modal de "Reportes por Área" mostrando las dos
+opciones de formato con sus íconos y descripciones]
+
+5. Hacer clic en la opción de formato deseada (se resaltará con borde azul)
+
+6. Hacer clic en el botón "Descargar"
+
+7. El sistema generará y descargará el archivo:
+   - Si eligió Excel: "reportes-por-area-[PERIODO].xlsx"
+   - Si eligió ZIP: "reportes-por-area-[PERIODO].zip"
+
+[SUGERENCIA DE CAPTURA: Proceso de descarga mostrando el mensaje de
+"Generando reportes por área..."]
+
+CONTENIDO DE LOS ARCHIVOS:
+
+• Formato Excel con múltiples hojas:
+  - Hoja 1: Área 1 con todas sus cargas
+  - Hoja 2: Área 2 con todas sus cargas
+  - Hoja N: Área N con todas sus cargas
+  - Cada hoja incluye: Docente, Materia, Horas, Costo/Hora, Importe
+
+• Formato ZIP:
+  - reporte-[AREA-1]-[PERIODO].xlsx
+  - reporte-[AREA-2]-[PERIODO].xlsx
+  - reporte-[AREA-N]-[PERIODO].xlsx
+  - Cada archivo con el mismo formato que el Excel
+
+UTILIDAD:
+- Enviar reportes específicos a coordinadores de área
+- Análisis por departamento
+- Distribución de información por área
+- Archivo consolidado o archivos separados según necesidad
+
+
+7.7 CERRAR PERIODO DE PAGOS
+--------------------------------------------------------------------------------
+
+Cuando un periodo está ABIERTO, puede cerrarlo desde este módulo.
+
+Pasos:
+
+1. Seleccionar un periodo en estado ABIERTO
+
+2. Aparecerá el botón "Cerrar Periodo" (rojo con candado)
+
+[SUGERENCIA DE CAPTURA: Botón "Cerrar Periodo" visible cuando hay un
+periodo abierto]
+
+3. Hacer clic en "Cerrar Periodo"
+
+4. Se abrirá un modal de confirmación mostrando:
+   - Advertencia importante
+   - Nombre del periodo a cerrar
+   - Mensaje: "Una vez cerrado, no se podrán realizar más cargas de horas"
+
+[SUGERENCIA DE CAPTURA: Modal de confirmación para cerrar periodo desde
+gestión de pagos]
+
+5. Opciones:
+   - Cancelar: No cierra el periodo
+   - Cerrar Periodo: Confirma el cierre
+
+6. Si confirma:
+   - El periodo cambiará a estado CERRADO
+   - Los coordinadores no podrán cargar más horas
+   - El reporte se actualizará mostrando el nuevo estado
+
+ANTES DE CERRAR UN PERIODO:
+✓ Verificar que todas las áreas hayan cargado sus horas
+✓ Revisar el reporte de pagos
+✓ Exportar el reporte a Excel como respaldo
+✓ Comunicar a los coordinadores
+✓ Validar que los totales sean correctos
+
+¡IMPORTANTE!
+- Esta acción NO se puede deshacer desde este módulo
+- Solo se puede reabrir un periodo desde el módulo de Periodos (si es necesario)
+- Asegúrese de que todo esté correcto antes de cerrar
+
+
+BÚSQUEDA EN EL REPORTE
+--------------------------------------------------------------------------------
+
+Puede buscar docentes o materias específicas en el reporte.
+
+Pasos:
+
+1. Localizar la barra de búsqueda en la parte superior
+
+2. Escribir el término de búsqueda:
+   - Nombre del docente
+   - Nombre de materia (buscará en los detalles)
+
+3. Hacer clic en el botón "Buscar" o presionar Enter
+
+4. El reporte se filtrará mostrando solo los resultados coincidentes
+
+5. Para limpiar la búsqueda:
+   - Borrar el texto
+   - Hacer clic en "Limpiar filtros"
+
+[SUGERENCIA DE CAPTURA: Barra de búsqueda con un ejemplo de filtrado activo]
+
+
+================================================================================
+                    FIN DEL MÓDULO 7
+================================================================================
+
+
+================================================================================
+                    8. SOLUCIÓN DE PROBLEMAS COMUNES
+================================================================================
+
+8.1 PROBLEMAS DE INICIO DE SESIÓN
+--------------------------------------------------------------------------------
+
+PROBLEMA: "Credenciales incorrectas"
+SOLUCIÓN:
+- Verificar que el correo electrónico esté escrito correctamente
+- Verificar que la contraseña sea correcta (distingue mayúsculas/minúsculas)
+- Si olvidó su contraseña, contactar al administrador del sistema
+- Verificar que su usuario esté activo
+
+PROBLEMA: "La sesión ha expirado"
+SOLUCIÓN:
+- Volver a iniciar sesión
+- La sesión expira por seguridad después de inactividad
+- Guardar su trabajo frecuentemente para evitar pérdida de datos
+
+
+8.2 PROBLEMAS CON PERMISOS
+--------------------------------------------------------------------------------
+
+PROBLEMA: "No puedo ver ciertos módulos"
+SOLUCIÓN:
+- Verificar que tenga el rol necesario para ese módulo
+- Contactar al administrador para revisar sus roles asignados
+- Cerrar sesión e iniciar nuevamente si recientemente le asignaron roles
+
+PROBLEMA: "No puedo editar/eliminar registros"
+SOLUCIÓN:
+- Verificar que tenga permisos de edición (ADMIN o RH)
+- Los coordinadores solo tienen acceso de lectura en algunos módulos
+- Contactar a RH si necesita permisos adicionales
+
+
+8.3 PROBLEMAS CON CARGA DE HORAS
+--------------------------------------------------------------------------------
+
+PROBLEMA: "No puedo cargar horas"
+SOLUCIÓN:
+- Verificar que haya un periodo ABIERTO
+- Verificar que tenga un área seleccionada
+- Contactar a RH para que abran un periodo si no hay ninguno activo
+
+PROBLEMA: "No veo mi área en el selector"
+SOLUCIÓN:
+- Verificar que esté asignado como coordinador de esa área
+- Contactar a RH o ADMIN para que le asignen al área
+- Cerrar sesión e iniciar nuevamente
+
+PROBLEMA: "Error al subir archivo de plantilla"
+SOLUCIÓN:
+- Verificar que el archivo sea .xlsx, .xls o .csv
+- No modificar los nombres de las columnas
+- Verificar que no haya filas vacías entre los datos
+- Descargar una plantilla nueva y copiar los datos
+
+PROBLEMA: "Errores en la previsualización"
+SOLUCIÓN:
+- Revisar la tabla de errores en la vista previa
+- Corregir cada error indicado en el archivo
+- Verificar que los códigos internos de docentes existan
+- Verificar que las horas y costos sean números válidos
+- Volver a subir el archivo corregido
+
+
+8.4 PROBLEMAS CON IMPORTACIÓN DE DOCENTES
+--------------------------------------------------------------------------------
+
+PROBLEMA: "Error al importar docentes"
+SOLUCIÓN:
+- Verificar el formato del RFC (debe ser válido)
+- Verificar que los códigos internos sean únicos
+- Revisar la tabla de errores en el resultado
+- Descargar el reporte de errores para más detalles
+
+PROBLEMA: "Docentes duplicados"
+SOLUCIÓN:
+- El sistema actualiza automáticamente si el código interno ya existe
+- Verificar que no haya códigos internos duplicados en el archivo
+- Si necesita crear un docente nuevo, usar un código diferente
+
+
+8.5 PROBLEMAS CON PERIODOS
+--------------------------------------------------------------------------------
+
+PROBLEMA: "No puedo abrir un periodo"
+SOLUCIÓN:
+- Verificar que no haya otro periodo ABIERTO
+- Solo puede haber un periodo abierto a la vez
+- Cerrar el periodo actual antes de abrir otro
+
+PROBLEMA: "Cerré el periodo por error"
+SOLUCIÓN:
+- Contactar al administrador del sistema
+- El periodo puede reabrirse desde el módulo de Periodos
+- Solo usuarios con rol ADMIN o RH pueden reabrir periodos
+
+
+8.6 PROBLEMAS CON REPORTES
+--------------------------------------------------------------------------------
+
+PROBLEMA: "El reporte no muestra datos"
+SOLUCIÓN:
+- Verificar que haya seleccionado un periodo
+- Verificar que el periodo tenga cargas de horas registradas
+- Verificar que el filtro de área no esté excluyendo todos los datos
+
+PROBLEMA: "No puedo exportar a Excel"
+SOLUCIÓN:
+- Verificar que tenga seleccionado un periodo
+- Verificar que su navegador permita descargas
+- Intentar con otro navegador si el problema persiste
+- Verificar que tenga espacio en disco
+
+
+8.7 PROBLEMAS GENERALES
+--------------------------------------------------------------------------------
+
+PROBLEMA: "La página se carga lentamente"
+SOLUCIÓN:
+- Verificar su conexión a internet
+- Cerrar otras pestañas del navegador
+- Limpiar el caché del navegador
+- Actualizar la página (F5)
+
+PROBLEMA: "Los cambios no se guardan"
+SOLUCIÓN:
+- Verificar que haya hecho clic en "Guardar" o "Confirmar"
+- Esperar a que aparezca el mensaje de confirmación
+- Verificar su conexión a internet
+- No cerrar la ventana antes de que se complete la operación
+
+PROBLEMA: "Mensaje de error desconocido"
+SOLUCIÓN:
+- Anotar el mensaje de error completo
+- Tomar una captura de pantalla
+- Contactar al soporte técnico con los detalles
+- Intentar la operación nuevamente
+
+
+8.8 CONTACTO DE SOPORTE
+--------------------------------------------------------------------------------
+
+Si ninguna de las soluciones anteriores resuelve su problema:
+
+1. Contactar al Departamento de Recursos Humanos
+2. Proporcionar la siguiente información:
+   - Su nombre y correo electrónico
+   - Descripción detallada del problema
+   - Pasos que realizó antes del error
+   - Capturas de pantalla del error (si es posible)
+   - Navegador y sistema operativo que utiliza
+
+3. Horario de atención:
+   - Lunes a Viernes: 9:00 AM - 6:00 PM
+   - Respuesta esperada: 24-48 horas hábiles
+
+
+================================================================================
+                    9. GLOSARIO DE TÉRMINOS
+================================================================================
+
+ÁREA
+  División académica o departamento de la universidad. Cada área tiene
+  coordinadores asignados responsables de registrar las cargas de horas
+  de los docentes.
+
+BORRADOR
+  Estado inicial de un periodo recién creado. No permite cargas de horas.
+
+CARGA DE HORAS
+  Registro de las horas trabajadas por un docente en una materia específica
+  durante un periodo académico.
+
+CERRADO
+  Estado de un periodo que ya no permite nuevas cargas de horas pero aún
+  no ha sido reportado.
+
+CÓDIGO INTERNO
+  Número de empleado del docente. Se formatea automáticamente a 6 dígitos
+  con ceros a la izquierda (ejemplo: 000123).
+
+COORDINADOR (COORD)
+  Usuario responsable de registrar las cargas de horas de los docentes en
+  una o más áreas asignadas.
+
+COSTO POR HORA
+  Tarifa en pesos mexicanos que se paga al docente por cada hora trabajada.
+
+DOCENTE
+  Profesor o maestro que imparte clases en la universidad. Cada docente
+  tiene un código interno y RFC únicos.
+
+IMPORTE
+  Cantidad total a pagar, calculada como: horas × costo_por_hora
+
+PAGABLE
+  Indica si una carga de horas debe ser pagada (Sí) o no (No). Las cargas
+  no pagables se registran pero no se incluyen en los cálculos de pago.
+
+PERIODO
+  Intervalo de tiempo durante el cual se registran cargas de horas. Tiene
+  fecha de inicio, fecha de fin y un estado.
+
+PERIODO ACTIVO
+  El único periodo que está en estado ABIERTO en un momento dado. Los
+  coordinadores solo pueden cargar horas en el periodo activo.
+
+PLANTILLA
+  Archivo Excel pre-configurado que facilita la carga masiva de datos.
+  Incluye los encabezados correctos y, en algunos casos, datos pre-llenados.
+
+REPORTADO
+  Estado final de un periodo. Indica que los reportes han sido generados
+  y el periodo está completamente procesado.
+
+RECURSOS HUMANOS (RH)
+  Rol de usuario con permisos para gestionar áreas, docentes, periodos y
+  pagos, pero no puede gestionar usuarios.
+
+RFC
+  Registro Federal de Contribuyentes. Identificador fiscal único de cada
+  docente en México. Formato: 13 caracteres (4 letras, 6 números, 3 caracteres).
+
+ROL
+  Conjunto de permisos que determina qué módulos y funciones puede usar
+  un usuario. Los roles principales son: ADMIN, RH y COORD.
+
+VISTA PREVIA
+  Pantalla que muestra los datos antes de confirmar su registro, permitiendo
+  revisar y detectar errores antes de guardar permanentemente.
+
+
+================================================================================
+                    FIN DEL MANUAL DE USUARIO
+================================================================================
+
+
+NOTAS FINALES:
+
+Este manual cubre todas las funcionalidades del Sistema de Recursos Humanos
+de la Universidad Mondragón México.
+
+Para obtener ayuda adicional o reportar problemas, contacte al Departamento
+de Recursos Humanos.
+
+Versión del manual: 1.0
+Fecha: Noviembre 2024
+
+© Universidad Mondragón México - Todos los derechos reservados

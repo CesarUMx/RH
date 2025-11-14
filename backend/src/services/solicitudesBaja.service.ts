@@ -105,7 +105,7 @@ export async function actualizarEstadoSolicitud(params: ActualizarEstadoSolicitu
  */
 export async function obtenerSolicitudesBaja(filtro?: { estadoBaja?: EstadoBaja }) {
   return prisma.solicitudBaja.findMany({
-    where: filtro,
+    where: filtro ?? {},
     include: {
       docente: true,
       creador: true
