@@ -21,20 +21,33 @@ const storage = multer.diskStorage({
 })
 
 // Filtro para archivos permitidos
-const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const allowedExtensions = ['.csv', '.xlsx', '.xls']
-  const ext = path.extname(file.originalname).toLowerCase()
-  
-  if (allowedExtensions.includes(ext)) {
-    cb(null, true)
+const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  // Verificar si la ruta incluye 'solicitudes' o 'documentos' para permitir PDF
+  if (req.path.includes('solicitud') || req.path.includes('documento')) {
+    const documentExtensions = ['.pdf']
+    const ext = path.extname(file.originalname).toLowerCase()
+    
+    if (documentExtensions.includes(ext)) {
+      cb(null, true)
+    } else {
+      cb(new Error('Solo se permiten archivos PDF para documentos.'))
+    }
   } else {
-    cb(new Error('Formato de archivo no soportado. Use CSV o XLSX.'))
+    // Para otras rutas (como importación), permitir solo archivos CSV/Excel
+    const dataExtensions = ['.csv', '.xlsx', '.xls']
+    const ext = path.extname(file.originalname).toLowerCase()
+    
+    if (dataExtensions.includes(ext)) {
+      cb(null, true)
+    } else {
+      cb(new Error('Formato de archivo no soportado. Use CSV o XLSX.'))
+    }
   }
 }
 
 // Configuración de límites
 const limits = {
-  fileSize: 10 * 1024 * 1024, // 10MB
+  fileSize: 15 * 1024 * 1024, // 15MB
   files: 1
 }
 

@@ -599,12 +599,12 @@ export async function confirmarCarga(req: Request, res: Response) {
         rfc: z.string(),
         materia: z.string().min(1, 'Materia requerida'),
         horas: z.union([
-          z.string().regex(/^\d+$/, 'Horas debe ser un número'),
-          z.number().min(1, 'Horas debe ser mayor a 0')
+          z.string().regex(/^-?\d+$/, 'Horas debe ser un número entero (puede ser negativo)'),
+          z.number().refine(val => val !== 0, { message: 'Horas no puede ser 0' })
         ]),
         costo_hora: z.union([
-          z.string().regex(/^\d+(\.\d+)?$/, 'Costo por hora debe ser un número'),
-          z.number().min(1, 'Costo por hora debe ser mayor a 0')
+          z.string().regex(/^-?\d+(\.\d+)?$/, 'Costo por hora debe ser un número (puede ser negativo)'),
+          z.number().refine(val => val !== 0, { message: 'Costo por hora no puede ser 0' })
         ]),
         pagable: z.union([
           z.string().regex(/^[01]$/, 'Pagable debe ser 0 o 1'),
@@ -744,6 +744,12 @@ export async function confirmarCarga(req: Request, res: Response) {
         let costoHora = typeof registro.costo_hora === 'string' ? parseFloat(registro.costo_hora) : registro.costo_hora
         if (!pagable) {
           costoHora = 0 // Forzar costo_hora a 0 cuando pagable es 0
+        }
+
+        // Validar que no sean ambos negativos (daría importe positivo, lo cual no tiene sentido)
+        if (horas < 0 && costoHora < 0) {
+          errores++
+          continue
         }
 
         // Verificar si ya existe una carga para este docente y materia
@@ -1007,12 +1013,12 @@ export async function procesarIndividual(req: Request, res: Response) {
         rfc: z.string().min(1, 'RFC requerido'),
         materia: z.string().min(1, 'Materia requerida'),
         horas: z.union([
-          z.string().regex(/^\d+$/, 'Horas debe ser un número'),
-          z.number().min(1, 'Horas debe ser mayor a 0')
+          z.string().regex(/^-?\d+$/, 'Horas debe ser un número entero (puede ser negativo)'),
+          z.number().refine(val => val !== 0, { message: 'Horas no puede ser 0' })
         ]),
         costo_hora: z.union([
-          z.string().regex(/^\d+(\.\d+)?$/, 'Costo por hora debe ser un número'),
-          z.number().min(0, 'Costo por hora no puede ser negativo')
+          z.string().regex(/^-?\d+(\.\d+)?$/, 'Costo por hora debe ser un número (puede ser negativo)'),
+          z.number().refine(val => val !== 0, { message: 'Costo por hora no puede ser 0' })
         ]),
         pagable: z.union([
           z.string().regex(/^[01]$/, 'Pagable debe ser 0 o 1'),
@@ -1190,8 +1196,8 @@ function validateRowData(row: any, lineNumber: number) {
   // Asegurar que horas sea un número
   const horasNum = typeof horas === 'number' ? horas : Number(String(horas).trim().replace(/\s+/g, ''));
   
-  if (isNaN(horasNum) || horasNum <= 0) {
-    throw new Error(`Las horas deben ser un número mayor a 0`)
+  if (isNaN(horasNum) || horasNum === 0) {
+    throw new Error(`Las horas deben ser un número distinto de 0 (puede ser negativo para ajustes)`)
   }
   
   // Validar costo por hora - Simplificado
@@ -1203,8 +1209,13 @@ function validateRowData(row: any, lineNumber: number) {
   // Asegurar que costo_hora sea un número
   const costoNum = typeof costoHora === 'number' ? costoHora : Number(String(costoHora).trim().replace(/\s+/g, ''));
   
-  if (isNaN(costoNum) || costoNum <= 0) {
-    throw new Error(`El costo por hora debe ser un número mayor a 0`)
+  if (isNaN(costoNum) || costoNum === 0) {
+    throw new Error(`El costo por hora debe ser un número distinto de 0 (puede ser negativo para descuentos)`)
+  }
+  
+  // Validar que no sean ambos negativos
+  if (horasNum < 0 && costoNum < 0) {
+    throw new Error(`Las horas y el costo por hora no pueden ser ambos negativos`)
   }
   
   // Validar pagable (0 o 1) - Simplificado
@@ -1468,18 +1479,26 @@ export async function updateCargaHora(req: Request, res: Response) {
     }
     
     const horasNum = parseFloat(horas)
-    if (isNaN(horasNum) || horasNum <= 0) {
+    if (isNaN(horasNum) || horasNum === 0) {
       return res.status(400).json({ 
         error: 'Datos inválidos', 
-        mensaje: 'Las horas deben ser un número mayor a 0' 
+        mensaje: 'Las horas deben ser un número distinto de 0 (puede ser negativo para ajustes)' 
       })
     }
     
     const costoHoraNum = parseFloat(costo_hora)
-    if (isNaN(costoHoraNum) || costoHoraNum < 0) {
+    if (isNaN(costoHoraNum) || costoHoraNum === 0) {
       return res.status(400).json({ 
         error: 'Datos inválidos', 
-        mensaje: 'El costo por hora debe ser un número no negativo' 
+        mensaje: 'El costo por hora debe ser un número distinto de 0 (puede ser negativo para descuentos)' 
+      })
+    }
+    
+    // Validar que no sean ambos negativos
+    if (horasNum < 0 && costoHoraNum < 0) {
+      return res.status(400).json({ 
+        error: 'Datos inválidos', 
+        mensaje: 'Las horas y el costo por hora no pueden ser ambos negativos' 
       })
     }
     

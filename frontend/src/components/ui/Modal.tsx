@@ -46,14 +46,14 @@ export const Modal = ({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 overflow-y-auto">
       <div
         className="fixed inset-0 bg-black opacity-50"
         onClick={onClose}
         aria-hidden="true"
       />
       <div
-        className={`${sizeClasses[size]} w-full bg-white rounded-lg shadow-lg z-50 overflow-hidden`}
+        className={`${sizeClasses[size]} w-full bg-white rounded-lg shadow-lg z-50 overflow-hidden my-8 max-h-[90vh] flex flex-col`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
@@ -70,7 +70,7 @@ export const Modal = ({
             <FaTimes />
           </button>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="p-6 overflow-y-auto">{children}</div>
       </div>
     </div>,
     document.body

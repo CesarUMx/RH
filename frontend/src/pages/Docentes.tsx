@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { FaEdit, FaTrash, FaPlus, FaCheck, FaTimes, FaUpload, FaDownload, FaSearch } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaCheck, FaTimes, FaUpload, FaDownload, FaSearch, FaFileUpload, FaUserMinus } from 'react-icons/fa';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useAuth } from '../context/AuthContext';
 import { useArea } from '../context/AreaContext';
@@ -15,6 +15,8 @@ import { Input } from '../components/ui/Input';
 import { FileUpload } from '../components/ui/FileUpload';
 
 import { docentesService } from '../services/docentes.service';
+import { AltaDocenteModal } from '../components/solicitudes/AltaDocenteModal';
+import { BajaDocenteModal } from '../components/docentes/BajaDocenteModal';
 import type {
   Docente,
   CreateDocenteDto,
@@ -70,6 +72,8 @@ export const Docentes = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isAltaDocenteModalOpen, setIsAltaDocenteModalOpen] = useState(false);
+  const [isBajaDocenteModalOpen, setIsBajaDocenteModalOpen] = useState(false);
   const [selectedDocente, setSelectedDocente] = useState<Docente | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -226,6 +230,12 @@ export const Docentes = () => {
     setIsDeleteModalOpen(true);
   };
 
+  // Función para abrir modal de baja
+  const handleBaja = (docente: Docente) => {
+    setSelectedDocente(docente);
+    setIsBajaDocenteModalOpen(true);
+  };
+
   // Función para manejar la creación de docente
   const handleCreateSubmit = (data: CreateDocenteForm) => {
     // Formatear el código interno a 6 dígitos
@@ -310,8 +320,31 @@ export const Docentes = () => {
     }),
   ];
   
-  // Solo mostrar columna de acciones para ADMIN y RH
-  if (!hasRole('COORD') || hasRole(['ADMIN', 'RH'])) {
+  // Columna de acciones según el rol
+  if (hasRole('COORD') && !hasRole(['ADMIN', 'RH'])) {
+    // Para coordinadores: solo botón de baja
+    columns.push(
+      columnHelper.display({
+        id: 'acciones',
+        header: 'Acciones',
+        cell: (info) => (
+          <div className="flex space-x-2">
+            {info.row.original.activo && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleBaja(info.row.original)}
+                title="Solicitar baja"
+              >
+                <FaUserMinus className="text-red-500" />
+              </Button>
+            )}
+          </div>
+        ),
+      })
+    );
+  } else if (hasRole(['ADMIN', 'RH'])) {
+    // Para admin y RH: botones de editar, eliminar y baja
     columns.push(
       columnHelper.display({
         id: 'acciones',
@@ -322,6 +355,7 @@ export const Docentes = () => {
               variant="outline"
               size="sm"
               onClick={() => handleEdit(info.row.original)}
+              title="Editar"
             >
               <FaEdit className="text-primary" />
             </Button>
@@ -329,9 +363,20 @@ export const Docentes = () => {
               variant="outline"
               size="sm"
               onClick={() => handleDelete(info.row.original)}
+              title="Eliminar"
             >
               <FaTrash className="text-red-500" />
             </Button>
+            {info.row.original.activo && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleBaja(info.row.original)}
+                title="Solicitar baja"
+              >
+                <FaUserMinus className="text-red-500" />
+              </Button>
+            )}
           </div>
         ),
       })
@@ -346,8 +391,19 @@ export const Docentes = () => {
             <h1 className="text-2xl font-bold text-gray-800">Gestión de Docentes</h1>
           </div>
           
+          {/* Mostrar botones según el rol */}
+          {hasRole('COORD') && !hasRole(['ADMIN', 'RH']) && (
+            <Button
+              onClick={() => setIsAltaDocenteModalOpen(true)}
+              className="flex items-center"
+              variant="primary"
+            >
+              <FaFileUpload className="mr-2" /> Alta de Docente
+            </Button>
+          )}
+          
           {/* Mostrar botones de acción solo para ADMIN y RH */}
-          {(!hasRole('COORD') || hasRole(['ADMIN', 'RH'])) && (
+          {hasRole(['ADMIN', 'RH']) && (
             <div className="flex space-x-2">
               <Button
                 onClick={() => setIsImportModalOpen(true)}
@@ -757,6 +813,26 @@ export const Docentes = () => {
             )}
           </div>
         </Modal>
+        
+        {/* Modal para alta de docente */}
+        <AltaDocenteModal
+          isOpen={isAltaDocenteModalOpen}
+          onClose={() => setIsAltaDocenteModalOpen(false)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['docentes'] });
+          }}
+        />
+        
+        {/* Modal para baja de docente */}
+        <BajaDocenteModal
+          isOpen={isBajaDocenteModalOpen}
+          onClose={() => setIsBajaDocenteModalOpen(false)}
+          docente={selectedDocente}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['docentes'] });
+            toast.success('Solicitud de baja enviada correctamente');
+          }}
+        />
       </div>
     </MainLayout>
   );

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaUsers, FaBuilding, FaUserTie, FaBars, FaTimes, FaSignOutAlt, FaUser, FaCalendarAlt, FaClock, FaFileInvoiceDollar } from 'react-icons/fa';
+import { FaUsers, FaBuilding, FaUserTie, FaBars, FaTimes, FaSignOutAlt, FaUser, FaCalendarAlt, FaClock, FaFileInvoiceDollar, FaClipboardList } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { AreaSelector } from '../components/AreaSelector';
 import { PeriodoInfo } from '../components/PeriodoInfo';
@@ -47,6 +47,12 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       path: '/docentes',
       icon: <FaUserTie className="mr-3 h-5 w-5" />,
       roles: ['ADMIN', 'RH', 'COORD'],
+    },
+    {
+      name: 'Solicitudes Pendientes',
+      path: '/solicitudes-pendientes',
+      icon: <FaClipboardList className="mr-3 h-5 w-5" />,
+      roles: ['ADMIN', 'RH'],
     },
     {
       name: 'Periodos',

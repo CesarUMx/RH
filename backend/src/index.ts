@@ -10,6 +10,7 @@ import { docentesRouter } from './modules/docentes/router'
 import { periodosRouter } from './modules/periodos/router'
 import { cargaHorasRouter } from './modules/carga-horas/router'
 import { pagosRouter } from './modules/pagos/router'
+import { solicitudesRouter } from './modules/solicitudes/router'
 import { requireAuth } from './middlewares/auth'
 import { PrismaClient } from '@prisma/client'
 
@@ -48,6 +49,7 @@ app.use('/api/docentes', docentesRouter)
 app.use('/api/periodos', periodosRouter)
 app.use('/api/carga-horas', cargaHorasRouter)
 app.use('/api/pagos', pagosRouter)
+app.use('/api/solicitudes', solicitudesRouter)
 
 // Ruta de salud
 app.get('/health', (_, res) => {
