@@ -20,6 +20,10 @@ const usuarioUpdateSchema = z.object({
   activo: z.boolean().optional()
 })
 
+const passwordUpdateSchema = z.object({
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres')
+})
+
 // GET /usuarios - Listar todos los usuarios con sus roles
 export async function listarUsuarios(_req: Request, res: Response) {
   try {
@@ -315,5 +319,54 @@ export async function listarRoles(_req: Request, res: Response) {
   } catch (error) {
     console.error('Error al listar roles:', error)
     return res.status(500).json({ error: 'Error al obtener roles' })
+  }
+}
+
+// PATCH /usuarios/:id/password - Actualizar contraseña de un usuario (solo ADMIN)
+export async function actualizarPassword(req: Request, res: Response) {
+  try {
+    const { id } = req.params
+    if (!id) {
+      return res.status(400).json({ error: 'ID de usuario requerido' })
+    }
+    const userId = parseInt(id)
+
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'ID de usuario inválido' })
+    }
+
+    // Validar datos de entrada
+    const validacion = passwordUpdateSchema.safeParse(req.body)
+    if (!validacion.success) {
+      return res.status(400).json({ 
+        error: 'Datos inválidos', 
+        detalles: validacion.error.format() 
+      })
+    }
+
+    const { password } = validacion.data
+
+    // Verificar que el usuario exista
+    const usuarioExistente = await prisma.user.findUnique({
+      where: { id: userId }
+    })
+
+    if (!usuarioExistente) {
+      return res.status(404).json({ error: 'Usuario no encontrado' })
+    }
+
+    // Hashear la nueva contraseña
+    const hash = await bcrypt.hash(password, 10)
+
+    // Actualizar solo la contraseña
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hash }
+    })
+
+    return res.json({ mensaje: 'Contraseña actualizada correctamente' })
+  } catch (error) {
+    console.error('Error al actualizar contraseña:', error)
+    return res.status(500).json({ error: 'Error al actualizar contraseña' })
   }
 }

@@ -4,7 +4,8 @@ import {
   crearUsuario, 
   actualizarUsuario, 
   eliminarUsuario, 
-  listarRoles 
+  listarRoles,
+  actualizarPassword
 } from './controller'
 import { requireAuth, requireRole } from '../../middlewares/auth'
 
@@ -18,4 +19,5 @@ usuariosRouter.get('/roles', requireAuth, requireRole(['ADMIN', 'RH']), listarRo
 usuariosRouter.get('/', requireAuth, requireRole(['ADMIN', 'RH']), listarUsuarios)
 usuariosRouter.post('/', requireAuth, requireRole(['ADMIN']), crearUsuario)
 usuariosRouter.put('/:id', requireAuth, requireRole(['ADMIN']), actualizarUsuario)
+usuariosRouter.patch('/:id/password', requireAuth, requireRole(['ADMIN']), actualizarPassword)
 usuariosRouter.delete('/:id', requireAuth, requireRole(['ADMIN']), eliminarUsuario)

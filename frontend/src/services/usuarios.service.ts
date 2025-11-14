@@ -44,6 +44,10 @@ export const usuariosService = {
     return response.data;
   },
 
+  updatePassword: async (id: number, password: string): Promise<void> => {
+    await api.patch(`/usuarios/${id}/password`, { password });
+  },
+
   delete: async (id: number): Promise<void> => {
     await api.delete(`/usuarios/${id}`);
   },
