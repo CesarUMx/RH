@@ -173,8 +173,7 @@ export async function generarPlantilla(req: Request, res: Response) {
         rfc: 'XAXX010101000',
         materia: 'MATERIA EJEMPLO',
         horas: '10',
-        costo_hora: '100',
-        pagable: '1'
+        costo_hora: '100'
       }];
     } else {
       data = docentes.map(docente => ({
@@ -183,8 +182,7 @@ export async function generarPlantilla(req: Request, res: Response) {
         rfc: docente.rfc,
         materia: '', // Campo a completar por el usuario
         horas: '', // Campo a completar por el usuario
-        costo_hora: '', // Campo a completar por el usuario
-        pagable: '1' // Por defecto es pagable (1)
+        costo_hora: '' // Campo a completar por el usuario
       }));
     }
     
@@ -195,8 +193,7 @@ export async function generarPlantilla(req: Request, res: Response) {
       { internal: 'rfc', display: 'RFC' },
       { internal: 'materia', display: 'Materia' },
       { internal: 'horas', display: 'Horas' },
-      { internal: 'costo_hora', display: 'Costo por Hora' },
-      { internal: 'pagable', display: 'Pagable (1=Sí, 0=No)' }
+      { internal: 'costo_hora', display: 'Costo por Hora' }
     ];
     
     // Guardar el mapeo en una variable global para usarlo en el procesamiento
@@ -221,8 +218,7 @@ export async function generarPlantilla(req: Request, res: Response) {
       { wch: 15 }, // RFC
       { wch: 40 }, // Materia
       { wch: 10 }, // Horas
-      { wch: 15 }, // Costo por Hora
-      { wch: 20 }  // Pagable
+      { wch: 15 }  // Costo por Hora
     ];
     worksheet['!cols'] = wscols;
     
@@ -442,8 +438,7 @@ export async function procesarArchivo(req: Request, res: Response) {
             { internal: 'rfc', display: 'RFC' },
             { internal: 'materia', display: 'Materia' },
             { internal: 'horas', display: 'Horas' },
-            { internal: 'costo_hora', display: 'Costo por Hora' },
-            { internal: 'pagable', display: 'Pagable (1=Sí, 0=No)' }
+            { internal: 'costo_hora', display: 'Costo por Hora' }
           ];
           
           // Convertir a JSON usando los encabezados descriptivos
@@ -605,11 +600,6 @@ export async function confirmarCarga(req: Request, res: Response) {
         costo_hora: z.union([
           z.string().regex(/^-?\d+(\.\d+)?$/, 'Costo por hora debe ser un número (puede ser negativo)'),
           z.number().refine(val => val !== 0, { message: 'Costo por hora no puede ser 0' })
-        ]),
-        pagable: z.union([
-          z.string().regex(/^[01]$/, 'Pagable debe ser 0 o 1'),
-          z.number().min(0).max(1),
-          z.boolean()
         ])
       })),
       periodoId: z.number(),
@@ -738,13 +728,10 @@ export async function confirmarCarga(req: Request, res: Response) {
 
         // Convertir valores a números
         const horas = typeof registro.horas === 'string' ? parseInt(registro.horas) : registro.horas
-        const pagable = typeof registro.pagable === 'string' ? registro.pagable === '1' : !!registro.pagable
+        const pagable = true // Siempre pagable por defecto
         
-        // Si pagable es 0, el costo por hora debe ser 0 (importe = 0)
-        let costoHora = typeof registro.costo_hora === 'string' ? parseFloat(registro.costo_hora) : registro.costo_hora
-        if (!pagable) {
-          costoHora = 0 // Forzar costo_hora a 0 cuando pagable es 0
-        }
+        // Obtener costo por hora
+        const costoHora = typeof registro.costo_hora === 'string' ? parseFloat(registro.costo_hora) : registro.costo_hora
 
         // Validar que no sean ambos negativos (daría importe positivo, lo cual no tiene sentido)
         if (horas < 0 && costoHora < 0) {
@@ -1019,11 +1006,6 @@ export async function procesarIndividual(req: Request, res: Response) {
         costo_hora: z.union([
           z.string().regex(/^-?\d+(\.\d+)?$/, 'Costo por hora debe ser un número (puede ser negativo)'),
           z.number().refine(val => val !== 0, { message: 'Costo por hora no puede ser 0' })
-        ]),
-        pagable: z.union([
-          z.string().regex(/^[01]$/, 'Pagable debe ser 0 o 1'),
-          z.number().min(0).max(1),
-          z.boolean()
         ])
       }),
       periodoId: z.number(),
@@ -1125,7 +1107,7 @@ export async function procesarIndividual(req: Request, res: Response) {
     // Convertir valores a números
     const horas = typeof dato.horas === 'string' ? parseInt(dato.horas) : dato.horas
     const costoHora = typeof dato.costo_hora === 'string' ? parseFloat(dato.costo_hora) : dato.costo_hora
-    const pagable = typeof dato.pagable === 'string' ? dato.pagable === '1' : !!dato.pagable
+    const pagable = true // Siempre pagable por defecto
 
     // Verificar si ya existe una carga para este docente, materia, periodo y área
     const cargaExistente = await prisma.cargaHoras.findFirst({
@@ -1145,7 +1127,7 @@ export async function procesarIndividual(req: Request, res: Response) {
       materia: dato.materia,
       horas: horas,
       costo_hora: costoHora,
-      pagable: pagable ? 1 : 0,
+      pagable: 1,
       importe: horas * costoHora,
       existe: !!cargaExistente
     }]
