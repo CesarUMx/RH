@@ -44,8 +44,7 @@ export const CargaHoras = () => {
     rfc: '',
     materia: '',
     horas: 0,
-    costo_hora: 0,
-    pagable: true
+    costo_hora: 0
   });
 
   // Consulta para obtener el periodo activo
@@ -316,8 +315,7 @@ export const CargaHoras = () => {
       rfc: '',
       materia: '',
       horas: 0,
-      costo_hora: 0,
-      pagable: true
+      costo_hora: 0
     });
     setDocenteSeleccionado(false);
     setSugerenciasDocentes([]);
@@ -491,11 +489,11 @@ export const CargaHoras = () => {
     try {
       setIsUploading(true);
 
-      // Formatear el código interno
+      // Formatear el código interno y establecer pagable siempre como 1
       const formattedData = {
         ...individualFormData,
         codigo_interno: formatCodigoInterno(individualFormData.codigo_interno),
-        pagable: individualFormData.pagable ? 1 : 0 // Convertir booleano a 0/1 para el backend
+        pagable: 1 // Siempre pagable por defecto
       };
 
       // Llamar al servicio para procesar la carga individual
@@ -653,7 +651,6 @@ export const CargaHoras = () => {
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horas</th>
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Costo/Hora</th>
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Importe</th>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pagable</th>
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                           </tr>
                         </thead>
@@ -670,13 +667,6 @@ export const CargaHoras = () => {
                                 <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{item.horas || 0}</td>
                                 <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">${item.costo_hora || 0}</td>
                                 <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{formatCurrency((item.horas || 0) * (item.costo_hora || 0))}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                                  {item.pagable ? (
-                                    <FaCheck className="text-green-500" />
-                                  ) : (
-                                    <FaTimes className="text-red-500" />
-                                  )}
-                                </td>
                                 <td className="px-3 py-2 text-sm">
                                   {tieneError ? (
                                     <div className="flex items-start text-red-600">
@@ -841,11 +831,6 @@ export const CargaHoras = () => {
                             header: "Importe",
                             accessorFn: (row: any) => row.importe || row.horas * row.costoHora,
                             cell: (info: any) => formatCurrency(info.getValue())
-                          },
-                          {
-                            header: "Pagable",
-                            accessorKey: "pagable",
-                            cell: (info: any) => info.getValue() ? 'Sí' : 'No'
                           },
                           {
                             header: "Acciones",
@@ -1053,19 +1038,6 @@ export const CargaHoras = () => {
                   />
                 </div>
 
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="pagable"
-                    name="pagable"
-                    checked={individualFormData.pagable}
-                    onChange={handleIndividualFormChange}
-                    className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                  />
-                  <label htmlFor="pagable" className="ml-2 block text-sm text-gray-700">
-                    Pagable
-                  </label>
-                </div>
 
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button
