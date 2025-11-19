@@ -95,7 +95,13 @@ export const Home = () => {
                 <div className="p-3 bg-green-50 border border-green-200 rounded-md">
                   <p className="font-medium text-green-800">Periodo: {activePeriodo.nombre}</p>
                   <p className="text-sm text-green-600 mt-1">
-                    Del {new Date(activePeriodo.fechaInicio).toLocaleDateString('es-ES')} al {new Date(activePeriodo.fechaFin).toLocaleDateString('es-ES')}
+                    Del {(() => {
+                      const [year, month, day] = activePeriodo.fechaInicio.split('T')[0].split('-');
+                      return `${day}/${month}/${year}`;
+                    })()} al {(() => {
+                      const [year, month, day] = activePeriodo.fechaFin.split('T')[0].split('-');
+                      return `${day}/${month}/${year}`;
+                    })()}
                   </p>
                 </div>
               ) : (

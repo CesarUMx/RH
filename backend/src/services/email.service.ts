@@ -68,7 +68,7 @@ export async function sendEmail({ to, subject, html, from }: SendEmailParams): P
     
     // Enviar el correo
     const info = await transporter.sendMail({
-      from: from || `Universidad Mexicana <${env.email.user || 'noreply@example.com'}>`,
+      from: from || `Universidad Mondragón México <${env.email.user || 'noreply@example.com'}>`,
       to,
       subject,
       html,
@@ -112,16 +112,16 @@ export const emailTemplates = {
   solicitudAprobada: (nombreDocente: string): string => {
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-        <h2 style="color: #2c3e50; text-align: center;">Universidad Mexicana</h2>
+        <h2 style="color: #2c3e50; text-align: center;">Universidad Mondragón México</h2>
         <h3 style="color: #3498db;">Solicitud de Alta Aprobada</h3>
         <p>Estimado(a) Coordinador(a),</p>
         <p>Le informamos que su solicitud de alta para el docente <strong>${nombreDocente}</strong> ha sido <strong style="color: #27ae60;">APROBADA</strong> por el departamento de Recursos Humanos.</p>
-        <p><strong>El docente ya se encuentra registrado en el sistema</strong> y está listo para ser asignado a cursos.</p>
-        <p>Puede acceder a la información del docente desde el módulo de Docentes en el sistema.</p>
+        <p>El departamento de Recursos Humanos procederá con el registro del docente en el sistema.</p>
+        <p>Una vez completado el proceso, el docente estará disponible para ser asignado a cursos desde el módulo de Docentes.</p>
         <p>Si tiene alguna pregunta, no dude en contactar al departamento de Recursos Humanos.</p>
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #7f8c8d; font-size: 12px;">
           <p>Este es un correo automático, por favor no responda a este mensaje.</p>
-          <p>Universidad Mexicana &copy; ${new Date().getFullYear()}</p>
+          <p>Universidad Mondragón México &copy; ${new Date().getFullYear()}</p>
         </div>
       </div>
     `;
@@ -131,7 +131,7 @@ export const emailTemplates = {
   solicitudRechazada: (nombreDocente: string, motivo: string): string => {
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-        <h2 style="color: #2c3e50; text-align: center;">Universidad Mexicana</h2>
+        <h2 style="color: #2c3e50; text-align: center;">Universidad Mondragón México</h2>
         <h3 style="color: #e74c3c;">Solicitud de Alta Rechazada</h3>
         <p>Estimado(a) Coordinador(a),</p>
         <p>Lamentamos informarle que su solicitud de alta para el docente <strong>${nombreDocente}</strong> ha sido <strong style="color: #e74c3c;">RECHAZADA</strong> por el departamento de Recursos Humanos.</p>
@@ -143,7 +143,7 @@ export const emailTemplates = {
         <p>Si tiene alguna pregunta o requiere asistencia, por favor contacte al departamento de Recursos Humanos.</p>
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #7f8c8d; font-size: 12px;">
           <p>Este es un correo automático, por favor no responda a este mensaje.</p>
-          <p>Universidad Mexicana &copy; ${new Date().getFullYear()}</p>
+          <p>Universidad Mondragón México &copy; ${new Date().getFullYear()}</p>
         </div>
       </div>
     `;
@@ -153,7 +153,7 @@ export const emailTemplates = {
   solicitudBaja: (nombreDocente: string, nombreCoordinador: string, motivoBaja: string): string => {
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-        <h2 style="color: #2c3e50; text-align: center;">Universidad Mexicana</h2>
+        <h2 style="color: #2c3e50; text-align: center;">Universidad Mondragón México</h2>
         <h3 style="color: #e74c3c;">Solicitud de Baja de Docente</h3>
         <p>Estimado(a) Departamento de Recursos Humanos,</p>
         <p>Se ha registrado una solicitud de baja para el docente <strong>${nombreDocente}</strong>.</p>
@@ -166,7 +166,7 @@ export const emailTemplates = {
         <p>Por favor, procese esta solicitud según los procedimientos establecidos.</p>
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #7f8c8d; font-size: 12px;">
           <p>Este es un correo automático, por favor no responda a este mensaje.</p>
-          <p>Universidad Mexicana &copy; ${new Date().getFullYear()}</p>
+          <p>Universidad Mondragón México &copy; ${new Date().getFullYear()}</p>
         </div>
       </div>
     `;

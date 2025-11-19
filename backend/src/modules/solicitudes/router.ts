@@ -1,4 +1,4 @@
-import { Router } from 'express'
+import { Router, Request, Response, NextFunction } from 'express'
 import { 
   crearSolicitudAlta,
   listarSolicitudes,
@@ -13,8 +13,24 @@ import {
 } from './solicitudesBaja.controller'
 import { requireAuth, requireRole } from '../../middlewares/auth'
 import { upload } from '../../middlewares/upload'
+import multer from 'multer'
 
 export const solicitudesRouter = Router()
+
+// Middleware para manejar errores de multer
+const handleMulterError = (err: any, req: Request, res: Response, next: NextFunction) => {
+  if (err instanceof multer.MulterError) {
+    // Errores específicos de multer
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'El archivo excede el tamaño máximo permitido de 10MB' })
+    }
+    return res.status(400).json({ error: `Error al subir archivo: ${err.message}` })
+  } else if (err) {
+    // Otros errores (como los del fileFilter)
+    return res.status(400).json({ error: err.message || 'Error al subir archivo' })
+  }
+  next()
+}
 
 // Crear solicitud de alta (COORD)
 solicitudesRouter.post(
@@ -46,6 +62,7 @@ solicitudesRouter.post(
   requireAuth,
   requireRole(['ADMIN', 'RH', 'COORD']),
   upload.single('documento'),
+  handleMulterError,
   subirDocumentoSolicitud
 )
 

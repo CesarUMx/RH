@@ -926,6 +926,12 @@ export async function obtenerCargas(req: Request, res: Response) {
             nombre: true,
             rfc: true
           }
+        },
+        creadoPor: {
+          select: {
+            id: true,
+            nombre: true
+          }
         }
       },
       orderBy: [
@@ -1597,6 +1603,14 @@ export async function deleteCargaHora(req: Request, res: Response) {
       return res.status(403).json({ 
         error: 'Acceso denegado', 
         mensaje: 'No eres coordinador del área de esta carga' 
+      })
+    }
+
+    // Verificar que el usuario sea quien creó la carga
+    if (carga.creadoPorId !== user.id) {
+      return res.status(403).json({ 
+        error: 'Acceso denegado', 
+        mensaje: 'Solo puedes eliminar las cargas que tú creaste' 
       })
     }
 
