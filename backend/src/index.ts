@@ -13,6 +13,7 @@ import { pagosRouter } from './modules/pagos/router'
 import { solicitudesRouter } from './modules/solicitudes/router'
 import { requireAuth } from './middlewares/auth'
 import { PrismaClient } from '@prisma/client'
+import { inicializarCronJobs } from './services/cron.service'
 
 // Crear aplicación Express
 const app = express()
@@ -71,4 +72,7 @@ const PORT = env.server.port
 app.listen(PORT, () => {
     console.log(`✅ Servidor iniciado en puerto ${PORT}`)
     console.log(`🌐 Modo: ${env.server.nodeEnv}`)
+    
+    // Inicializar tareas programadas (Cron Jobs)
+    inicializarCronJobs()
 })
