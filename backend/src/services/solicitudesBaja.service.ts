@@ -124,7 +124,7 @@ async function enviarCorreoBaja(solicitud: any) {
   
   await sendEmail({
     to: correoRH,
-    subject: 'Solicitud de Baja de Docente - Universidad Mexicana',
+    subject: 'Solicitud de Baja de Docente - Universidad Mondragón México',
     html: emailTemplates.solicitudBaja(
       solicitud.docente.nombre,
       solicitud.creador.nombre,

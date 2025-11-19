@@ -19,7 +19,7 @@ import { FaExclamationTriangle } from 'react-icons/fa';
 
 export const CargaHoras = () => {
   const { selectedArea } = useArea();
-  const { hasRole } = useAuth();
+  const { hasRole, user } = useAuth();
 
   // Estado para el modal de confirmación de eliminación
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -834,17 +834,29 @@ export const CargaHoras = () => {
                           },
                           {
                             header: "Acciones",
-                            cell: (info: any) => (
-                              <div className="flex space-x-2 justify-center">
-                                <button
-                                  onClick={() => handleDeleteClick(info.row.original.id)}
-                                  className="text-red-500 hover:text-red-700"
-                                  title="Eliminar carga"
-                                >
-                                  <FaTrash />
-                                </button>
-                              </div>
-                            )
+                            cell: (info: any) => {
+                              const carga = info.row.original;
+                              // Solo mostrar el botón de eliminar si el usuario actual es quien creó la carga
+                              const puedeEliminar = user && carga.creadoPor && carga.creadoPor.id === user.id;
+                              
+                              return (
+                                <div className="flex space-x-2 justify-center">
+                                  {puedeEliminar ? (
+                                    <button
+                                      onClick={() => handleDeleteClick(carga.id)}
+                                      className="text-red-500 hover:text-red-700"
+                                      title="Eliminar carga"
+                                    >
+                                      <FaTrash />
+                                    </button>
+                                  ) : (
+                                    <span className="text-gray-400" title="Solo puedes eliminar las cargas que tú creaste">
+                                      <FaTrash />
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            }
                           }
                         ]}
                         data={cargasData.data || []}

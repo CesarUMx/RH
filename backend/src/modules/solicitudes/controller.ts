@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import * as fs from 'fs'
 import * as path from 'path'
+import sharp from 'sharp'
 import { sendEmail, emailTemplates } from '../../services/email.service'
 
 // Reiniciar el cliente de Prisma para asegurar que esté sincronizado con el esquema actualizado
@@ -231,16 +232,45 @@ export async function subirDocumentoSolicitud(req: Request, res: Response) {
     
     // Generar nombre de archivo único
     const timestamp = new Date().getTime()
-    const fileExtension = path.extname(req.file.originalname)
-    const fileName = `${tipo}_${timestamp}${fileExtension}`
-    const filePath = path.join(uploadsDir, fileName)
+    const fileExtension = path.extname(req.file.originalname).toLowerCase()
     
-    // Mover el archivo a la ubicación final
-    fs.renameSync(req.file.path, filePath)
+    // Determinar si es una imagen que debe convertirse a WebP
+    const imageExtensions = ['.jpg', '.jpeg', '.png']
+    const isImage = imageExtensions.includes(fileExtension)
+    
+    let fileName: string
+    let filePath: string
+    let relativePath: string
+    
+    if (isImage) {
+      // Convertir imagen a WebP
+      fileName = `${tipo}_${timestamp}.webp`
+      filePath = path.join(uploadsDir, fileName)
+      
+      try {
+        await sharp(req.file.path)
+          .webp({ quality: 90 }) // Calidad 90 para mantener buena calidad sin perder mucho peso
+          .toFile(filePath)
+        
+        // Eliminar el archivo temporal original
+        fs.unlinkSync(req.file.path)
+      } catch (conversionError) {
+        console.error('Error al convertir imagen a WebP:', conversionError)
+        // Si falla la conversión, usar el archivo original
+        fileName = `${tipo}_${timestamp}${fileExtension}`
+        filePath = path.join(uploadsDir, fileName)
+        fs.renameSync(req.file.path, filePath)
+      }
+    } else {
+      // Para PDFs, solo mover el archivo
+      fileName = `${tipo}_${timestamp}${fileExtension}`
+      filePath = path.join(uploadsDir, fileName)
+      fs.renameSync(req.file.path, filePath)
+    }
     
     // Ruta relativa para acceder al archivo
     // Usamos una ruta que comienza con /uploads para que sea accesible desde el frontend
-    const relativePath = `/uploads/solicitudes/${solicitudId}/${fileName}`
+    relativePath = `/uploads/solicitudes/${solicitudId}/${fileName}`
     
     // Actualizar o crear registro de documentos
     let solicitudActualizada
@@ -276,13 +306,32 @@ export async function subirDocumentoSolicitud(req: Request, res: Response) {
     }
     
     return res.json(solicitudActualizada)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error al subir documento:', error)
+    
     // Eliminar archivo temporal si existe
     if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path)
+      try {
+        fs.unlinkSync(req.file.path)
+      } catch (unlinkError) {
+        console.error('Error al eliminar archivo temporal:', unlinkError)
+      }
     }
-    return res.status(500).json({ error: 'Error al subir documento' })
+    
+    // Proporcionar mensaje de error más específico
+    let mensajeError = 'Error al subir documento'
+    
+    if (error.code === 'ENOSPC') {
+      mensajeError = 'No hay espacio suficiente en el disco del servidor'
+    } else if (error.code === 'EACCES' || error.code === 'EPERM') {
+      mensajeError = 'Error de permisos al guardar el archivo'
+    } else if (error.message && error.message.includes('sharp')) {
+      mensajeError = 'Error al procesar la imagen. Intente con otro formato o archivo'
+    } else if (error.message) {
+      mensajeError = `Error: ${error.message}`
+    }
+    
+    return res.status(500).json({ error: mensajeError })
   }
 }
 
@@ -337,28 +386,6 @@ export async function actualizarEstadoSolicitud(req: Request, res: Response) {
       }
     })
     
-    // Si el estado es COMPLETO, crear un nuevo docente con los datos de la solicitud
-    if (estado === 'COMPLETO') {
-      try {
-        // Generar un código interno único
-        const timestamp = new Date().getTime().toString().slice(-6)
-        const codigoInterno = `T${timestamp}`
-        
-        // Crear el docente
-        await prisma.docente.create({
-          data: {
-            nombre: solicitud.nombre,
-            codigoInterno,
-            rfc: `TEMP${timestamp}`, // RFC temporal, deberá actualizarse después
-            activo: true
-          }
-        })
-      } catch (error) {
-        console.error('Error al crear docente desde solicitud:', error)
-        // No interrumpir el flujo si falla la creación del docente
-      }
-    }
-    
     // Intentar obtener el correo del coordinador directamente desde la base de datos
     try {
       // Obtener el coordinador desde la base de datos usando una consulta SQL directa
@@ -379,14 +406,14 @@ export async function actualizarEstadoSolicitud(req: Request, res: Response) {
           if (estado === 'COMPLETO') {
             await sendEmail({
               to: coordinadorEmail,
-              subject: 'Solicitud de Alta Aprobada - Universidad Mexicana',
+              subject: 'Solicitud de Alta Aprobada - Universidad Mondragón México',
               html: emailTemplates.solicitudAprobada(solicitudActualizada.nombre)
             });
             console.log(`Correo de aprobación enviado a ${coordinadorEmail}`);
           } else if (estado === 'RECHAZADO' && motivoRechazo) {
             await sendEmail({
               to: coordinadorEmail,
-              subject: 'Solicitud de Alta Rechazada - Universidad Mexicana',
+              subject: 'Solicitud de Alta Rechazada - Universidad Mondragón México',
               html: emailTemplates.solicitudRechazada(solicitudActualizada.nombre, motivoRechazo)
             });
             console.log(`Correo de rechazo enviado a ${coordinadorEmail}`);

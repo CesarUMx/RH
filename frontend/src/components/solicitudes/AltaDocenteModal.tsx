@@ -32,6 +32,7 @@ export const AltaDocenteModal = ({ isOpen, onClose, onSuccess }: AltaDocenteModa
   const [documentos, setDocumentos] = useState<DocumentoInfo[]>(initialDocumentos);
   const [enviando, setEnviando] = useState(false);
   const [nombre, setNombre] = useState('');
+  const [solicitudId, setSolicitudId] = useState<number | null>(null);
 
   // Manejar cambio de archivo
   const handleFileChange = (index: number, file: File | null) => {
@@ -48,9 +49,16 @@ export const AltaDocenteModal = ({ isOpen, onClose, onSuccess }: AltaDocenteModa
 
   // Validar archivo
   const validarArchivo = (file: File): { valido: boolean; mensaje?: string } => {
-    // Verificar tipo de archivo (PDF)
-    if (file.type !== 'application/pdf') {
-      return { valido: false, mensaje: 'Solo se permiten archivos PDF.' };
+    // Verificar tipo de archivo (PDF o imágenes)
+    const tiposPermitidos = [
+      'application/pdf',
+      'image/jpeg',
+      'image/jpg',
+      'image/png'
+    ];
+    
+    if (!tiposPermitidos.includes(file.type)) {
+      return { valido: false, mensaje: 'Solo se permiten archivos PDF, JPG, JPEG o PNG.' };
     }
     
     // Verificar tamaño (máximo 10MB)
@@ -67,6 +75,7 @@ export const AltaDocenteModal = ({ isOpen, onClose, onSuccess }: AltaDocenteModa
     setNombre('');
     setDocumentos(JSON.parse(JSON.stringify(initialDocumentos))); // Copia profunda para resetear completamente
     setEnviando(false);
+    setSolicitudId(null);
   };
 
   // Efecto para resetear el formulario cuando se cierra el modal
@@ -97,17 +106,23 @@ export const AltaDocenteModal = ({ isOpen, onClose, onSuccess }: AltaDocenteModa
     try {
       setEnviando(true);
       
-      // Crear solicitud de alta
-      const solicitud = await solicitudesService.crearSolicitudAlta({
-        nombre
-      });
+      // Crear solicitud de alta solo si no existe una previa
+      let idSolicitud = solicitudId;
+      if (!idSolicitud) {
+        const solicitud = await solicitudesService.crearSolicitudAlta({
+          nombre
+        });
+        idSolicitud = solicitud.id;
+        setSolicitudId(idSolicitud);
+      }
       
-      // Subir cada documento
+      // Subir cada documento (solo los que no se han completado exitosamente)
       let todosExitosos = true;
       
       for (let i = 0; i < documentos.length; i++) {
         const doc = documentos[i];
-        if (!doc.archivo) continue;
+        // Saltar si no hay archivo o si ya se completó exitosamente
+        if (!doc.archivo || doc.completado) continue;
         
         try {
           setDocumentos(prev => {
@@ -117,7 +132,7 @@ export const AltaDocenteModal = ({ isOpen, onClose, onSuccess }: AltaDocenteModa
           });
           
           await solicitudesService.subirDocumentoSolicitud(
-            solicitud.id,
+            idSolicitud,
             doc.key,
             doc.archivo
           );
@@ -128,27 +143,46 @@ export const AltaDocenteModal = ({ isOpen, onClose, onSuccess }: AltaDocenteModa
             nuevos[i].completado = true;
             return nuevos;
           });
-        } catch (error) {
+        } catch (error: any) {
           console.error(`Error al subir ${doc.nombre}:`, error);
+          
+          // Extraer mensaje de error específico del backend
+          let mensajeError = 'Error al subir el documento';
+          if (error.response?.data?.error) {
+            mensajeError = error.response.data.error;
+          } else if (error.message) {
+            mensajeError = error.message;
+          }
+          
           setDocumentos(prev => {
             const nuevos = [...prev];
             nuevos[i].subiendo = false;
-            nuevos[i].error = 'Error al subir el documento';
+            nuevos[i].error = mensajeError;
             return nuevos;
           });
-          toast.error(`Error al subir ${doc.nombre}`);
+          
+          // Mostrar mensaje de error específico con el nombre del documento
+          toast.error(`${doc.nombre}: ${mensajeError}`, {
+            duration: 5000, // Mostrar por 5 segundos para que se pueda leer
+          });
           todosExitosos = false;
         }
       }
       
-      if (todosExitosos) {
+      // Verificar si todos los documentos están completados
+      const todosCompletados = documentos.every(doc => doc.completado);
+      
+      if (todosCompletados) {
         toast.success('Solicitud de alta enviada correctamente');
         onSuccess();
         onClose();
         resetearFormulario();
-      } else {
-        toast.error('Hubo errores al subir algunos documentos. Por favor, intente nuevamente.');
+      } else if (!todosExitosos) {
+        toast.error('Hubo errores al subir algunos documentos. Corrija los archivos con error y haga clic en "Enviar" nuevamente para reintentar.', {
+          duration: 6000,
+        });
         // No cerramos el modal para que pueda corregir los errores
+        // La solicitud ya está creada, al reintentar solo se subirán los documentos
       }
     } catch (error) {
       console.error('Error al crear solicitud de alta:', error);
@@ -200,7 +234,7 @@ export const AltaDocenteModal = ({ isOpen, onClose, onSuccess }: AltaDocenteModa
         </div>
         
         <div className="space-y-4">
-          <h3 className="font-medium text-gray-900">Documentos Requeridos (PDF)</h3>
+          <h3 className="font-medium text-gray-900">Documentos Requeridos (PDF o Imágenes JPG/PNG)</h3>
           
           {documentos.map((doc, index) => (
             <div key={doc.key} className="border rounded-md p-4">
@@ -225,7 +259,7 @@ export const AltaDocenteModal = ({ isOpen, onClose, onSuccess }: AltaDocenteModa
                   <input
                     type="file"
                     id={`doc-${doc.key}`}
-                    accept="application/pdf"
+                    accept="application/pdf,image/jpeg,image/jpg,image/png"
                     onChange={(e) => {
                       const file = e.target.files?.[0] || null;
                       if (file) {

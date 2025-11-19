@@ -8,9 +8,30 @@ import { DataTable } from '../components/ui/DataTable';
 import { Pagination } from '../components/ui/Pagination';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
+import { Input } from '../components/ui/Input';
 import { solicitudesService, ESTADO_ALTA } from '../services/solicitudes.service';
 import type { SolicitudAlta, EstadoAlta, SolicitudDocumentos } from '../services/solicitudes.service';
-import { API_BASE_URL } from '../services/api';
+import { docentesService } from '../services/docentes.service';
+import type { CreateDocenteDto } from '../services/docentes.service';
+import { SERVER_BASE_URL } from '../services/api';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+// Esquema de validación para crear docente
+const createDocenteSchema = z.object({
+  codigoInterno: z.string().min(1, 'El código interno es requerido'),
+  nombre: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
+  rfc: z
+    .string()
+    .regex(
+      /^[A-Z&Ñ]{3,4}[0-9]{6}[A-Z0-9]{3}$/,
+      'El RFC debe tener el formato correcto'
+    ),
+  activo: z.boolean(),
+});
+
+type CreateDocenteForm = z.infer<typeof createDocenteSchema>;
 
 export const SolicitudesPendientes = () => {
   const queryClient = useQueryClient();
@@ -20,6 +41,7 @@ export const SolicitudesPendientes = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [isCreateDocenteModalOpen, setIsCreateDocenteModalOpen] = useState(false);
   const [motivoRechazo, setMotivoRechazo] = useState('');
   const [filtroEstado, setFiltroEstado] = useState<EstadoAlta | 'TODOS'>('PENDIENTE'); // Por defecto muestra las pendientes
 
@@ -33,17 +55,58 @@ export const SolicitudesPendientes = () => {
   const actualizarEstadoMutation = useMutation({
     mutationFn: ({ id, estado, motivoRechazo }: { id: number; estado: EstadoAlta; motivoRechazo?: string }) => 
       solicitudesService.actualizarEstadoSolicitud(id, estado, motivoRechazo),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['solicitudes'] });
       setIsApproveModalOpen(false);
       setIsRejectModalOpen(false);
       setMotivoRechazo('');
-      setSelectedSolicitud(null);
+      
+      // Si se aprobó la solicitud, abrir el modal de creación de docente
+      if (variables.estado === ESTADO_ALTA.COMPLETO && selectedSolicitud) {
+        // Prellenar el formulario con el nombre de la solicitud
+        createDocenteForm.reset({
+          nombre: selectedSolicitud.nombre,
+          codigoInterno: '',
+          rfc: '',
+          activo: true
+        });
+        setIsCreateDocenteModalOpen(true);
+      } else {
+        setSelectedSolicitud(null);
+      }
     },
     onError: (error) => {
       console.error('Error al actualizar estado:', error);
       toast.error('Error al actualizar el estado de la solicitud');
     }
+  });
+
+  // Mutación para crear docente
+  const createDocenteMutation = useMutation({
+    mutationFn: (data: CreateDocenteDto) => docentesService.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docentes'] });
+      setIsCreateDocenteModalOpen(false);
+      setSelectedSolicitud(null);
+      toast.success('Docente creado correctamente');
+      createDocenteForm.reset();
+    },
+    onError: (error: any) => {
+      console.error('Error al crear docente:', error);
+      const errorMessage = error.response?.data?.error || 'Error al crear docente';
+      toast.error(errorMessage);
+    },
+  });
+
+  // Formulario para crear docente
+  const createDocenteForm = useForm<CreateDocenteForm>({
+    resolver: zodResolver(createDocenteSchema),
+    defaultValues: {
+      nombre: '',
+      codigoInterno: '',
+      rfc: '',
+      activo: true,
+    },
   });
 
   // Manejar cambio de página
@@ -61,6 +124,11 @@ export const SolicitudesPendientes = () => {
     });
     
     toast.success('Solicitud aprobada correctamente');
+  };
+
+  // Manejar creación de docente
+  const handleCreateDocente = (data: CreateDocenteForm) => {
+    createDocenteMutation.mutate(data);
   };
 
   // Manejar rechazo de solicitud
@@ -174,8 +242,8 @@ export const SolicitudesPendientes = () => {
     // Si la ruta ya incluye la URL completa, usarla directamente
     if (value.startsWith('http')) return value;
     
-    // Si es una ruta relativa que comienza con /, agregarle la URL base del backend
-    return `${API_BASE_URL}${value}`;
+    // Si es una ruta relativa que comienza con /, agregarle la URL base del servidor (sin /api)
+    return `${SERVER_BASE_URL}${value}`;
   };
 
   return (
@@ -366,7 +434,7 @@ export const SolicitudesPendientes = () => {
                 ¿Está seguro que desea aprobar la solicitud de <strong>{selectedSolicitud.nombre}</strong>?
               </p>
               <p className="text-gray-700">
-                Al aprobar la solicitud, se creará un nuevo docente en el sistema con los datos proporcionados.
+                Después de aprobar, se abrirá un formulario para completar los datos del docente y registrarlo en el sistema.
               </p>
               
               <div className="flex justify-end space-x-3">
@@ -435,6 +503,84 @@ export const SolicitudesPendientes = () => {
             </div>
           </Modal>
         )}
+
+        {/* Modal para crear docente después de aprobar solicitud */}
+        <Modal
+          isOpen={isCreateDocenteModalOpen}
+          onClose={() => {
+            setIsCreateDocenteModalOpen(false);
+            setSelectedSolicitud(null);
+            createDocenteForm.reset();
+          }}
+          title="Crear Docente"
+          size="md"
+        >
+          <form onSubmit={createDocenteForm.handleSubmit(handleCreateDocente)} className="space-y-4">
+            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+              <p className="text-sm text-blue-700">
+                La solicitud ha sido aprobada. Complete los datos del docente para registrarlo en el sistema.
+              </p>
+            </div>
+
+            <Input
+              label="Nombre"
+              placeholder="Nombre completo del docente"
+              {...createDocenteForm.register('nombre')}
+              error={createDocenteForm.formState.errors.nombre?.message}
+            />
+            
+            <Input
+              label="Código Interno"
+              placeholder="Ej: 123456"
+              {...createDocenteForm.register('codigoInterno')}
+              error={createDocenteForm.formState.errors.codigoInterno?.message}
+            />
+            
+            <Input
+              label="RFC"
+              placeholder="Ej: ABCD123456XYZ"
+              {...createDocenteForm.register('rfc')}
+              error={createDocenteForm.formState.errors.rfc?.message}
+              onChange={(e) => {
+                // Convertir a mayúsculas automáticamente
+                e.target.value = e.target.value.toUpperCase();
+                createDocenteForm.setValue('rfc', e.target.value);
+              }}
+            />
+            
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="activo"
+                {...createDocenteForm.register('activo')}
+                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+              />
+              <label htmlFor="activo" className="ml-2 block text-sm text-gray-900">
+                Docente activo
+              </label>
+            </div>
+            
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsCreateDocenteModalOpen(false);
+                  setSelectedSolicitud(null);
+                  createDocenteForm.reset();
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                isLoading={createDocenteMutation.isPending}
+              >
+                Crear Docente
+              </Button>
+            </div>
+          </form>
+        </Modal>
       </div>
     </MainLayout>
   );

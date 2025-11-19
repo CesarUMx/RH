@@ -392,15 +392,74 @@ export const Docentes = () => {
           </div>
           
           {/* Mostrar botones según el rol */}
-          {hasRole('COORD') && !hasRole(['ADMIN', 'RH']) && (
-            <Button
-              onClick={() => setIsAltaDocenteModalOpen(true)}
-              className="flex items-center"
-              variant="primary"
-            >
-              <FaFileUpload className="mr-2" /> Alta de Docente
-            </Button>
-          )}
+          {hasRole('COORD') && !hasRole(['ADMIN', 'RH']) && (() => {
+            // Verificar si estamos entre el día 1 y 15 del mes
+            const hoy = new Date();
+            const diaDelMes = hoy.getDate();
+            const esPeriodoPermitido = diaDelMes >= 1 && diaDelMes <= 15;
+            
+            return (
+              <div className="flex flex-col items-end gap-2">
+                <div className="relative group">
+                  <Button
+                    onClick={() => {
+                      if (esPeriodoPermitido) {
+                        setIsAltaDocenteModalOpen(true);
+                      } else {
+                        toast.error(
+                          <div className="flex flex-col">
+                            <span className="font-semibold">⏰ Período no disponible</span>
+                            <span className="text-sm mt-1">Las solicitudes de alta solo pueden realizarse del 1 al 15 de cada mes.</span>
+                            <span className="text-xs mt-2 text-gray-300">Hoy es día {diaDelMes} del mes</span>
+                          </div>,
+                          {
+                            duration: 6000,
+                            style: {
+                              background: '#1e293b',
+                              color: '#fff',
+                              padding: '16px',
+                            },
+                          }
+                        );
+                      }
+                    }}
+                    className={`flex items-center transition-all duration-200 ${
+                      !esPeriodoPermitido ? 'opacity-50 cursor-not-allowed hover:opacity-50' : ''
+                    }`}
+                    variant={esPeriodoPermitido ? "primary" : "outline"}
+                  >
+                    <FaFileUpload className="mr-2" /> Alta de Docente
+                  </Button>
+                  
+                  {/* Tooltip informativo */}
+                  {!esPeriodoPermitido && (
+                    <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                      <div className="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-lg whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <span className="text-yellow-400">⚠️</span>
+                          <span>Disponible del 1 al 15 de cada mes</span>
+                        </div>
+                        <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Badge de estado */}
+                {esPeriodoPermitido ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                    Alta activada (día {diaDelMes}/15)
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full">
+                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                    Alta desactivada (día {diaDelMes})
+                  </span>
+                )}
+              </div>
+            );
+          })()}
           
           {/* Mostrar botones de acción solo para ADMIN y RH */}
           {hasRole(['ADMIN', 'RH']) && (

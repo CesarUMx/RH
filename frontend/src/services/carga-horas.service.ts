@@ -40,6 +40,10 @@ export interface CargaHora {
     nombre: string;
     rfc: string;
   };
+  creadoPor: {
+    id: number;
+    nombre: string;
+  };
   createdAt: string;
 }
 

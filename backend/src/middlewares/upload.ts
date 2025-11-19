@@ -22,15 +22,15 @@ const storage = multer.diskStorage({
 
 // Filtro para archivos permitidos
 const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  // Verificar si la ruta incluye 'solicitudes' o 'documentos' para permitir PDF
+  // Verificar si la ruta incluye 'solicitudes' o 'documentos' para permitir PDF e imágenes
   if (req.path.includes('solicitud') || req.path.includes('documento')) {
-    const documentExtensions = ['.pdf']
+    const documentExtensions = ['.pdf', '.jpg', '.jpeg', '.png']
     const ext = path.extname(file.originalname).toLowerCase()
     
     if (documentExtensions.includes(ext)) {
       cb(null, true)
     } else {
-      cb(new Error('Solo se permiten archivos PDF para documentos.'))
+      cb(new Error('Solo se permiten archivos PDF, JPG, JPEG y PNG para documentos.'))
     }
   } else {
     // Para otras rutas (como importación), permitir solo archivos CSV/Excel
@@ -47,7 +47,7 @@ const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCa
 
 // Configuración de límites
 const limits = {
-  fileSize: 15 * 1024 * 1024, // 15MB
+  fileSize: 10 * 1024 * 1024, // 10MB
   files: 1
 }
 
