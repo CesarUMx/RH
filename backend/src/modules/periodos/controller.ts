@@ -269,3 +269,68 @@ export const reportarPeriodo = async (req: Request, res: Response) => {
     return res.status(500).json({ error: 'Error al reportar periodo' })
   }
 }
+
+// Reabrir un periodo (cambiar de CERRADO a ABIERTO)
+export const reabrirPeriodo = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id
+    if (!id) {
+      return res.status(400).json({ error: 'ID de periodo no proporcionado' })
+    }
+    const periodoId = parseInt(id)
+    
+    if (isNaN(periodoId)) {
+      return res.status(400).json({ error: 'ID de periodo inválido' })
+    }
+    
+    // Verificar si ya existe un periodo abierto
+    const periodoAbierto = await prisma.periodo.findFirst({
+      where: {
+        estado: EstadoPeriodo.ABIERTO
+      }
+    })
+    
+    if (periodoAbierto && periodoAbierto.id !== periodoId) {
+      return res.status(400).json({ 
+        error: 'Ya existe un periodo abierto', 
+        periodoAbierto 
+      })
+    }
+    
+    // Verificar que el periodo exista y esté en estado CERRADO
+    const periodo = await prisma.periodo.findUnique({
+      where: { id: periodoId }
+    })
+    
+    if (!periodo) {
+      return res.status(404).json({ error: 'Periodo no encontrado' })
+    }
+    
+    if (periodo.estado !== EstadoPeriodo.CERRADO) {
+      return res.status(400).json({ 
+        error: 'Solo se pueden reabrir periodos en estado CERRADO',
+        estadoActual: periodo.estado
+      })
+    }
+    
+    // Actualizar el estado del periodo a ABIERTO
+    const periodoActualizado = await prisma.periodo.update({
+      where: { id: periodoId },
+      data: { estado: EstadoPeriodo.ABIERTO }
+    })
+    
+    // Auditar la acción
+    await auditarAccion(
+      req.user?.id, 
+      'REABRIR', 
+      'Periodo', 
+      periodoId, 
+      periodoActualizado
+    )
+    
+    return res.json(periodoActualizado)
+  } catch (error: unknown) {
+    console.error('Error al reabrir periodo:', error)
+    return res.status(500).json({ error: 'Error al reabrir periodo' })
+  }
+}
