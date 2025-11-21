@@ -53,4 +53,9 @@ export const periodosService = {
     const response = await api.patch(`/periodos/${id}/reportar`);
     return response.data;
   },
+
+  reabrir: async (id: number): Promise<Periodo> => {
+    const response = await api.patch(`/periodos/${id}/reabrir`);
+    return response.data;
+  },
 };

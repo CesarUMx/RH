@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { FaPlus, FaCheck, FaLock, FaFileAlt } from 'react-icons/fa';
+import { FaPlus, FaCheck, FaLock, FaFileAlt, FaUnlock } from 'react-icons/fa';
 import { createColumnHelper } from '@tanstack/react-table';
 
 import { MainLayout } from '../layouts/MainLayout';
@@ -44,7 +44,7 @@ export const Periodos = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedPeriodo, setSelectedPeriodo] = useState<Periodo | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [accionConfirmacion, setAccionConfirmacion] = useState<'abrir' | 'cerrar' | 'reportar'>('abrir');
+  const [accionConfirmacion, setAccionConfirmacion] = useState<'abrir' | 'cerrar' | 'reportar' | 'reabrir'>('abrir');
 
   // Consulta para obtener periodos
   const { data: periodos = [], isLoading } = useQuery({
@@ -114,6 +114,25 @@ export const Periodos = () => {
     },
   });
 
+  // Mutación para reabrir periodo
+  const reabrirPeriodoMutation = useMutation({
+    mutationFn: periodosService.reabrir,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['periodos'] });
+      setIsConfirmModalOpen(false);
+      toast.success('Periodo reabierto correctamente');
+    },
+    onError: (error: any) => {
+      console.error('Error al reabrir periodo:', error);
+      // Si hay un periodo abierto, mostrar mensaje específico
+      if (error.response?.data?.periodoAbierto) {
+        toast.error(`Ya existe un periodo abierto: ${error.response.data.periodoAbierto.nombre}`);
+      } else {
+        toast.error('Error al reabrir periodo');
+      }
+    },
+  });
+
   // Formulario para crear periodo
   const createForm = useForm({
     resolver: zodResolver(createPeriodoSchema),
@@ -130,7 +149,7 @@ export const Periodos = () => {
   };
 
   // Función para abrir modal de confirmación
-  const handleConfirmAction = (periodo: Periodo, accion: 'abrir' | 'cerrar' | 'reportar') => {
+  const handleConfirmAction = (periodo: Periodo, accion: 'abrir' | 'cerrar' | 'reportar' | 'reabrir') => {
     setSelectedPeriodo(periodo);
     setAccionConfirmacion(accion);
     setIsConfirmModalOpen(true);
@@ -149,6 +168,9 @@ export const Periodos = () => {
         break;
       case 'reportar':
         reportarPeriodoMutation.mutate(selectedPeriodo.id);
+        break;
+      case 'reabrir':
+        reabrirPeriodoMutation.mutate(selectedPeriodo.id);
         break;
     }
   };
@@ -238,14 +260,24 @@ export const Periodos = () => {
               </Button>
             )}
             {periodo.estado === EstadoPeriodo.CERRADO && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleConfirmAction(periodo, 'reportar')}
-                title="Reportar periodo"
-              >
-                <FaFileAlt className="text-blue-500" />
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleConfirmAction(periodo, 'reabrir')}
+                  title="Reabrir periodo"
+                >
+                  <FaUnlock className="text-orange-500" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleConfirmAction(periodo, 'reportar')}
+                  title="Reportar periodo"
+                >
+                  <FaFileAlt className="text-blue-500" />
+                </Button>
+              </>
             )}
           </div>
         );
@@ -330,7 +362,7 @@ export const Periodos = () => {
             <p>
               ¿Estás seguro de que deseas {accionConfirmacion} el periodo "{selectedPeriodo?.nombre}"?
             </p>
-            {accionConfirmacion === 'abrir' && (
+            {(accionConfirmacion === 'abrir' || accionConfirmacion === 'reabrir') && (
               <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
                 <p className="text-sm text-yellow-700">
                   <strong>Nota:</strong> Solo puede haber un periodo abierto a la vez.
@@ -351,7 +383,8 @@ export const Periodos = () => {
                 isLoading={
                   abrirPeriodoMutation.isPending || 
                   cerrarPeriodoMutation.isPending || 
-                  reportarPeriodoMutation.isPending
+                  reportarPeriodoMutation.isPending ||
+                  reabrirPeriodoMutation.isPending
                 }
               >
                 Confirmar

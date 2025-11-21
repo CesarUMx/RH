@@ -4,7 +4,8 @@ import {
   crearPeriodo,
   abrirPeriodo,
   cerrarPeriodo,
-  reportarPeriodo
+  reportarPeriodo,
+  reabrirPeriodo
 } from './controller'
 import { requireAuth, requireRole } from '../../middlewares/auth'
 
@@ -18,3 +19,4 @@ periodosRouter.post('/', requireAuth, requireRole(['ADMIN', 'RH']), crearPeriodo
 periodosRouter.patch('/:id/abrir', requireAuth, requireRole(['ADMIN', 'RH']), abrirPeriodo)
 periodosRouter.patch('/:id/cerrar', requireAuth, requireRole(['ADMIN', 'RH']), cerrarPeriodo)
 periodosRouter.patch('/:id/reportar', requireAuth, requireRole(['ADMIN', 'RH']), reportarPeriodo)
+periodosRouter.patch('/:id/reabrir', requireAuth, requireRole(['ADMIN', 'RH']), reabrirPeriodo)
