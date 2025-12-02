@@ -470,19 +470,13 @@ export const CargaHoras = () => {
       return;
     }
 
-    if (individualFormData.horas === 0) {
-      toast.error('Las horas no pueden ser 0 (puede usar valores negativos para ajustes)');
+    if (individualFormData.horas <= 0) {
+      toast.error('Las horas deben ser mayor a 0');
       return;
     }
 
-    if (individualFormData.costo_hora === 0) {
-      toast.error('El costo por hora no puede ser 0 (puede usar valores negativos para descuentos)');
-      return;
-    }
-
-    // Validar que no sean ambos negativos
-    if (individualFormData.horas < 0 && individualFormData.costo_hora < 0) {
-      toast.error('Las horas y el costo por hora no pueden ser ambos negativos');
+    if (individualFormData.costo_hora <= 0) {
+      toast.error('El costo por hora debe ser mayor a 0');
       return;
     }
 
@@ -1032,19 +1026,22 @@ export const CargaHoras = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
-                    label="Horas (puede ser negativo para ajustes)"
+                    label="Horas"
                     name="horas"
                     type="number"
                     value={individualFormData.horas}
                     onChange={handleIndividualFormChange}
+                    min="0.01"
+                    step="0.01"
                     required
                   />
                   <Input
-                    label="Costo por Hora (puede ser negativo para descuentos)"
+                    label="Costo por Hora"
                     name="costo_hora"
                     type="number"
                     value={individualFormData.costo_hora}
                     onChange={handleIndividualFormChange}
+                    min="0.01"
                     step="0.01"
                     required
                   />
