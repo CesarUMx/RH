@@ -85,7 +85,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           <div className="flex items-center flex-shrink-0 px-4">
             <img
               className="h-8 w-auto"
-              src="/logo.svg"
+              src="/logo.png"
               alt="Logo UMx"
             />
             <h1 className="ml-3 text-xl font-bold text-white">UMx RH</h1>
@@ -148,7 +148,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           <div className="flex items-center">
             <img
               className="h-8 w-auto"
-              src="/logo.svg"
+              src="/logo.png"
               alt="Logo UMx"
             />
             <h1 className="ml-3 text-xl font-bold text-white">UMx RH</h1>
@@ -174,7 +174,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             <div className="flex items-center mb-8">
               <img
                 className="h-8 w-auto"
-                src="/logo.svg"
+                src="/logo.png"
                 alt="Logo UMx"
               />
               <h1 className="ml-3 text-xl font-bold text-white">UMx RH</h1>

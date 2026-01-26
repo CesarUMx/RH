@@ -111,11 +111,11 @@ export function inicializarCronJobs() {
   // ============================================
   // Descomentar la siguiente línea para producción y comentar la de arriba
   
-  cron.schedule('0 0 * * *', () => {
-    cerrarPeriodosVencidos()
-  }, {
-    timezone: 'America/Mexico_City'
-  })
+  // cron.schedule('0 0 * * *', () => {
+  //   cerrarPeriodosVencidos()
+  // }, {
+  //   timezone: 'America/Mexico_City'
+  // })
   
   // console.log('✅ Cron configurado: Verificación de cierre de períodos a las 00:00 (medianoche, hora México)')
 }
