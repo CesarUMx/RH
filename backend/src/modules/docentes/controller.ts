@@ -39,6 +39,39 @@ const paginacionSchema = z.object({
   areaId: z.string().optional()
 })
 
+// GET /docentes/buscar - Buscar un docente específico por código interno o RFC
+export async function buscarDocente(req: Request, res: Response) {
+  try {
+    const { query } = req.query
+
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ error: 'Se requiere un parámetro de búsqueda (query)' })
+    }
+
+    const searchQuery = query.trim()
+
+    // Buscar por código interno o RFC
+    const docente = await prisma.docente.findFirst({
+      where: {
+        OR: [
+          { codigoInterno: searchQuery },
+          { rfc: searchQuery }
+        ],
+        activo: true // Solo buscar docentes activos
+      }
+    })
+
+    if (!docente) {
+      return res.status(404).json({ error: 'Docente no encontrado o inactivo' })
+    }
+
+    return res.json(docente)
+  } catch (error) {
+    console.error('Error al buscar docente:', error)
+    return res.status(500).json({ error: 'Error al buscar docente' })
+  }
+}
+
 // GET /docentes - Listar docentes con paginación y búsqueda
 export async function listarDocentes(req: Request, res: Response) {
   try {
