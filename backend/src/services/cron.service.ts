@@ -23,23 +23,12 @@ async function cerrarPeriodosVencidos() {
   try {
     const ahora = new Date()
     
-    // Log para verificar que el cron se está ejecutando
-    console.log('🔍 [CRON] Verificación de cierre de períodos:', ahora.toLocaleString('es-MX', { 
-      timeZone: 'America/Mexico_City',
-      dateStyle: 'full',
-      timeStyle: 'long'
-    }))
-    console.log('📅 [CRON] Fecha/hora actual (objeto Date):', ahora)
-    console.log('📅 [CRON] Fecha/hora actual (ISO):', ahora.toISOString())
-    
     // Buscar TODOS los períodos ABIERTOS para ver sus fechas
     const todosLosAbiertos = await prisma.periodo.findMany({
       where: {
         estado: 'ABIERTO'
       }
     })
-    
-    console.log(`📊 [CRON] Total de períodos ABIERTOS: ${todosLosAbiertos.length}`)
     
     // Mostrar información de cada período abierto
     todosLosAbiertos.forEach((periodo, index) => {
@@ -61,11 +50,11 @@ async function cerrarPeriodosVencidos() {
     })
     
     if (periodosVencidos.length === 0) {
-      console.log('✅ [CRON] No hay períodos para cerrar')
+      console.log('[CRON] No hay períodos para cerrar')
       return
     }
     
-    console.log(`📋 [CRON] Se encontraron ${periodosVencidos.length} período(s) vencido(s)`)
+    console.log(`[CRON] Se encontraron ${periodosVencidos.length} período(s) vencido(s)`)
     
     // Cerrar cada período vencido
     for (const periodo of periodosVencidos) {
@@ -74,15 +63,15 @@ async function cerrarPeriodosVencidos() {
         data: { estado: 'CERRADO' }
       })
       
-      console.log(`🔒 [CRON] Período cerrado: "${periodo.nombre}" (ID: ${periodo.id})`)
+      console.log(`[CRON] Período cerrado: "${periodo.nombre}" (ID: ${periodo.id})`)
       console.log(`   - Fecha de fin: ${periodo.fechaFin.toLocaleDateString('es-MX')}`)
       console.log(`   - Estado: ABIERTO → CERRADO`)
     }
     
-    console.log(`✅ [CRON] Se cerraron ${periodosVencidos.length} período(s) correctamente`)
+    console.log(`[CRON] Se cerraron ${periodosVencidos.length} período(s) correctamente`)
     
   } catch (error) {
-    console.error('❌ [CRON] Error al cerrar períodos vencidos:', error)
+    console.error('[CRON] Error al cerrar períodos vencidos:', error)
   }
 }
 
@@ -90,7 +79,7 @@ async function cerrarPeriodosVencidos() {
  * Inicializa todas las tareas programadas
  */
 export function inicializarCronJobs() {
-  console.log('⏰ Inicializando tareas programadas (Cron Jobs)...')
+  console.log('Inicializando tareas programadas (Cron Jobs)...')
   
   // ============================================
   // PRUEBA: Ejecutar a las 3:00 PM hora México
@@ -117,5 +106,5 @@ export function inicializarCronJobs() {
     timezone: 'America/Mexico_City'
   })
   
-  // console.log('✅ Cron configurado: Verificación de cierre de períodos a las 00:00 (medianoche, hora México)')
+  // console.log('Cron configurado: Verificación de cierre de períodos a las 00:00 (medianoche, hora México)')
 }

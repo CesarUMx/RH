@@ -70,8 +70,8 @@ app.get('/me', requireAuth, (req, res) => {
 // Iniciar servidor
 const PORT = env.server.port
 app.listen(PORT, () => {
-    console.log(`✅ Servidor iniciado en puerto ${PORT}`)
-    console.log(`🌐 Modo: ${env.server.nodeEnv}`)
+    console.log(`Servidor iniciado en puerto ${PORT}`)
+    console.log(`Modo: ${env.server.nodeEnv}`)
     
     // Inicializar tareas programadas (Cron Jobs)
     inicializarCronJobs()
