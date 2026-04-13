@@ -30,7 +30,7 @@ const _env = envSchema.safeParse(process.env)
 
 // Si hay errores, mostrarlos y salir
 if (!_env.success) {
-  console.error('❌ Variables de entorno inválidas:')
+  console.error('Variables de entorno inválidas:')
   console.error(_env.error.format())
   throw new Error('Variables de entorno inválidas')
 }
