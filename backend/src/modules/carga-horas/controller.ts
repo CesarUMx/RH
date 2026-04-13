@@ -1121,6 +1121,14 @@ export async function procesarIndividual(req: Request, res: Response) {
       })
     }
 
+    // Verificar que el docente esté activo
+    if (!docente.activo) {
+      return res.status(400).json({ 
+        error: 'Docente no activo', 
+        mensaje: `El docente ${docente.nombre} (${dato.codigo_interno}) no está activo` 
+      })
+    }
+
     // Verificar que el RFC coincida con el docente
     if (docente.rfc !== dato.rfc) {
       return res.status(400).json({ 
