@@ -116,6 +116,11 @@ export const docentesService = {
       });
 
       if (response.data && response.data.id) {
+        // Verificar que el docente esté activo
+        if (!response.data.activo) {
+          return null; // No devolver docentes inactivos
+        }
+        
         // Asegurarse de que el código interno esté formateado
         return {
           ...response.data,
@@ -149,11 +154,13 @@ export const docentesService = {
       });
 
       if (response.data && response.data.data) {
-        // Formatear los códigos internos de todos los docentes
-        return response.data.data.map((docente: Docente) => ({
-          ...docente,
-          codigoInterno: formatCodigoInterno(docente.codigoInterno)
-        }));
+        // Formatear los códigos internos y filtrar solo docentes activos
+        return response.data.data
+          .filter((docente: Docente) => docente.activo === true)
+          .map((docente: Docente) => ({
+            ...docente,
+            codigoInterno: formatCodigoInterno(docente.codigoInterno)
+          }));
       }
       return [];
     } catch (error) {
