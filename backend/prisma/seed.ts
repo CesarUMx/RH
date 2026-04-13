@@ -47,7 +47,7 @@ async function main() {
     create: { nombre: 'Licenciaturas', activo: true }
   })
 
-  console.log('✅ Seed ejecutado con éxito')
+  console.log('Seed ejecutado con éxito')
 }
 
 main()
