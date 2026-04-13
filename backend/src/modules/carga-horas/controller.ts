@@ -392,6 +392,21 @@ export async function procesarArchivo(req: Request, res: Response) {
     let data: any[] = []
     let errores: { linea: number, mensaje: string }[] = []
 
+    // Obtener todos los docentes para validar que estén activos
+    const todosLosDocentes = await prisma.docente.findMany({
+      select: {
+        codigoInterno: true,
+        activo: true,
+        nombre: true
+      }
+    })
+    
+    // Crear un mapa de código interno -> docente para búsqueda rápida
+    const docentesMap = new Map()
+    todosLosDocentes.forEach(d => {
+      docentesMap.set(d.codigoInterno, d)
+    })
+
     // Leer datos del archivo según su extensión
     if (ext === '.csv') {
       // Procesar CSV
@@ -417,6 +432,16 @@ export async function procesarArchivo(req: Request, res: Response) {
           // Validar datos
           try {
             validateRowData(rowData, i + 1)
+            
+            // Validar que el docente exista y esté activo
+            const docente = docentesMap.get(rowData.codigo_interno)
+            if (!docente) {
+              throw new Error(`El docente con código ${rowData.codigo_interno} no existe en el sistema`)
+            }
+            if (!docente.activo) {
+              throw new Error(`El docente ${docente.nombre} (${rowData.codigo_interno}) no está activo`)
+            }
+            
             data.push(rowData)
           } catch (error: any) {
             errores.push({ linea: i + 1, mensaje: error.message })
@@ -508,6 +533,16 @@ export async function procesarArchivo(req: Request, res: Response) {
             // Intentar validar la fila
             try {
               validateRowData(row, index + 2) // +2 porque Excel empieza en 1 y hay encabezado
+              
+              // Validar que el docente exista y esté activo
+              const docente = docentesMap.get(row.codigo_interno)
+              if (!docente) {
+                throw new Error(`El docente con código ${row.codigo_interno} no existe en el sistema`)
+              }
+              if (!docente.activo) {
+                throw new Error(`El docente ${docente.nombre} (${row.codigo_interno}) no está activo`)
+              }
+              
               // Si pasa la validación, agregar sin marca de error
               row._error = null;
               data.push(row)
