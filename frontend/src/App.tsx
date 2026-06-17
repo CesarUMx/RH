@@ -15,6 +15,10 @@ import { SolicitudesPendientes } from './pages/SolicitudesPendientes';
 import { Periodos } from './pages/Periodos';
 import { CargaHoras } from './pages/CargaHoras';
 import { GestionPagos } from './pages/GestionPagos';
+import { ConfiguracionExpedientes } from './pages/ConfiguracionExpedientes';
+import { MiExpediente } from './pages/MiExpediente';
+import { ValidarExpedientes } from './pages/ValidarExpedientes';
+import { Contratos } from './pages/Contratos';
 
 // Componentes
 import { RedireccionInicio } from './components/RedireccionInicio';
@@ -121,6 +125,38 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={['ADMIN', 'RH']}>
                   <SolicitudesPendientes />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/configurar-expedientes"
+              element={
+                <ProtectedRoute requiredRoles={['ADMIN']}>
+                  <ConfiguracionExpedientes />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/mi-expediente"
+              element={
+                <ProtectedRoute requiredRoles={['EMPLEADO']}>
+                  <MiExpediente />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/validar-expedientes"
+              element={
+                <ProtectedRoute requiredRoles={['ADMIN', 'RH']}>
+                  <ValidarExpedientes />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/contratos"
+              element={
+                <ProtectedRoute requiredRoles={['ADMIN', 'RH', 'EMPLEADO']}>
+                  <Contratos />
                 </ProtectedRoute>
               }
             />

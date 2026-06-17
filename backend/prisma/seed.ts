@@ -6,7 +6,7 @@ const prisma = new PrismaClient()
 
 async function main() {
   // Roles base
-  const roles = ['ADMIN', 'RH', 'COORD']
+  const roles = ['ADMIN', 'RH', 'COORD', 'EMPLEADO']
   for (const nombre of roles) {
     await prisma.role.upsert({
       where: { nombre },

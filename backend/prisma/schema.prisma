@@ -23,6 +23,9 @@ model User {
   solicitudesCreadas SolicitudAlta[]
   // lado opuesto de SolicitudBaja.creador
   solicitudesBaja   SolicitudBaja[]
+  // módulo expedientes y contratos
+  documentosExpediente DocumentoExpediente[] @relation("DocumentosEmpleado")
+  contratos            Contrato[]            @relation("ContratosEmpleado")
   createdAt         DateTime        @default(now())
 }
 
@@ -132,6 +135,71 @@ enum EstadoBaja {
   PENDIENTE
   PROCESADO
   CANCELADO
+}
+
+enum EstadoDocumento {
+  PENDIENTE
+  VERIFICADO
+  RECHAZADO
+  PROXIMO_A_VENCER
+  VENCIDO
+}
+
+model SeccionExpediente {
+  id     Int     @id @default(autoincrement())
+  nombre String  @unique
+  orden  Int     @default(0)
+  activo Boolean @default(true)
+}
+
+model TipoDocumentoExpediente {
+  id               Int                   @id @default(autoincrement())
+  nombre           String                @unique
+  descripcion      String?
+  seccion          String?
+  requerido        Boolean               @default(false)
+  requiereVigencia Boolean               @default(false)
+  activo           Boolean               @default(true)
+  orden            Int                   @default(0)
+  documentos       DocumentoExpediente[]
+}
+
+model DocumentoExpediente {
+  id                         Int                     @id @default(autoincrement())
+  empleado                   User                    @relation("DocumentosEmpleado", fields: [empleadoId], references: [id])
+  empleadoId                 Int
+  tipo                       TipoDocumentoExpediente @relation(fields: [tipoDocumentoId], references: [id])
+  tipoDocumentoId            Int
+  archivo                    String
+  nombreOriginal             String
+  estado                     EstadoDocumento         @default(PENDIENTE)
+  fechaVigencia              DateTime?
+  soloMesAnio                Boolean                 @default(false)
+  motivoRechazo              String?
+  verificadoPorId            Int?
+  verificadoEn               DateTime?
+  alertaProximaEnviada       Boolean                 @default(false)
+  alertaVencidoEnviada       Boolean                 @default(false)
+  // Versión anterior para auditoría (máximo 2 versiones: actual + anterior)
+  archivoAnterior            String?
+  nombreOriginalAnterior     String?
+  fechaVigenciaAnterior      DateTime?
+  reemplazadoEn              DateTime?
+  createdAt                  DateTime                @default(now())
+  updatedAt                  DateTime                @updatedAt
+
+  @@unique([empleadoId, tipoDocumentoId])
+}
+
+model Contrato {
+  id             Int      @id @default(autoincrement())
+  empleado       User     @relation("ContratosEmpleado", fields: [empleadoId], references: [id])
+  empleadoId     Int
+  titulo         String
+  archivo        String
+  nombreOriginal String
+  subidoPorId    Int
+  createdAt      DateTime @default(now())
 }
 
 model SolicitudAlta {

@@ -22,8 +22,16 @@ const storage = multer.diskStorage({
 
 // Filtro para archivos permitidos
 const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  // Verificar si la ruta incluye 'solicitudes' o 'documentos' para permitir PDF e imágenes
-  if (req.path.includes('solicitud') || req.path.includes('documento')) {
+  // Expedientes y contratos: solo PDF
+  if (req.path.includes('expediente') || req.path.includes('contrato')) {
+    const ext = path.extname(file.originalname).toLowerCase()
+    if (ext === '.pdf') {
+      cb(null, true)
+    } else {
+      cb(new Error('Solo se permiten archivos PDF para expedientes y contratos.'))
+    }
+  // Solicitudes y documentos: PDF e imágenes
+  } else if (req.path.includes('solicitud') || req.path.includes('documento')) {
     const documentExtensions = ['.pdf', '.jpg', '.jpeg', '.png']
     const ext = path.extname(file.originalname).toLowerCase()
     

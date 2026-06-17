@@ -14,7 +14,8 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (correo: string, password: string) => Promise<any>; // Cambiado a Promise<any>
+  login: (correo: string, password: string) => Promise<any>;
+  loginWithGoogle: (credential: string) => Promise<any>;
   logout: () => void;
   hasRole: (role: string | string[]) => boolean;
 }
@@ -66,6 +67,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const loginWithGoogle = async (credential: string) => {
+    setIsLoading(true);
+    try {
+      const response = await authService.loginWithGoogle(credential);
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      setToken(response.token);
+      setUser(response.user);
+      return response;
+    } catch (error) {
+      console.error('AuthContext - Error al iniciar sesión con Google:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = () => {
     authService.logout();
     setToken(null);
@@ -90,6 +108,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isAuthenticated: !!user,
         isLoading,
         login,
+        loginWithGoogle,
         logout,
         hasRole,
       }}

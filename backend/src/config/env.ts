@@ -17,6 +17,9 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   CORS_ALLOWED_ORIGINS: z.string().default('http://localhost:5173'),
   
+  // Google OAuth
+  GOOGLE_CLIENT_ID: z.string().optional(),
+
   // Correo electrónico
   EMAIL_HOST: z.string().default('smtp.gmail.com'),
   EMAIL_PORT: z.string().default('587'),
@@ -57,5 +60,8 @@ export const env = {
     secure: _env.data.EMAIL_SECURE === 'true',
     user: _env.data.EMAIL_USER,
     password: _env.data.EMAIL_PASSWORD,
+  },
+  google: {
+    clientId: _env.data.GOOGLE_CLIENT_ID ?? '',
   },
 }

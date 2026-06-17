@@ -170,5 +170,76 @@ export const emailTemplates = {
         </div>
       </div>
     `;
-  }
+  },
+
+  // ── Módulo Expedientes ──────────────────────────────────────────────────────
+
+  documentoVerificado: (tipoNombre: string): string => {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+        <h2 style="color: #2c3e50; text-align: center;">Universidad Mondragón México</h2>
+        <h3 style="color: #27ae60;">Documento Verificado</h3>
+        <p>Estimado(a) colaborador(a),</p>
+        <p>Le informamos que su documento <strong>${tipoNombre}</strong> ha sido <strong style="color: #27ae60;">VERIFICADO</strong> por el departamento de Recursos Humanos.</p>
+        <p>Ingresa al sistema para revisar el estado de tu expediente.</p>
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #7f8c8d; font-size: 12px;">
+          <p>Este es un correo automático, por favor no responda a este mensaje.</p>
+          <p>Universidad Mondragón México &copy; ${new Date().getFullYear()}</p>
+        </div>
+      </div>
+    `;
+  },
+
+  documentoRechazado: (tipoNombre: string, motivo: string): string => {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+        <h2 style="color: #2c3e50; text-align: center;">Universidad Mondragón México</h2>
+        <h3 style="color: #e74c3c;">Documento Rechazado</h3>
+        <p>Estimado(a) colaborador(a),</p>
+        <p>Lamentamos informarle que su documento <strong>${tipoNombre}</strong> ha sido <strong style="color: #e74c3c;">RECHAZADO</strong> por el departamento de Recursos Humanos.</p>
+        <p><strong>Motivo del rechazo:</strong></p>
+        <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #e74c3c; margin: 15px 0;">
+          <p style="margin: 0;">${motivo}</p>
+        </div>
+        <p>Por favor, ingresa al sistema y sube una nueva versión del documento corrigiendo lo indicado.</p>
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #7f8c8d; font-size: 12px;">
+          <p>Este es un correo automático, por favor no responda a este mensaje.</p>
+          <p>Universidad Mondragón México &copy; ${new Date().getFullYear()}</p>
+        </div>
+      </div>
+    `;
+  },
+
+  documentoProximoVencer: (tipoNombre: string, fechaVigencia: string): string => {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+        <h2 style="color: #2c3e50; text-align: center;">Universidad Mondragón México</h2>
+        <h3 style="color: #f39c12;">Documento Próximo a Vencer</h3>
+        <p>Estimado(a) colaborador(a),</p>
+        <p>Le informamos que su documento <strong>${tipoNombre}</strong> está <strong style="color: #f39c12;">PRÓXIMO A VENCER</strong>.</p>
+        <p><strong>Fecha de vencimiento:</strong> ${fechaVigencia}</p>
+        <p>Por favor, ingresa al sistema y actualiza el documento antes de que venza para mantener tu expediente vigente.</p>
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #7f8c8d; font-size: 12px;">
+          <p>Este es un correo automático, por favor no responda a este mensaje.</p>
+          <p>Universidad Mondragón México &copy; ${new Date().getFullYear()}</p>
+        </div>
+      </div>
+    `;
+  },
+
+  documentoVencido: (tipoNombre: string): string => {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+        <h2 style="color: #2c3e50; text-align: center;">Universidad Mondragón México</h2>
+        <h3 style="color: #e74c3c;">Documento Vencido</h3>
+        <p>Estimado(a) colaborador(a),</p>
+        <p>Le informamos que su documento <strong>${tipoNombre}</strong> ha <strong style="color: #e74c3c;">VENCIDO</strong>.</p>
+        <p>Por favor, ingresa al sistema y sube una versión actualizada del documento a la brevedad posible.</p>
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #7f8c8d; font-size: 12px;">
+          <p>Este es un correo automático, por favor no responda a este mensaje.</p>
+          <p>Universidad Mondragón México &copy; ${new Date().getFullYear()}</p>
+        </div>
+      </div>
+    `;
+  },
 };
