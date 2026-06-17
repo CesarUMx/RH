@@ -205,8 +205,23 @@ export const MiExpediente = () => {
             {grupos.map(({ seccion, items: grupo }) => {
               const requeridos = grupo.filter((i) => i.tipo.requerido).length
               const verificadosReq = grupo.filter((i) => i.tipo.requerido && i.documento?.estado === 'VERIFICADO').length
+              const rechazadosReq = grupo.filter((i) => i.tipo.requerido && i.documento?.estado === 'RECHAZADO').length
+              const opcionales = grupo.filter((i) => !i.tipo.requerido).length
+              const subidosOpc = grupo.filter((i) => !i.tipo.requerido && i.documento && i.documento.estado !== 'RECHAZADO').length
+
               const pct = requeridos > 0 ? Math.round((verificadosReq / requeridos) * 100) : 100
-              const seccionCompleta = requeridos === 0 || verificadosReq === requeridos
+              const requeridosCompletos = requeridos === 0 || (verificadosReq === requeridos && rechazadosReq === 0)
+              const opcionalesPendientes = requeridosCompletos && opcionales > 0 && subidosOpc < opcionales
+              const seccionCompleta = requeridosCompletos && !opcionalesPendientes
+
+              const badgeConfig = seccionCompleta
+                ? { label: 'Completo', cls: 'bg-green-100 text-green-700' }
+                : opcionalesPendientes
+                  ? { label: 'Opc. pendientes', cls: 'bg-blue-100 text-blue-700' }
+                  : { label: 'Pendiente', cls: 'bg-yellow-100 text-yellow-700' }
+
+              const barColor = seccionCompleta ? 'bg-green-500' : opcionalesPendientes ? 'bg-blue-400' : 'bg-primary'
+
               const abierto = isAbierto(seccion, grupo)
 
               return (
@@ -228,17 +243,15 @@ export const MiExpediente = () => {
                       <div className="hidden xs:flex items-center gap-2">
                         <div className="w-16 sm:w-24 bg-gray-200 rounded-full h-1.5">
                           <div
-                            className={`h-1.5 rounded-full transition-all ${seccionCompleta ? 'bg-green-500' : 'bg-primary'}`}
+                            className={`h-1.5 rounded-full transition-all ${barColor}`}
                             style={{ width: `${pct}%` }}
                           />
                         </div>
                         <span className="text-xs text-gray-500 whitespace-nowrap">{verificadosReq}/{requeridos}</span>
                       </div>
                     )}
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
-                      seccionCompleta ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                    }`}>
-                      {seccionCompleta ? 'Completo' : 'Pendiente'}
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${badgeConfig.cls}`}>
+                      {badgeConfig.label}
                     </span>
                     <span className="text-xs text-gray-400 flex-shrink-0">{grupo.length} doc{grupo.length !== 1 ? 's' : ''}</span>
                   </button>

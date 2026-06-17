@@ -157,6 +157,11 @@ export const expedientesService = {
     return data
   },
 
+  revertirDocumento: async (docId: number): Promise<DocumentoExpediente> => {
+    const { data } = await api.patch(`/expedientes/documentos/${docId}/revertir`)
+    return data
+  },
+
   // Util: URL del archivo en el servidor
   getArchivoUrl: (ruta: string) => `${SERVER_BASE_URL}/${ruta}`,
 
