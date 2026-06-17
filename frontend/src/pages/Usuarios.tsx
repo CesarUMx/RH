@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { FaEdit, FaTrash, FaPlus, FaCheck, FaTimes, FaKey } from 'react-icons/fa';
@@ -50,6 +50,8 @@ export const Usuarios = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [selectedUsuario, setSelectedUsuario] = useState<Usuario | null>(null);
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
 
   // Consulta para obtener usuarios
   const { data: usuarios = [], isLoading } = useQuery({
@@ -62,6 +64,17 @@ export const Usuarios = () => {
     queryKey: ['roles'],
     queryFn: usuariosService.getRoles,
   });
+
+  const usuariosFiltrados = useMemo(() => {
+    return usuarios.filter((u) => {
+      const matchSearch =
+        search === '' ||
+        u.nombre.toLowerCase().includes(search.toLowerCase()) ||
+        u.correo.toLowerCase().includes(search.toLowerCase());
+      const matchRole = roleFilter === '' || u.roles.includes(roleFilter);
+      return matchSearch && matchRole;
+    });
+  }, [usuarios, search, roleFilter]);
 
   // Mutación para crear usuario
   const createUsuarioMutation = useMutation({
@@ -283,12 +296,32 @@ export const Usuarios = () => {
           </Button>
         </div>
 
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <input
+            type="text"
+            placeholder="Buscar por nombre o correo..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="">Todos los roles</option>
+            {roles.map((rol) => (
+              <option key={rol.id} value={rol.nombre}>{rol.nombre}</option>
+            ))}
+          </select>
+        </div>
+
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
           </div>
         ) : (
-          <DataTable columns={columns} data={usuarios} />
+          <DataTable columns={columns} data={usuariosFiltrados} />
         )}
 
         {/* Modal para crear usuario */}
