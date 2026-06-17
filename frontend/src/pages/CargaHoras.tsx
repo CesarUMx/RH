@@ -854,6 +854,7 @@ export const CargaHoras = () => {
                           }
                         ]}
                         data={cargasData.data || []}
+                        disablePagination
                       />
 
                       {/* Total de Área como fila extra de la tabla */}

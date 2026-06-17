@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { FaEdit, FaTrash, FaPlus, FaCheck, FaTimes, FaKey } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaCheck, FaTimes, FaKey, FaSearch } from 'react-icons/fa';
 import { createColumnHelper } from '@tanstack/react-table';
 
 import { MainLayout } from '../layouts/MainLayout';
@@ -296,14 +296,18 @@ export const Usuarios = () => {
           </Button>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 mb-4">
-          <input
-            type="text"
-            placeholder="Buscar por nombre o correo..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-          />
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="flex flex-1">
+            <Input
+              placeholder="Buscar por nombre o correo..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="rounded-r-none"
+            />
+            <Button type="button" className="rounded-l-none">
+              <FaSearch />
+            </Button>
+          </div>
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
