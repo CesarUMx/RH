@@ -166,18 +166,32 @@ async function revisarVigenciaDocumentos() {
  */
 export function inicializarCronJobs() {
   console.log('Inicializando tareas programadas (Cron Jobs)...')
+  
+  // ============================================
+  // PRUEBA: Ejecutar a las 3:00 PM hora México
+  // ============================================
+  // Cron expression: '0 15 * * *'
+  // - *: todos los días del mes
+  // - *: todos los meses
+  // - *: todos los días de la semana
+  
+  // cron.schedule('30 14 * * *', () => {
+  //   cerrarPeriodosVencidos()
+  // }, {
+  //   timezone: 'America/Mexico_City'
+  // })
+  
+  // ============================================
+  // PRODUCCIÓN: Ejecutar a medianoche (00:00)
+  // ============================================
+  // Descomentar la siguiente línea para producción y comentar la de arriba
+  
+  // cron.schedule('0 0 * * *', () => {
+  //   cerrarPeriodosVencidos()
+  // }, {
+  //   timezone: 'America/Mexico_City'
+  // })
+  
+  // console.log('Cron configurado: Verificación de cierre de períodos a las 00:00 (medianoche, hora México)')
 
-  // Cierre automático de períodos vencidos - 00:00 diario
-  cron.schedule('0 0 * * *', () => {
-    cerrarPeriodosVencidos()
-  }, {
-    timezone: 'America/Mexico_City'
-  })
-
-  // Verificación de vigencia de documentos de expediente - 00:00 diario
-  cron.schedule('0 0 * * *', () => {
-    revisarVigenciaDocumentos()
-  }, {
-    timezone: 'America/Mexico_City'
-  })
 }
