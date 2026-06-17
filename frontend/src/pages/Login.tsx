@@ -22,10 +22,6 @@ export const Login = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
 
-  if (!authLoading && isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-
   const {
     register,
     handleSubmit,
@@ -33,6 +29,10 @@ export const Login = () => {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
+
+  if (!authLoading && isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);

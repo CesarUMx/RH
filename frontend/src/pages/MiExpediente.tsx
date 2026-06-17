@@ -264,6 +264,9 @@ export const MiExpediente = () => {
                                     <span className="text-xs bg-red-50 text-red-600 border border-red-200 px-1.5 py-0.5 rounded leading-none">Req.</span>
                                   )}
                                 </div>
+                                {item.tipo.descripcion && (
+                                  <p className="text-xs text-gray-500 mt-0.5">{item.tipo.descripcion}</p>
+                                )}
                                 {/* Detalles secundarios debajo del nombre */}
                                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
                                   {/* Estado badge */}
