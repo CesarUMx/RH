@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaUsers, FaBuilding, FaUserTie, FaBars, FaTimes, FaSignOutAlt, FaUser, FaCalendarAlt, FaClock, FaFileInvoiceDollar, FaClipboardList } from 'react-icons/fa';
+import { FaUsers, FaBuilding, FaUserTie, FaBars, FaTimes, FaSignOutAlt, FaUser, FaCalendarAlt, FaClock, FaFileInvoiceDollar, FaClipboardList, FaCog, FaFolderOpen, FaClipboardCheck, FaFileContract } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { AreaSelector } from '../components/AreaSelector';
 import { PeriodoInfo } from '../components/PeriodoInfo';
@@ -66,6 +66,30 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       icon: <FaFileInvoiceDollar className="mr-3 h-5 w-5" />,
       roles: ['ADMIN', 'RH'],
     },
+    {
+      name: 'Configurar Expedientes',
+      path: '/configurar-expedientes',
+      icon: <FaCog className="mr-3 h-5 w-5" />,
+      roles: ['ADMIN'],
+    },
+    {
+      name: 'Validar Expedientes',
+      path: '/validar-expedientes',
+      icon: <FaClipboardCheck className="mr-3 h-5 w-5" />,
+      roles: ['ADMIN', 'RH'],
+    },
+    {
+      name: 'Mi Expediente',
+      path: '/mi-expediente',
+      icon: <FaFolderOpen className="mr-3 h-5 w-5" />,
+      roles: ['EMPLEADO'],
+    },
+    {
+      name: 'Contratos',
+      path: '/contratos',
+      icon: <FaFileContract className="mr-3 h-5 w-5" />,
+      roles: ['ADMIN', 'RH', 'EMPLEADO'],
+    },
   ];
 
   const handleLogout = () => {
@@ -110,7 +134,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                     to={item.path}
                     className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
                       isActive
-                        ? 'bg-secondary text-white border-l-4 border-white pl-1'
+                        ? 'bg-secondary text-white'
                         : 'text-white hover:bg-primary-light'
                     }`}
                   >
@@ -197,7 +221,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                     to={item.path}
                     className={`group flex items-center px-2 py-3 text-base font-medium rounded-md transition-all duration-200 ${
                       isActive
-                        ? 'bg-secondary text-white border-l-4 border-white pl-1'
+                        ? 'bg-secondary text-white'
                         : 'text-white hover:bg-primary-light'
                     }`}
                     onClick={toggleMobileMenu}

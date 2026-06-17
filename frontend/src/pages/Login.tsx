@@ -3,6 +3,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'react-hot-toast';
+import { GoogleLogin } from '@react-oauth/google';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
@@ -15,8 +17,12 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export const Login = () => {
-  const { login } = useAuth();
+  const { login, loginWithGoogle, isAuthenticated, isLoading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+
+  if (!authLoading && isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
 
   const {
     register,
@@ -91,6 +97,34 @@ export const Login = () => {
             >
               Iniciar sesión
             </Button>
+          </div>
+
+          <div className="relative my-2">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-gray-50 px-3 text-gray-500">o continúa con</span>
+            </div>
+          </div>
+
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={(credentialResponse) => {
+                if (!credentialResponse.credential) return;
+                loginWithGoogle(credentialResponse.credential)
+                  .then(() => {
+                    toast.success('Inicio de sesión exitoso');
+                    window.location.href = '/';
+                  })
+                  .catch((error: any) => {
+                    const msg = error?.response?.data?.error ?? 'Error al iniciar sesión con Google';
+                    toast.error(msg);
+                  });
+              }}
+              onError={() => { toast.error('Error al iniciar sesión con Google'); }}
+              useOneTap={false}
+            />
           </div>
         </form>
         <div className="mt-4 text-center">

@@ -14,6 +14,8 @@ export const RedireccionInicio = () => {
       navigate('/gestion-pagos');
     } else if (hasRole(['COORD'])) {
       navigate('/carga-horas');
+    } else if (hasRole(['EMPLEADO'])) {
+      navigate('/mi-expediente');
     } else {
       // Si no tiene ningún rol específico, redirigir a docentes por defecto
       navigate('/docentes');

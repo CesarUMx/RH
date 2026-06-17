@@ -11,6 +11,8 @@ import { periodosRouter } from './modules/periodos/router'
 import { cargaHorasRouter } from './modules/carga-horas/router'
 import { pagosRouter } from './modules/pagos/router'
 import { solicitudesRouter } from './modules/solicitudes/router'
+import { expedientesRouter } from './modules/expedientes/router'
+import { contratosRouter } from './modules/contratos/router'
 import { requireAuth } from './middlewares/auth'
 import { PrismaClient } from '@prisma/client'
 import { inicializarCronJobs } from './services/cron.service'
@@ -51,6 +53,8 @@ app.use('/api/periodos', periodosRouter)
 app.use('/api/carga-horas', cargaHorasRouter)
 app.use('/api/pagos', pagosRouter)
 app.use('/api/solicitudes', solicitudesRouter)
+app.use('/api/expedientes', expedientesRouter)
+app.use('/api/contratos', contratosRouter)
 
 // Ruta de salud
 app.get('/health', (_, res) => {

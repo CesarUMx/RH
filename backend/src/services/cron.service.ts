@@ -76,35 +76,108 @@ async function cerrarPeriodosVencidos() {
 }
 
 /**
+ * Revisa la vigencia de todos los documentos de expediente.
+ * - Estado VERIFICADO y a 7 días o menos de vencer → PROXIMO_A_VENCER + email
+ * - Estado PROXIMO_A_VENCER o VERIFICADO y ya venció → VENCIDO + email
+ * Usa flags alertaProximaEnviada / alertaVencidoEnviada para no reenviar.
+ */
+async function revisarVigenciaDocumentos() {
+  try {
+    console.log('[CRON] Iniciando revisión de vigencia de documentos...')
+
+    const ahora = new Date()
+    const en7Dias = new Date(ahora.getTime() + 7 * 24 * 60 * 60 * 1000)
+
+    // Buscar documentos que tengan vigencia definida y estado relevante
+    const documentos = await prisma.documentoExpediente.findMany({
+      where: {
+        fechaVigencia: { not: null },
+        estado: { in: ['VERIFICADO', 'PROXIMO_A_VENCER'] },
+      },
+      include: {
+        tipo: true,
+        empleado: { select: { correo: true, nombre: true } },
+      },
+    })
+
+    let vencidos = 0
+    let proximosAVencer = 0
+
+    const { sendEmail, emailTemplates } = await import('./email.service')
+
+    for (const doc of documentos) {
+      if (!doc.fechaVigencia) continue
+
+      const yaVencio = doc.fechaVigencia < ahora
+      const proximoAVencer = !yaVencio && doc.fechaVigencia <= en7Dias
+
+      if (yaVencio && doc.estado !== 'VENCIDO') {
+        await prisma.documentoExpediente.update({
+          where: { id: doc.id },
+          data: { estado: 'VENCIDO', alertaVencidoEnviada: true },
+        })
+        vencidos++
+
+        if (!doc.alertaVencidoEnviada) {
+          try {
+            await sendEmail({
+              to: doc.empleado.correo,
+              subject: `Documento vencido: ${doc.tipo.nombre}`,
+              html: emailTemplates.documentoVencido(doc.tipo.nombre),
+            })
+          } catch (e) {
+            console.error(`[CRON] Error enviando email vencido a ${doc.empleado.correo}:`, e)
+          }
+        }
+      } else if (proximoAVencer && doc.estado === 'VERIFICADO') {
+        await prisma.documentoExpediente.update({
+          where: { id: doc.id },
+          data: { estado: 'PROXIMO_A_VENCER', alertaProximaEnviada: true },
+        })
+        proximosAVencer++
+
+        if (!doc.alertaProximaEnviada) {
+          try {
+            const fechaFormateada = doc.fechaVigencia.toLocaleDateString('es-MX', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })
+            await sendEmail({
+              to: doc.empleado.correo,
+              subject: `Documento próximo a vencer: ${doc.tipo.nombre}`,
+              html: emailTemplates.documentoProximoVencer(doc.tipo.nombre, fechaFormateada),
+            })
+          } catch (e) {
+            console.error(`[CRON] Error enviando email próximo a vencer a ${doc.empleado.correo}:`, e)
+          }
+        }
+      }
+    }
+
+    console.log(`[CRON] Vigencia revisada: ${vencidos} vencido(s), ${proximosAVencer} próximo(s) a vencer`)
+  } catch (error) {
+    console.error('[CRON] Error al revisar vigencia de documentos:', error)
+  }
+}
+
+/**
  * Inicializa todas las tareas programadas
  */
 export function inicializarCronJobs() {
   console.log('Inicializando tareas programadas (Cron Jobs)...')
-  
-  // ============================================
-  // PRUEBA: Ejecutar a las 3:00 PM hora México
-  // ============================================
-  // Cron expression: '0 15 * * *'
-  // - *: todos los días del mes
-  // - *: todos los meses
-  // - *: todos los días de la semana
-  
-  // cron.schedule('30 14 * * *', () => {
-  //   cerrarPeriodosVencidos()
-  // }, {
-  //   timezone: 'America/Mexico_City'
-  // })
-  
-  // ============================================
-  // PRODUCCIÓN: Ejecutar a medianoche (00:00)
-  // ============================================
-  // Descomentar la siguiente línea para producción y comentar la de arriba
-  
+
+  // Cierre automático de períodos vencidos - 00:00 diario
   cron.schedule('0 0 * * *', () => {
     cerrarPeriodosVencidos()
   }, {
     timezone: 'America/Mexico_City'
   })
-  
-  // console.log('Cron configurado: Verificación de cierre de períodos a las 00:00 (medianoche, hora México)')
+
+  // Verificación de vigencia de documentos de expediente - 00:00 diario
+  cron.schedule('0 0 * * *', () => {
+    revisarVigenciaDocumentos()
+  }, {
+    timezone: 'America/Mexico_City'
+  })
 }
