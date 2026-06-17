@@ -19,6 +19,8 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export const Login = () => {
   const { login, loginWithGoogle, isAuthenticated, isLoading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
 
   if (!authLoading && isAuthenticated) {
     return <Navigate to="/" replace />;
@@ -108,23 +110,41 @@ export const Login = () => {
             </div>
           </div>
 
-          <div className="flex justify-center">
-            <GoogleLogin
-              onSuccess={(credentialResponse) => {
-                if (!credentialResponse.credential) return;
-                loginWithGoogle(credentialResponse.credential)
-                  .then(() => {
-                    toast.success('Inicio de sesión exitoso');
-                    window.location.href = '/';
-                  })
-                  .catch((error: any) => {
-                    const msg = error?.response?.data?.error ?? 'Error al iniciar sesión con Google';
-                    toast.error(msg);
-                  });
-              }}
-              onError={() => { toast.error('Error al iniciar sesión con Google'); }}
-              useOneTap={false}
-            />
+          <div className="flex flex-col items-center gap-2 min-h-[44px]">
+            {isGoogleLoading ? (
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-primary" />
+                Verificando con Google...
+              </div>
+            ) : (
+              <GoogleLogin
+                onSuccess={(credentialResponse) => {
+                  if (!credentialResponse.credential) return;
+                  setGoogleError(null);
+                  setIsGoogleLoading(true);
+                  loginWithGoogle(credentialResponse.credential)
+                    .then(() => {
+                      toast.success('Inicio de sesión exitoso');
+                      window.location.href = '/';
+                    })
+                    .catch((error: any) => {
+                      const msg = error?.response?.data?.error ?? 'Error al iniciar sesión con Google';
+                      setGoogleError(msg);
+                      setIsGoogleLoading(false);
+                    });
+                }}
+                onError={() => {
+                  setGoogleError('Error al iniciar sesión con Google');
+                }}
+                useOneTap={false}
+              />
+            )}
+            {googleError && (
+              <div className="w-full flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-md px-3 py-2">
+                <span className="mt-0.5 flex-shrink-0">&#9888;</span>
+                <span>{googleError}</span>
+              </div>
+            )}
           </div>
         </form>
         <div className="mt-4 text-center">
