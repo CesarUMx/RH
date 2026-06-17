@@ -54,8 +54,8 @@ export const Login = () => {
         <div>
           <div className="flex justify-center">
             <img
-              className="h-16 w-auto"
-              src="/logo.svg"
+              className="h-24 w-auto"
+              src="/logo2.png"
               alt="Logo UMx"
             />
           </div>

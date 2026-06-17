@@ -17,7 +17,7 @@ export default defineConfig({
     port: 4173,
     strictPort: true,
     allowedHosts: [
-      'rh.mondragonmexico.edu.mx',
+      'srh.mondragonmexico.edu.mx',
       'localhost',
       '127.0.0.1',
       '172.18.0.99'

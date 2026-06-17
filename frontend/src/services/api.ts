@@ -4,7 +4,10 @@ import axios from 'axios';
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 // Base URL del servidor (sin /api) para archivos estáticos
-export const SERVER_BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
+const apiUrl = import.meta.env.VITE_API_URL;
+export const SERVER_BASE_URL = apiUrl && apiUrl.startsWith('http') 
+  ? apiUrl.replace('/api', '') 
+  : window.location.origin;
 
 // Crear instancia de axios con configuración base
 const api = axios.create({
