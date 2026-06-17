@@ -1,4 +1,3 @@
-// Importaciones de tipos
 import {
   flexRender,
   getCoreRowModel,
@@ -6,66 +5,33 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   type SortingState,
+  type PaginationState,
 } from '@tanstack/react-table';
 import { useState } from 'react';
 import { Button } from './Button';
 
-// Definir el tipo para la paginación
-type PaginationState = {
-  pageIndex: number;
-  pageSize: number;
-};
-
 interface DataTableProps<TData> {
   columns: any[];
   data: TData[];
-  pagination?: {
-    pageIndex: number;
-    pageSize: number;
-    pageCount: number;
-    onPaginationChange?: (pagination: PaginationState) => void;
-    serverSide?: boolean;
-  };
 }
 
-export function DataTable<TData>({
-  columns,
-  data,
-  pagination,
-}: DataTableProps<TData>) {
+export function DataTable<TData>({ columns, data }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 25,
+  });
 
-  // Configuración de la tabla con manejo especial para la paginación
-  const tableConfig: any = {
+  const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
-    state: {
-      sorting,
-      ...(pagination && {
-        pagination: {
-          pageIndex: pagination.pageIndex >= 0 ? pagination.pageIndex : 0,
-          pageSize: pagination.pageSize > 0 ? pagination.pageSize : 10,
-        },
-      }),
-    },
-  };
-  
-  // Añadir configuración de paginación si está habilitada
-  if (pagination) {
-    tableConfig.getPaginationRowModel = pagination.serverSide ? undefined : getPaginationRowModel();
-    tableConfig.manualPagination = pagination.serverSide;
-    tableConfig.pageCount = pagination.pageCount > 0 ? pagination.pageCount : 1;
-    
-    // Usar any para evitar problemas de tipo con onPaginationChange
-    if (pagination.onPaginationChange) {
-      tableConfig.onPaginationChange = pagination.onPaginationChange;
-    }
-  }
-  
-  const table = useReactTable(tableConfig);
+    onPaginationChange: setPagination,
+    state: { sorting, pagination },
+  });
 
   return (
     <div className="w-full">
@@ -126,50 +92,56 @@ export function DataTable<TData>({
         </table>
       </div>
 
-      {pagination && (
-        <div className="flex items-center justify-between px-2 py-3 mt-2">
-          <div className="flex-1 text-sm text-gray-700">
-            {data.length > 0 ? (
-              <>
-                Mostrando {' '}
-                {Math.min(table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1, data.length)} a{' '}
-                {Math.min(
-                  (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-                  pagination.serverSide ? (pagination.pageCount || 1) * pagination.pageSize : data.length
-                )}{' '}
-                de{' '}
-                {pagination.serverSide && pagination.pageCount > 0 ? 
-                  (pagination.pageCount * pagination.pageSize) : 
-                  data.length} registros
-              </>
-            ) : (
-              <>No hay registros para mostrar</>
-            )}
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              Anterior
-            </Button>
-            <span className="text-sm text-gray-700">
-              Página {table.getState().pagination.pageIndex + 1} de{' '}
-              {pagination.pageCount || 1}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              Siguiente
-            </Button>
-          </div>
+      <div className="flex items-center justify-between px-2 py-3 mt-2 flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-700">Mostrar</span>
+          <select
+            value={pagination.pageSize}
+            onChange={(e) => table.setPageSize(Number(e.target.value))}
+            className="border border-gray-300 rounded-md text-sm px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+          <span className="text-sm text-gray-700">registros</span>
         </div>
-      )}
+
+        <div className="text-sm text-gray-700">
+          {data.length > 0 ? (
+            <>
+              Mostrando{' '}
+              {pagination.pageIndex * pagination.pageSize + 1} a{' '}
+              {Math.min((pagination.pageIndex + 1) * pagination.pageSize, data.length)}{' '}
+              de {data.length} registros
+            </>
+          ) : (
+            <>No hay registros para mostrar</>
+          )}
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Anterior
+          </Button>
+          <span className="text-sm text-gray-700">
+            Página {pagination.pageIndex + 1} de {table.getPageCount()}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Siguiente
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

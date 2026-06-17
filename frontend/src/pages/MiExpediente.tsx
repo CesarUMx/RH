@@ -215,18 +215,18 @@ export const MiExpediente = () => {
                   <button
                     type="button"
                     onClick={() => toggleSeccion(seccion, grupo)}
-                    className="w-full flex items-center gap-3 px-5 py-4 hover:bg-gray-50 transition-colors text-left"
+                    className="w-full flex items-center gap-2 sm:gap-3 px-4 sm:px-5 py-4 hover:bg-gray-50 transition-colors text-left"
                   >
-                    <span className="text-gray-400">
+                    <span className="text-gray-400 flex-shrink-0">
                       {abierto ? <FaChevronDown className="h-3 w-3" /> : <FaChevronRight className="h-3 w-3" />}
                     </span>
-                    <span className="font-semibold text-gray-700 uppercase tracking-wide text-sm flex-1">
+                    <span className="font-semibold text-gray-700 uppercase tracking-wide text-sm flex-1 min-w-0">
                       {seccion}
                     </span>
-                    {/* Barra de progreso */}
+                    {/* Barra de progreso — oculta en móvil muy pequeño */}
                     {requeridos > 0 && (
-                      <div className="flex items-center gap-2">
-                        <div className="w-24 bg-gray-200 rounded-full h-1.5">
+                      <div className="hidden xs:flex items-center gap-2">
+                        <div className="w-16 sm:w-24 bg-gray-200 rounded-full h-1.5">
                           <div
                             className={`h-1.5 rounded-full transition-all ${seccionCompleta ? 'bg-green-500' : 'bg-primary'}`}
                             style={{ width: `${pct}%` }}
@@ -235,12 +235,12 @@ export const MiExpediente = () => {
                         <span className="text-xs text-gray-500 whitespace-nowrap">{verificadosReq}/{requeridos}</span>
                       </div>
                     )}
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ml-1 ${
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
                       seccionCompleta ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
                     }`}>
                       {seccionCompleta ? 'Completo' : 'Pendiente'}
                     </span>
-                    <span className="text-xs text-gray-400 ml-1">{grupo.length} doc{grupo.length !== 1 ? 's' : ''}</span>
+                    <span className="text-xs text-gray-400 flex-shrink-0">{grupo.length} doc{grupo.length !== 1 ? 's' : ''}</span>
                   </button>
 
                   {/* Filas de documentos */}
@@ -253,38 +253,41 @@ export const MiExpediente = () => {
                         const editable = puedeEditar(estado)
 
                         return (
-                          <div key={item.tipo.id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50">
-                            <FaFilePdf className="text-red-400 flex-shrink-0" />
-
-                            {/* Nombre + badges */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-sm font-medium text-gray-800 truncate">{item.tipo.nombre}</span>
-                                {item.tipo.requerido && (
-                                  <span className="text-xs bg-red-50 text-red-600 border border-red-200 px-1.5 py-0.5 rounded leading-none">Req.</span>
-                                )}
-                                {item.tipo.requiereVigencia && doc?.fechaVigencia && (
-                                  <span className="text-xs text-gray-400">Vence: {formatFecha(doc.fechaVigencia)}</span>
-                                )}
-                                {doc?.estado === 'RECHAZADO' && doc.motivoRechazo && (
-                                  <span className="text-xs text-red-600 truncate max-w-xs" title={doc.motivoRechazo}>
-                                    — {doc.motivoRechazo}
-                                  </span>
-                                )}
+                          <div key={item.tipo.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 hover:bg-gray-50">
+                            {/* Fila superior (móvil) / lado izquierdo (desktop): ícono + nombre + badges */}
+                            <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
+                              <FaFilePdf className="text-red-400 flex-shrink-0 mt-0.5 sm:mt-0" />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-sm font-medium text-gray-800">{item.tipo.nombre}</span>
+                                  {item.tipo.requerido && (
+                                    <span className="text-xs bg-red-50 text-red-600 border border-red-200 px-1.5 py-0.5 rounded leading-none">Req.</span>
+                                  )}
+                                </div>
+                                {/* Detalles secundarios debajo del nombre */}
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                                  {/* Estado badge */}
+                                  {cfg ? (
+                                    <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${cfg.color}`}>
+                                      {cfg.icon}{cfg.label}
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs text-gray-400 italic">Sin documento</span>
+                                  )}
+                                  {item.tipo.requiereVigencia && doc?.fechaVigencia && (
+                                    <span className="text-xs text-gray-400">Vence: {formatFecha(doc.fechaVigencia)}</span>
+                                  )}
+                                  {doc?.estado === 'RECHAZADO' && doc.motivoRechazo && (
+                                    <span className="text-xs text-red-600" title={doc.motivoRechazo}>
+                                      — {doc.motivoRechazo}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
 
-                            {/* Estado badge */}
-                            {cfg ? (
-                              <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap ${cfg.color}`}>
-                                {cfg.icon}{cfg.label}
-                              </span>
-                            ) : (
-                              <span className="text-xs text-gray-400 italic">Sin documento</span>
-                            )}
-
                             {/* Acciones */}
-                            <div className="flex items-center gap-2 flex-shrink-0">
+                            <div className="flex items-center gap-2 flex-shrink-0 pl-7 sm:pl-0">
                               {doc && (
                                 <a
                                   href={expedientesService.getArchivoUrl(doc.archivo)}
@@ -301,7 +304,7 @@ export const MiExpediente = () => {
                                   {doc ? 'Reemplazar' : 'Subir'}
                                 </Button>
                               ) : (
-                                <span className="text-xs text-gray-300 w-16 text-center">Verificado</span>
+                                <span className="text-xs text-gray-300 text-center">Verificado</span>
                               )}
                             </div>
                           </div>
