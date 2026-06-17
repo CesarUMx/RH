@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast'
-import { FaCheck, FaEye, FaUser, FaChevronLeft, FaFilePdf, FaTrash } from 'react-icons/fa'
+import { FaCheck, FaEye, FaUser, FaChevronLeft, FaFilePdf, FaTrash, FaUndo } from 'react-icons/fa'
+import { useAuth } from '../context/AuthContext'
 
 import { MainLayout } from '../layouts/MainLayout'
 import { Button } from '../components/ui/Button'
@@ -104,11 +105,13 @@ const TarjetaEmpleado = ({
 
 export const ValidarExpedientes = () => {
   const queryClient = useQueryClient()
+  const { hasRole } = useAuth()
+  const isAdmin = hasRole('ADMIN')
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<number | null>(null)
   const [busqueda, setBusqueda] = useState('')
   const [isVerificarOpen, setIsVerificarOpen] = useState(false)
   const [docSeleccionado, setDocSeleccionado] = useState<{ id: number; nombre: string } | null>(null)
-  const [accionDoc, setAccionDoc] = useState<'VERIFICADO' | 'RECHAZADO'>('VERIFICADO')
+  const [accionDoc, setAccionDoc] = useState<'VERIFICADO' | 'RECHAZADO' | 'REVERTIR'>('VERIFICADO')
   const [motivoRechazo, setMotivoRechazo] = useState('')
 
   // ── Queries ────────────────────────────────────────────────────────────────
@@ -131,18 +134,24 @@ export const ValidarExpedientes = () => {
   // ── Mutation ────────────────────────────────────────────────────────────────
   const verificarMutation = useMutation({
     mutationFn: () =>
-      expedientesService.verificarDocumento(docSeleccionado!.id, accionDoc, motivoRechazo || undefined),
+      accionDoc === 'REVERTIR'
+        ? expedientesService.revertirDocumento(docSeleccionado!.id)
+        : expedientesService.verificarDocumento(docSeleccionado!.id, accionDoc, motivoRechazo || undefined),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expedientes-lista'] })
       queryClient.invalidateQueries({ queryKey: ['expediente-empleado', empleadoSeleccionado] })
-      toast.success(accionDoc === 'VERIFICADO' ? 'Documento verificado' : 'Documento rechazado')
+      toast.success(
+        accionDoc === 'VERIFICADO' ? 'Documento verificado' :
+        accionDoc === 'REVERTIR'   ? 'Documento revertido a Rechazado' :
+        'Documento rechazado'
+      )
       cerrarModalVerificar()
     },
     onError: (err: any) => toast.error(err.response?.data?.error || 'Error al procesar'),
   })
 
   // ── Handlers ────────────────────────────────────────────────────────────────
-  const abrirVerificar = (item: ItemExpediente, tipo: 'VERIFICADO' | 'RECHAZADO') => {
+  const abrirVerificar = (item: ItemExpediente, tipo: 'VERIFICADO' | 'RECHAZADO' | 'REVERTIR') => {
     if (!item.documento) return
     setDocSeleccionado({ id: item.documento.id, nombre: item.tipo.nombre })
     setAccionDoc(tipo)
@@ -244,6 +253,7 @@ export const ValidarExpedientes = () => {
                     const doc = item.documento
                     const estadoConfig = doc ? ESTADO_CONFIG[doc.estado] : null
                     const puedeProcesar = doc && ['PENDIENTE', 'PROXIMO_A_VENCER', 'VENCIDO'].includes(doc.estado)
+                    const puedeRevertir = doc && ['VERIFICADO', 'RECHAZADO'].includes(doc.estado)
 
                     return (
                       <div key={item.tipo.id} className="bg-white rounded-lg shadow border border-gray-100 p-5">
@@ -331,6 +341,16 @@ export const ValidarExpedientes = () => {
                                 </Button>
                               </>
                             )}
+                            {puedeRevertir && isAdmin && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => abrirVerificar(item, 'REVERTIR')}
+                                title="Revertir estado (solo Admin)"
+                              >
+                                <FaUndo className="text-orange-500" />
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -350,7 +370,11 @@ export const ValidarExpedientes = () => {
       <Modal
         isOpen={isVerificarOpen}
         onClose={cerrarModalVerificar}
-        title={accionDoc === 'VERIFICADO' ? `Verificar: ${docSeleccionado?.nombre}` : `Rechazar: ${docSeleccionado?.nombre}`}
+        title={
+          accionDoc === 'VERIFICADO' ? `Verificar: ${docSeleccionado?.nombre}` :
+          accionDoc === 'REVERTIR'   ? `Revertir: ${docSeleccionado?.nombre}` :
+          `Rechazar: ${docSeleccionado?.nombre}`
+        }
         size="sm"
       >
         <div className="space-y-4">
@@ -365,6 +389,14 @@ export const ValidarExpedientes = () => {
           {accionDoc === 'VERIFICADO' && (
             <p className="text-sm text-gray-600">¿Confirmas que el documento <strong>{docSeleccionado?.nombre}</strong> es correcto y válido?</p>
           )}
+          {accionDoc === 'REVERTIR' && (
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600">
+                Esto cambiará el estado de <strong>{docSeleccionado?.nombre}</strong> a <span className="text-red-600 font-medium">Rechazado</span> y el empleado deberá subir el documento nuevamente.
+              </p>
+              <p className="text-xs text-gray-400">Se registrará el motivo: "Revertido por RH — el documento debe ser reemplazado".</p>
+            </div>
+          )}
           <div className="flex justify-end space-x-2 pt-4">
             <Button variant="outline" onClick={cerrarModalVerificar}>Cancelar</Button>
             <Button
@@ -378,7 +410,7 @@ export const ValidarExpedientes = () => {
                 verificarMutation.mutate()
               }}
             >
-              {accionDoc === 'VERIFICADO' ? 'Verificar' : 'Rechazar'}
+              {accionDoc === 'VERIFICADO' ? 'Verificar' : accionDoc === 'REVERTIR' ? 'Revertir' : 'Rechazar'}
             </Button>
           </div>
         </div>

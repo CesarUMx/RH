@@ -434,3 +434,58 @@ export async function verificarDocumento(req: Request, res: Response) {
     res.status(500).json({ error: 'Error al verificar documento' })
   }
 }
+
+// ─── ADMIN: Revertir estado de documento ───────────────────────────────────────
+
+export async function revertirDocumento(req: Request, res: Response) {
+  try {
+    const docId = Number(req.params.id)
+    const adminId = req.user!.id
+
+    const doc = await prisma.documentoExpediente.findUnique({
+      where: { id: docId },
+      include: { tipo: true, empleado: true },
+    })
+    if (!doc) return res.status(404).json({ error: 'Documento no encontrado' })
+
+    if (!['VERIFICADO', 'RECHAZADO'].includes(doc.estado)) {
+      return res.status(400).json({ error: 'Solo se pueden revertir documentos Verificados o Rechazados' })
+    }
+
+    const docActualizado = await prisma.documentoExpediente.update({
+      where: { id: docId },
+      data: {
+        estado: 'RECHAZADO',
+        motivoRechazo: 'Revertido por administrador — el documento debe ser reemplazado',
+        verificadoPorId: null,
+        verificadoEn: null,
+        alertaProximaEnviada: false,
+        alertaVencidoEnviada: false,
+      },
+    })
+
+    await auditarAccion(adminId, 'DOC_REVERTIDO', 'DocumentoExpediente', docId, {
+      estadoAnterior: doc.estado,
+    })
+
+    try {
+      const { sendEmail, emailTemplates } = await import('../../services/email.service')
+      await sendEmail({
+        to: doc.empleado.correo,
+        subject: 'Documento de expediente rechazado',
+        html: emailTemplates.documentoRechazado(
+          doc.tipo.nombre,
+          'Revertido por administrador — el documento debe ser reemplazado'
+        ),
+      })
+    } catch (emailError) {
+      console.error('[EMAIL] Error al enviar notificación:', emailError)
+    }
+
+    res.json(docActualizado)
+  } catch (error: any) {
+    if (error.code === 'P2025') return res.status(404).json({ error: 'Documento no encontrado' })
+    console.error(error)
+    res.status(500).json({ error: 'Error al revertir documento' })
+  }
+}
