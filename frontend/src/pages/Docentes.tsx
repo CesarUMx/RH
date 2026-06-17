@@ -544,6 +544,7 @@ export const Docentes = () => {
                 <DataTable 
                   columns={columns} 
                   data={docentesPaginados?.data || []} 
+                  disablePagination
                 />
                 
                 {/* Componente de paginación personalizado */}

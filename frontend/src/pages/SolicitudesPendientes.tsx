@@ -294,6 +294,7 @@ export const SolicitudesPendientes = () => {
             <DataTable
               columns={columns}
               data={solicitudesPaginadas?.data || []}
+              disablePagination
             />
           )}
           
