@@ -75,6 +75,19 @@ const formatFecha = (fecha: string | null) => {
   return new Date(fecha).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
+const formatFechaVigencia = (fecha: string | null, soloMesAnio: boolean) => {
+  if (!fecha) return '—'
+  const d = new Date(fecha)
+  // Si es 31-dic → fue guardado como "solo año"
+  if (d.getMonth() === 11 && d.getDate() === 31) {
+    return d.getFullYear().toString()
+  }
+  if (soloMesAnio) {
+    return d.toLocaleDateString('es-MX', { year: 'numeric', month: 'long' })
+  }
+  return d.toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })
+}
+
 // ── Componente ────────────────────────────────────────────────────────────────
 
 export const MiExpediente = () => {
@@ -83,7 +96,7 @@ export const MiExpediente = () => {
   const [itemSeleccionado, setItemSeleccionado] = useState<ItemExpediente | null>(null)
   const [archivo, setArchivo] = useState<File | null>(null)
   const [fechaVigencia, setFechaVigencia] = useState('')
-  const [soloMesAnio, setSoloMesAnio] = useState(false)
+  const [precisionFecha, setPrecisionFecha] = useState<'anio' | 'mes' | 'dia'>('anio')
   const [archivoError, setArchivoError] = useState('')
 
   // ── Query ────────────────────────────────────────────────────────────────────
@@ -98,13 +111,29 @@ export const MiExpediente = () => {
   })
 
   // ── Mutation ────────────────────────────────────────────────────────────────
+  const computarFechaFinal = (): string | undefined => {
+    if (!fechaVigencia) return undefined
+    if (precisionFecha === 'anio') {
+      const year = parseInt(fechaVigencia, 10)
+      // último día del año
+      return `${year}-12-31`
+    }
+    if (precisionFecha === 'mes') {
+      // fechaVigencia es 'YYYY-MM'; calcular último día del mes
+      const [y, m] = fechaVigencia.split('-').map(Number)
+      const ultimo = new Date(y, m, 0).getDate()
+      return `${y}-${String(m).padStart(2, '0')}-${String(ultimo).padStart(2, '0')}`
+    }
+    return fechaVigencia
+  }
+
   const subirMutation = useMutation({
     mutationFn: () =>
       expedientesService.subirDocumento(
         itemSeleccionado!.tipo.id,
         archivo!,
-        fechaVigencia || undefined,
-        soloMesAnio
+        computarFechaFinal(),
+        false
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mi-expediente'] })
@@ -119,7 +148,7 @@ export const MiExpediente = () => {
     setItemSeleccionado(item)
     setArchivo(null)
     setFechaVigencia('')
-    setSoloMesAnio(false)
+    setPrecisionFecha('anio')
     setArchivoError('')
     setIsSubirOpen(true)
   }
@@ -129,7 +158,7 @@ export const MiExpediente = () => {
     setItemSeleccionado(null)
     setArchivo(null)
     setFechaVigencia('')
-    setSoloMesAnio(false)
+    setPrecisionFecha('anio')
     setArchivoError('')
   }
 
@@ -291,7 +320,7 @@ export const MiExpediente = () => {
                                     <span className="text-xs text-gray-400 italic">Sin documento</span>
                                   )}
                                   {item.tipo.requiereVigencia && doc?.fechaVigencia && (
-                                    <span className="text-xs text-gray-400">Vence: {formatFecha(doc.fechaVigencia)}</span>
+                                    <span className="text-xs text-gray-400">Vence: {formatFechaVigencia(doc.fechaVigencia, doc.soloMesAnio)}</span>
                                   )}
                                   {doc?.estado === 'RECHAZADO' && doc.motivoRechazo && (
                                     <span className="text-xs text-red-600" title={doc.motivoRechazo}>
@@ -317,7 +346,7 @@ export const MiExpediente = () => {
                               {editable ? (
                                 <Button size="sm" onClick={() => abrirSubir(item)}>
                                   <FaUpload className="mr-1" />
-                                  {doc ? 'Reemplazar' : 'Subir'}
+                                  {doc ? 'Reemplazar PDF' : 'Subir PDF'}
                                 </Button>
                               ) : (
                                 <span className="text-xs text-gray-300 text-center">Verificado</span>
@@ -373,27 +402,67 @@ export const MiExpediente = () => {
 
           {/* Vigencia (solo si el tipo la requiere) */}
           {itemSeleccionado?.tipo.requiereVigencia && (
-            <div className="space-y-2">
-              <Input
-                label="Fecha de vigencia *"
-                type="date"
-                value={fechaVigencia}
-                onChange={(e) => setFechaVigencia(e.target.value)}
-              />
-              <label className="flex items-center gap-2 cursor-pointer">
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700">Fecha de vigencia *</label>
+
+              {/* Selector de precisión */}
+              <div className="flex gap-4">
+                {(['anio', 'mes', 'dia'] as const).map((p) => (
+                  <label key={p} className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="precision"
+                      value={p}
+                      checked={precisionFecha === p}
+                      onChange={() => { setPrecisionFecha(p); setFechaVigencia('') }}
+                      className="h-3.5 w-3.5 text-primary"
+                    />
+                    <span className="text-sm text-gray-600">
+                      {p === 'anio' ? 'Solo año' : p === 'mes' ? 'Mes y año' : 'Fecha exacta'}
+                    </span>
+                  </label>
+                ))}
+              </div>
+
+              {/* Input dinámico según precisión */}
+              {precisionFecha === 'anio' && (
                 <input
-                  type="checkbox"
-                  checked={soloMesAnio}
-                  onChange={(e) => setSoloMesAnio(e.target.checked)}
-                  className="h-4 w-4 text-primary rounded border-gray-300"
+                  type="number"
+                  min={2000}
+                  max={2099}
+                  placeholder="Ej. 2028"
+                  value={fechaVigencia}
+                  onChange={(e) => setFechaVigencia(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
-                <span className="text-sm text-gray-600">
-                  Solo mes y año (la fecha exacta no está especificada en el documento)
-                </span>
-              </label>
-              {soloMesAnio && (
+              )}
+              {precisionFecha === 'mes' && (
+                <input
+                  type="month"
+                  value={fechaVigencia}
+                  onChange={(e) => setFechaVigencia(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              )}
+              {precisionFecha === 'dia' && (
+                <input
+                  type="date"
+                  value={fechaVigencia}
+                  onChange={(e) => setFechaVigencia(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              )}
+
+              {/* Nota informativa */}
+              {fechaVigencia && precisionFecha !== 'dia' && (
                 <p className="text-xs text-gray-500 bg-blue-50 border border-blue-100 rounded p-2">
-                  Al marcar esta opción, se considerará como fecha de vencimiento el último día del mes seleccionado.
+                  {precisionFecha === 'anio'
+                    ? `Se guardará el 31 de diciembre de ${fechaVigencia}.`
+                    : (() => {
+                        const [y, m] = fechaVigencia.split('-').map(Number)
+                        const ultimo = new Date(y, m, 0).getDate()
+                        return `Se guardará el ${ultimo} de ${new Date(y, m - 1).toLocaleDateString('es-MX', { month: 'long' })} de ${y}.`
+                      })()}
                 </p>
               )}
             </div>
