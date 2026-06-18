@@ -5,7 +5,6 @@ import { FaUpload, FaFilePdf, FaCheck, FaExclamationTriangle, FaClock, FaTimes, 
 import { MainLayout } from '../layouts/MainLayout'
 import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
-import { Input } from '../components/ui/Input'
 
 import { expedientesService } from '../services/expedientes.service'
 import type { ItemExpediente, EstadoDocumento, SeccionExpediente } from '../services/expedientes.service'
@@ -69,11 +68,6 @@ const ESTADO_CONFIG: Record<EstadoDocumento, { label: string; color: string; ico
 
 const puedeEditar = (estado: EstadoDocumento | null) =>
   estado === null || ['PENDIENTE', 'RECHAZADO', 'PROXIMO_A_VENCER', 'VENCIDO'].includes(estado)
-
-const formatFecha = (fecha: string | null) => {
-  if (!fecha) return '—'
-  return new Date(fecha).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })
-}
 
 const formatFechaVigencia = (fecha: string | null, soloMesAnio: boolean) => {
   if (!fecha) return '—'
