@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import { PrismaClient, EstadoPeriodo } from '@prisma/client'
 import { JwtPayload } from '../../middlewares/auth'
 import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import * as path from 'path'
 import * as fs from 'fs'
 import multer from 'multer'
@@ -159,34 +160,7 @@ export async function generarPlantilla(req: Request, res: Response) {
       orderBy: { nombre: 'asc' }
     })
 
-    // Crear la plantilla
-    const workbook = XLSX.utils.book_new()
-    
-    // Datos para la hoja de cálculo
-    let data = [];
-    
-    // Si no hay docentes, agregar al menos una fila de ejemplo
-    if (docentes.length === 0) {
-      data = [{
-        codigo_interno: 'EJEMPLO',
-        nombre: 'DOCENTE EJEMPLO',
-        rfc: 'XAXX010101000',
-        materia: 'MATERIA EJEMPLO',
-        horas: '10',
-        costo_hora: '100'
-      }];
-    } else {
-      data = docentes.map(docente => ({
-        codigo_interno: docente.codigoInterno,
-        nombre: docente.nombre,
-        rfc: docente.rfc,
-        materia: '', // Campo a completar por el usuario
-        horas: '', // Campo a completar por el usuario
-        costo_hora: '' // Campo a completar por el usuario
-      }));
-    }
-    
-    // Definir los nombres de campo internos y sus encabezados descriptivos
+    // Definir el mapeo de campos
     const fieldMapping = [
       { internal: 'codigo_interno', display: 'Código Interno' },
       { internal: 'nombre', display: 'Nombre del Docente' },
@@ -195,87 +169,100 @@ export async function generarPlantilla(req: Request, res: Response) {
       { internal: 'horas', display: 'Horas' },
       { internal: 'costo_hora', display: 'Costo por Hora' }
     ];
-    
+
     // Guardar el mapeo en una variable global para usarlo en el procesamiento
     global.fieldMapping = fieldMapping as FieldMapping[];
-    
-    // Crear la hoja de cálculo con encabezados internos
-    const worksheet = XLSX.utils.json_to_sheet(data, {
-      header: fieldMapping.map(f => f.internal),
-      skipHeader: false
-    })
-    
-    // Establecer encabezados descriptivos
-    const headers = fieldMapping.map(f => ({ v: f.display, t: 's' }));
-    
-    // Reemplazar encabezados
-    XLSX.utils.sheet_add_aoa(worksheet, [headers.map(h => h.v)], { origin: 'A1' });
-    
-    // Ajustar ancho de columnas
-    const wscols = [
-      { wch: 15 }, // Código Interno
-      { wch: 30 }, // Nombre del Docente
-      { wch: 15 }, // RFC
-      { wch: 40 }, // Materia
-      { wch: 10 }, // Horas
-      { wch: 15 }  // Costo por Hora
+
+    // Crear la plantilla con ExcelJS para soporte de protección de celdas
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Carga Horas');
+
+    // Definir columnas con anchos
+    worksheet.columns = [
+      { key: 'codigo_interno', width: 18 },
+      { key: 'nombre',         width: 32 },
+      { key: 'rfc',            width: 18 },
+      { key: 'materia',        width: 42 },
+      { key: 'horas',          width: 12 },
+      { key: 'costo_hora',     width: 18 },
     ];
-    worksheet['!cols'] = wscols;
-    
-    // Agregar la hoja al libro
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Carga Horas')
-    
-    // Crear directorio temporal si no existe
-    const uploadsDir = path.join(process.cwd(), 'uploads')
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true })
-    }
-    
-    // Generar nombre de archivo único
-    const timestamp = new Date().getTime()
-    const fileName = `plantilla_carga_${area.nombre}_${periodo.nombre}_${timestamp}.xlsx`
-    const filePath = path.join(uploadsDir, fileName)
-    
-    // Escribir el archivo
-    try {
-      XLSX.writeFile(workbook, filePath)
-      
-      // Verificar que el archivo existe antes de enviarlo
-      if (fs.existsSync(filePath)) {
-        const stats = fs.statSync(filePath)
-        
-        if (stats.size === 0) {
-          throw new Error('El archivo generado está vacío')
+
+    // Fila de encabezados
+    const headerRow = worksheet.addRow([
+      'Código Interno',
+      'Nombre del Docente',
+      'RFC',
+      'Materia',
+      'Horas',
+      'Costo por Hora'
+    ]);
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true };
+      cell.protection = { locked: true };
+    });
+
+    // Filas de datos
+    const docentesData = docentes.length === 0
+      ? [{ codigoInterno: 'EJEMPLO', nombre: 'DOCENTE EJEMPLO', rfc: 'XAXX010101000' }]
+      : docentes;
+
+    for (const docente of docentesData) {
+      const row = worksheet.addRow([
+        docente.codigoInterno,
+        docente.nombre,
+        docente.rfc,
+        '',
+        '',
+        ''
+      ]);
+
+      // Columnas bloqueadas: Código Interno (1), Nombre (2), RFC (3)
+      for (let col = 1; col <= 3; col++) {
+        const cell = row.getCell(col);
+        cell.protection = { locked: true };
+        if (col === 1) {
+          // Formato texto para preservar ceros iniciales (ej. 00120)
+          cell.numFmt = '@';
+          cell.value = String(docente.codigoInterno);
         }
-        
-        // Establecer encabezados para la descarga
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`)
-        res.setHeader('Content-Length', stats.size)
-        
-        // Enviar el archivo como respuesta
-        const fileStream = fs.createReadStream(filePath)
-        fileStream.pipe(res)
-        
-        // Eliminar el archivo después de enviarlo
-        fileStream.on('end', () => {
-          fs.unlink(filePath, (unlinkErr) => {
-            if (unlinkErr) {
-              console.error('Error al eliminar el archivo temporal:', unlinkErr)
-            } else {
-              console.log(`Archivo temporal eliminado: ${filePath}`)
-            }
-          })
-        })
-      } else {
-        throw new Error('El archivo no se creó correctamente')
       }
+
+      // Columnas editables: Materia (4), Horas (5), Costo por Hora (6)
+      for (let col = 4; col <= 6; col++) {
+        row.getCell(col).protection = { locked: false };
+      }
+    }
+
+    // Proteger la hoja: celdas desbloqueadas son editables, bloqueadas no
+    await worksheet.protect('', {
+      selectLockedCells: true,
+      selectUnlockedCells: true,
+      sort: true,
+      autoFilter: true,
+      formatCells: false,
+      formatColumns: false,
+      formatRows: false,
+      insertColumns: false,
+      insertRows: false,
+      deleteColumns: false,
+      deleteRows: false,
+    });
+
+    // Generar buffer y enviar directamente (sin archivo temporal)
+    try {
+      const buffer = await workbook.xlsx.writeBuffer();
+      const fileName = `plantilla_carga_${area.nombre}_${periodo.nombre}_${new Date().getTime()}.xlsx`;
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.setHeader('Content-Length', buffer.byteLength);
+      res.end(Buffer.from(buffer));
     } catch (error) {
-      console.error('Error al generar o enviar el archivo Excel:', error)
+      console.error('Error al generar o enviar el archivo Excel:', error);
       return res.status(500).json({
         error: 'Error al generar plantilla',
         mensaje: 'No se pudo generar el archivo Excel'
-      })
+      });
     }
   } catch (error) {
     console.error('Error al generar plantilla:', error)
