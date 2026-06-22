@@ -14,6 +14,7 @@ import { solicitudesRouter } from './modules/solicitudes/router'
 import { expedientesRouter } from './modules/expedientes/router'
 import { contratosRouter } from './modules/contratos/router'
 import { requireAuth } from './middlewares/auth'
+import { errorHandler } from './middlewares/errorHandler'
 import { PrismaClient } from '@prisma/client'
 import { inicializarCronJobs } from './services/cron.service'
 
@@ -70,6 +71,9 @@ app.get('/api/me', requireAuth, (req, res) => {
 app.get('/me', requireAuth, (req, res) => {
     res.json({ user: req.user })
 })
+
+// Manejador global de errores (debe ir al final, después de todas las rutas)
+app.use(errorHandler)
 
 // Iniciar servidor
 const PORT = env.server.port

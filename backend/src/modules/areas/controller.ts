@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { JwtPayload } from '../../middlewares/auth'
+import { auditarAccion } from '../../utils/auditoria'
 
 const prisma = new PrismaClient()
 
@@ -103,6 +104,7 @@ export async function crearArea(req: Request, res: Response) {
 // PUT /areas/:id - Actualizar un área existente
 export async function actualizarArea(req: Request, res: Response) {
   try {
+    const user = req.user as JwtPayload
     const { id } = req.params
     
     // Aseguramos que id no sea undefined antes de usar parseInt
@@ -156,6 +158,8 @@ export async function actualizarArea(req: Request, res: Response) {
       }
     })
 
+    await auditarAccion(user.id, 'ACTUALIZAR_AREA', 'Area', areaId, { anterior: areaExistente, nuevo: validacion.data })
+
     return res.json(area)
   } catch (error) {
     console.error('Error al actualizar área:', error)
@@ -166,6 +170,7 @@ export async function actualizarArea(req: Request, res: Response) {
 // DELETE /areas/:id - Eliminar un área
 export async function eliminarArea(req: Request, res: Response) {
   try {
+    const user = req.user as JwtPayload
     const { id } = req.params
     
     // Aseguramos que id no sea undefined antes de usar parseInt
@@ -197,6 +202,8 @@ export async function eliminarArea(req: Request, res: Response) {
         data: { activo: false }
       })
 
+      await auditarAccion(user.id, 'DESACTIVAR_AREA', 'Area', areaId, { area: areaExistente, razon: 'tiene coordinadores o cargas asociadas' })
+
       return res.json({ 
         mensaje: 'Área marcada como inactiva porque tiene coordinadores o cargas asociadas' 
       })
@@ -206,6 +213,8 @@ export async function eliminarArea(req: Request, res: Response) {
     await prisma.area.delete({
       where: { id: areaId }
     })
+
+    await auditarAccion(user.id, 'ELIMINAR_AREA', 'Area', areaId, { area: areaExistente })
 
     return res.json({ mensaje: 'Área eliminada correctamente' })
   } catch (error) {
