@@ -13,7 +13,10 @@ import { pagosRouter } from './modules/pagos/router'
 import { solicitudesRouter } from './modules/solicitudes/router'
 import { expedientesRouter } from './modules/expedientes/router'
 import { contratosRouter } from './modules/contratos/router'
+import { departamentosRouter } from './modules/departamentos/router'
+import { empleadosRouter } from './modules/empleados/router'
 import { requireAuth } from './middlewares/auth'
+import { errorHandler } from './middlewares/errorHandler'
 import { PrismaClient } from '@prisma/client'
 import { inicializarCronJobs } from './services/cron.service'
 
@@ -38,6 +41,7 @@ app.use(express.json())
 
 // Servir archivos estáticos desde la carpeta uploads
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
+app.use('/credenciales', requireAuth, express.static(path.join(process.cwd(), 'uploads', 'credenciales')))
 
 // Iniciar servidor
 app.get('/', (_, res) => {
@@ -55,6 +59,8 @@ app.use('/api/pagos', pagosRouter)
 app.use('/api/solicitudes', solicitudesRouter)
 app.use('/api/expedientes', expedientesRouter)
 app.use('/api/contratos', contratosRouter)
+app.use('/api/departamentos', departamentosRouter)
+app.use('/api/empleados', empleadosRouter)
 
 // Ruta de salud
 app.get('/health', (_, res) => {
@@ -70,6 +76,9 @@ app.get('/api/me', requireAuth, (req, res) => {
 app.get('/me', requireAuth, (req, res) => {
     res.json({ user: req.user })
 })
+
+// Manejador global de errores (debe ir al final, después de todas las rutas)
+app.use(errorHandler)
 
 // Iniciar servidor
 const PORT = env.server.port

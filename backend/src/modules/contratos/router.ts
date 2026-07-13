@@ -23,7 +23,7 @@ const uploadContrato = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase()
-    if (ext === '.pdf') {
+    if (ext === '.pdf' && file.mimetype === 'application/pdf') {
       cb(null, true)
     } else {
       cb(new Error('Solo se permiten archivos PDF para contratos.'))

@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcrypt'
 import { z } from 'zod'
+import { ejecutarBaja } from '../empleados/controller'
 
 const prisma = new PrismaClient()
 
@@ -292,14 +293,13 @@ export async function eliminarUsuario(req: Request, res: Response) {
       }
     }
 
-    // Realizar soft delete (marcar como inactivo)
-    await prisma.user.update({
-      where: { id: userId },
-      data: { activo: false }
-    })
+    // Realizar baja: inactivo + suspender GW + enviar correo
+    await ejecutarBaja(userId, req.user!.id)
 
     return res.json({ mensaje: 'Usuario eliminado correctamente' })
-  } catch (error) {
+  } catch (error: any) {
+    const msg = error?.message ?? 'Error al eliminar usuario'
+    if (msg === 'El usuario ya está inactivo') return res.status(400).json({ error: msg })
     console.error('Error al eliminar usuario:', error)
     return res.status(500).json({ error: 'Error al eliminar usuario' })
   }

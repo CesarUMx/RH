@@ -7,6 +7,7 @@ import csvParser from 'csv-parser'
 import * as XLSX from 'xlsx'
 import { Readable } from 'stream'
 import { JwtPayload } from '../../middlewares/auth'
+import { auditarAccion } from '../../utils/auditoria'
 
 const prisma = new PrismaClient()
 
@@ -211,6 +212,7 @@ export async function crearDocente(req: Request, res: Response) {
 // PUT /docentes/:id - Actualizar un docente existente
 export async function actualizarDocente(req: Request, res: Response) {
   try {
+    const user = req.user as JwtPayload
     const { id } = req.params
     
     // Aseguramos que id no sea undefined antes de usar parseInt
@@ -277,6 +279,8 @@ export async function actualizarDocente(req: Request, res: Response) {
       }
     })
 
+    await auditarAccion(user.id, 'ACTUALIZAR_DOCENTE', 'Docente', docenteId, { anterior: docenteExistente, nuevo: validacion.data })
+
     return res.json(docente)
   } catch (error) {
     console.error('Error al actualizar docente:', error)
@@ -311,12 +315,15 @@ export async function eliminarDocente(req: Request, res: Response) {
     }
 
     // Verificar si tiene cargas asociadas
+    const user = req.user as JwtPayload
     if (docenteExistente.cargas.length > 0) {
       // En lugar de eliminar, marcar como inactivo
       await prisma.docente.update({
         where: { id: docenteId },
         data: { activo: false }
       })
+
+      await auditarAccion(user.id, 'DESACTIVAR_DOCENTE', 'Docente', docenteId, { docente: docenteExistente, razon: 'tiene cargas asociadas' })
 
       return res.json({ 
         mensaje: 'Docente marcado como inactivo porque tiene cargas asociadas' 
@@ -327,6 +334,8 @@ export async function eliminarDocente(req: Request, res: Response) {
     await prisma.docente.delete({
       where: { id: docenteId }
     })
+
+    await auditarAccion(user.id, 'ELIMINAR_DOCENTE', 'Docente', docenteId, { docente: docenteExistente })
 
     return res.json({ mensaje: 'Docente eliminado correctamente' })
   } catch (error) {

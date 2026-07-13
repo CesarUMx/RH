@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast'
-import { FaUpload, FaFilePdf, FaCheck, FaExclamationTriangle, FaClock, FaTimes, FaEye, FaChevronDown, FaChevronRight } from 'react-icons/fa'
+import { FaUpload, FaFilePdf, FaCheck, FaExclamationTriangle, FaClock, FaTimes, FaEye, FaChevronDown, FaChevronRight, FaDownload } from 'react-icons/fa'
+import empleadosService from '../services/empleados.service'
 import { MainLayout } from '../layouts/MainLayout'
 import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
@@ -90,7 +91,6 @@ export const MiExpediente = () => {
   const [itemSeleccionado, setItemSeleccionado] = useState<ItemExpediente | null>(null)
   const [archivo, setArchivo] = useState<File | null>(null)
   const [fechaVigencia, setFechaVigencia] = useState('')
-  const [precisionFecha, setPrecisionFecha] = useState<'anio' | 'mes' | 'dia'>('anio')
   const [archivoError, setArchivoError] = useState('')
 
   // ── Query ────────────────────────────────────────────────────────────────────
@@ -102,6 +102,16 @@ export const MiExpediente = () => {
   const { data: secciones = [] } = useQuery({
     queryKey: ['secciones-expediente'],
     queryFn: expedientesService.getSecciones,
+  })
+
+  const { data: tieneCredenciales } = useQuery({
+    queryKey: ['mis-credenciales-existe'],
+    queryFn: empleadosService.tieneCredenciales,
+  })
+
+  const descargarCredMut = useMutation({
+    mutationFn: empleadosService.descargarMisCredenciales,
+    onError: () => toast.error('No se pudo descargar el archivo de credenciales'),
   })
 
   // ── Mutation ────────────────────────────────────────────────────────────────
@@ -121,13 +131,18 @@ export const MiExpediente = () => {
     return fechaVigencia
   }
 
+  const nacionalidadMut = useMutation({
+    mutationFn: (esExtranjero: boolean) => empleadosService.actualizarMiNacionalidad(esExtranjero),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['mi-expediente'] }),
+    onError: (err: any) => toast.error(err.response?.data?.error || 'Error al actualizar'),
+  })
+
   const subirMutation = useMutation({
     mutationFn: () =>
       expedientesService.subirDocumento(
         itemSeleccionado!.tipo.id,
         archivo!,
-        computarFechaFinal(),
-        false
+        fechaVigencia || undefined
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mi-expediente'] })
@@ -142,7 +157,6 @@ export const MiExpediente = () => {
     setItemSeleccionado(item)
     setArchivo(null)
     setFechaVigencia('')
-    setPrecisionFecha('anio')
     setArchivoError('')
     setIsSubirOpen(true)
   }
@@ -152,7 +166,6 @@ export const MiExpediente = () => {
     setItemSeleccionado(null)
     setArchivo(null)
     setFechaVigencia('')
-    setPrecisionFecha('anio')
     setArchivoError('')
   }
 
@@ -201,7 +214,34 @@ export const MiExpediente = () => {
       <div className="container mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Mi Expediente</h1>
+          {tieneCredenciales && (
+            <button
+              onClick={() => descargarCredMut.mutate()}
+              disabled={descargarCredMut.isPending}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm font-medium"
+            >
+              <FaDownload />
+              {descargarCredMut.isPending ? 'Descargando...' : 'Descargar Credenciales'}
+            </button>
+          )}
         </div>
+
+        {/* Nacionalidad */}
+        {data && (
+          <div className="flex items-center gap-3 mb-4 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+            <span className="text-gray-600">Nacionalidad:</span>
+            <button
+              onClick={() => nacionalidadMut.mutate(!data.esExtranjero)}
+              disabled={nacionalidadMut.isPending}
+              className={`px-3 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                data.esExtranjero ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' : 'bg-green-100 text-green-700 hover:bg-green-200'
+              }`}
+            >
+              {data.esExtranjero ? 'Extranjero' : 'Mexicano'}
+            </button>
+            <span className="text-xs text-gray-400">Haz clic para cambiar y actualizar los documentos requeridos</span>
+          </div>
+        )}
 
         {/* Banner */}
         {data && (
@@ -395,72 +435,46 @@ export const MiExpediente = () => {
           </div>
 
           {/* Vigencia (solo si el tipo la requiere) */}
-          {itemSeleccionado?.tipo.requiereVigencia && (
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700">Fecha de vigencia *</label>
-
-              {/* Selector de precisión */}
-              <div className="flex gap-4">
-                {(['anio', 'mes', 'dia'] as const).map((p) => (
-                  <label key={p} className="flex items-center gap-1.5 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="precision"
-                      value={p}
-                      checked={precisionFecha === p}
-                      onChange={() => { setPrecisionFecha(p); setFechaVigencia('') }}
-                      className="h-3.5 w-3.5 text-primary"
-                    />
-                    <span className="text-sm text-gray-600">
-                      {p === 'anio' ? 'Solo año' : p === 'mes' ? 'Mes y año' : 'Fecha exacta'}
-                    </span>
-                  </label>
-                ))}
+          {itemSeleccionado?.tipo.requiereVigencia && (() => {
+            const precision = itemSeleccionado.tipo.precisionVigencia ?? 'DIA'
+            return (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Fecha de vigencia *
+                  <span className="ml-1 text-xs text-gray-400">
+                    ({precision === 'ANIO' ? 'Solo año' : precision === 'MES' ? 'Mes y año' : 'Fecha exacta'})
+                  </span>
+                </label>
+                {precision === 'ANIO' && (
+                  <input
+                    type="number"
+                    min={1900}
+                    max={2099}
+                    placeholder="Ej. 2028"
+                    value={fechaVigencia}
+                    onChange={(e) => setFechaVigencia(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
+                )}
+                {precision === 'MES' && (
+                  <input
+                    type="month"
+                    value={fechaVigencia}
+                    onChange={(e) => setFechaVigencia(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
+                )}
+                {precision === 'DIA' && (
+                  <input
+                    type="date"
+                    value={fechaVigencia}
+                    onChange={(e) => setFechaVigencia(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
+                )}
               </div>
-
-              {/* Input dinámico según precisión */}
-              {precisionFecha === 'anio' && (
-                <input
-                  type="number"
-                  min={2000}
-                  max={2099}
-                  placeholder="Ej. 2028"
-                  value={fechaVigencia}
-                  onChange={(e) => setFechaVigencia(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              )}
-              {precisionFecha === 'mes' && (
-                <input
-                  type="month"
-                  value={fechaVigencia}
-                  onChange={(e) => setFechaVigencia(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              )}
-              {precisionFecha === 'dia' && (
-                <input
-                  type="date"
-                  value={fechaVigencia}
-                  onChange={(e) => setFechaVigencia(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              )}
-
-              {/* Nota informativa */}
-              {fechaVigencia && precisionFecha !== 'dia' && (
-                <p className="text-xs text-gray-500 bg-blue-50 border border-blue-100 rounded p-2">
-                  {precisionFecha === 'anio'
-                    ? `Se guardará el 31 de diciembre de ${fechaVigencia}.`
-                    : (() => {
-                        const [y, m] = fechaVigencia.split('-').map(Number)
-                        const ultimo = new Date(y, m, 0).getDate()
-                        return `Se guardará el ${ultimo} de ${new Date(y, m - 1).toLocaleDateString('es-MX', { month: 'long' })} de ${y}.`
-                      })()}
-                </p>
-              )}
-            </div>
-          )}
+            )
+          })()}
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button variant="outline" type="button" onClick={cerrarModal}>Cancelar</Button>

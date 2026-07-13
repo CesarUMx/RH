@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaUsers, FaBuilding, FaUserTie, FaBars, FaTimes, FaSignOutAlt, FaUser, FaCalendarAlt, FaClock, FaFileInvoiceDollar, FaClipboardList, FaCog, FaFolderOpen, FaClipboardCheck, FaFileContract } from 'react-icons/fa';
+import { FaUsers, FaBuilding, FaUserTie, FaBars, FaTimes, FaSignOutAlt, FaUser, FaCalendarAlt, FaClock, FaFileInvoiceDollar, FaClipboardList, FaCog, FaFolderOpen, FaClipboardCheck, FaFileContract, FaSitemap, FaUserPlus } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { AreaSelector } from '../components/AreaSelector';
 import { PeriodoInfo } from '../components/PeriodoInfo';
@@ -89,6 +89,18 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       path: '/contratos',
       icon: <FaFileContract className="mr-3 h-5 w-5" />,
       roles: ['ADMIN', 'RH', 'EMPLEADO'],
+    },
+    {
+      name: 'Departamentos',
+      path: '/departamentos',
+      icon: <FaSitemap className="mr-3 h-5 w-5" />,
+      roles: ['ADMIN'],
+    },
+    {
+      name: 'Empleados',
+      path: '/empleados-nuevos',
+      icon: <FaUserPlus className="mr-3 h-5 w-5" />,
+      roles: ['ADMIN', 'RH'],
     },
   ];
 

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast'
-import { FaCheck, FaEye, FaUser, FaChevronLeft, FaFilePdf, FaTrash, FaUndo } from 'react-icons/fa'
+import { FaCheck, FaEye, FaUser, FaChevronLeft, FaFilePdf, FaTrash, FaUndo, FaUpload } from 'react-icons/fa'
 import { useAuth } from '../context/AuthContext'
 
 import { MainLayout } from '../layouts/MainLayout'
@@ -10,6 +10,7 @@ import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 
 import { expedientesService } from '../services/expedientes.service'
+import empleadosService from '../services/empleados.service'
 import type { EmpleadoExpediente, ItemExpediente, EstadoDocumento, SeccionExpediente } from '../services/expedientes.service'
 
 // ── Helper: agrupar por sección ───────────────────────────────────────────────
@@ -114,6 +115,12 @@ export const ValidarExpedientes = () => {
   const [accionDoc, setAccionDoc] = useState<'VERIFICADO' | 'RECHAZADO' | 'REVERTIR'>('VERIFICADO')
   const [motivoRechazo, setMotivoRechazo] = useState('')
 
+  const [isSubirOpen, setIsSubirOpen] = useState(false)
+  const [itemParaSubir, setItemParaSubir] = useState<ItemExpediente | null>(null)
+  const [archivoSubir, setArchivoSubir] = useState<File | null>(null)
+  const [vigenciaSubir, setVigenciaSubir] = useState('')
+  const [soloMesAnioSubir, setSoloMesAnioSubir] = useState(false)
+
   // ── Queries ────────────────────────────────────────────────────────────────
   const { data: empleados = [], isLoading: loadingLista } = useQuery({
     queryKey: ['expedientes-lista'],
@@ -132,6 +139,39 @@ export const ValidarExpedientes = () => {
   })
 
   // ── Mutation ────────────────────────────────────────────────────────────────
+  const toggleExtranjeroMut = useMutation({
+    mutationFn: (esExtranjero: boolean) =>
+      empleadosService.actualizarNacionalidad(empleadoSeleccionado!, esExtranjero),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expediente-empleado', empleadoSeleccionado] })
+      queryClient.invalidateQueries({ queryKey: ['expedientes-lista'] })
+      toast.success('Nacionalidad actualizada')
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error || 'Error al actualizar'),
+  })
+
+  const subirRHMutation = useMutation({
+    mutationFn: () =>
+      expedientesService.subirDocumentoRH(
+        empleadoSeleccionado!,
+        itemParaSubir!.tipo.id,
+        archivoSubir!,
+        vigenciaSubir || undefined,
+        soloMesAnioSubir
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expedientes-lista'] })
+      queryClient.invalidateQueries({ queryKey: ['expediente-empleado', empleadoSeleccionado] })
+      toast.success('Documento subido y verificado')
+      setIsSubirOpen(false)
+      setItemParaSubir(null)
+      setArchivoSubir(null)
+      setVigenciaSubir('')
+      setSoloMesAnioSubir(false)
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error || 'Error al subir documento'),
+  })
+
   const verificarMutation = useMutation({
     mutationFn: () =>
       accionDoc === 'REVERTIR'
@@ -187,6 +227,23 @@ export const ValidarExpedientes = () => {
             <h1 className="text-2xl font-bold text-gray-800">
               {empleadoSeleccionado && detalle ? `Expediente: ${detalle.empleado.nombre}` : 'Validar Expedientes'}
             </h1>
+            {empleadoSeleccionado && detalle && (
+              <div className="flex items-center gap-2 ml-4">
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                  detalle.empleado.esExtranjero ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
+                }`}>
+                  {detalle.empleado.esExtranjero ? 'Extranjero' : 'Mexicano'}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  isLoading={toggleExtranjeroMut.isPending}
+                  onClick={() => toggleExtranjeroMut.mutate(!detalle.empleado.esExtranjero)}
+                >
+                  Cambiar
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -351,6 +408,20 @@ export const ValidarExpedientes = () => {
                                 <FaUndo className="text-orange-500" />
                               </Button>
                             )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              title="Subir documento (RH)"
+                              onClick={() => {
+                                setItemParaSubir(item)
+                                setArchivoSubir(null)
+                                setVigenciaSubir('')
+                                setSoloMesAnioSubir(false)
+                                setIsSubirOpen(true)
+                              }}
+                            >
+                              <FaUpload className="text-blue-500" />
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -411,6 +482,58 @@ export const ValidarExpedientes = () => {
               }}
             >
               {accionDoc === 'VERIFICADO' ? 'Verificar' : accionDoc === 'REVERTIR' ? 'Revertir' : 'Rechazar'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ─── Modal subir documento (RH) ──────────────────── */}
+      <Modal
+        isOpen={isSubirOpen}
+        onClose={() => setIsSubirOpen(false)}
+        title={`Subir documento: ${itemParaSubir?.tipo.nombre ?? ''}`}
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-gray-500 bg-blue-50 border border-blue-200 rounded-md px-3 py-2">
+            El documento se marcará como <strong>Verificado</strong> automáticamente.
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Archivo PDF *</label>
+            <input
+              type="file"
+              accept=".pdf"
+              onChange={(e) => setArchivoSubir(e.target.files?.[0] ?? null)}
+              className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+            />
+          </div>
+          {itemParaSubir?.tipo.requiereVigencia && (
+            <>
+              <Input
+                type="date"
+                label="Fecha de vigencia *"
+                value={vigenciaSubir}
+                onChange={(e) => setVigenciaSubir(e.target.value)}
+              />
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={soloMesAnioSubir}
+                  onChange={(e) => setSoloMesAnioSubir(e.target.checked)}
+                  className="h-4 w-4 text-primary rounded border-gray-300"
+                />
+                Solo mes y año (vence al último día del mes)
+              </label>
+            </>
+          )}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setIsSubirOpen(false)}>Cancelar</Button>
+            <Button
+              disabled={!archivoSubir || (!!itemParaSubir?.tipo.requiereVigencia && !vigenciaSubir)}
+              isLoading={subirRHMutation.isPending}
+              onClick={() => subirRHMutation.mutate()}
+            >
+              Subir y verificar
             </Button>
           </div>
         </div>

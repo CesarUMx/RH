@@ -20,6 +20,15 @@ const envSchema = z.object({
   // Google OAuth
   GOOGLE_CLIENT_ID: z.string().optional(),
 
+  // Google Workspace Admin SDK (Service Account)
+  GOOGLE_SERVICE_ACCOUNT_EMAIL: z.string().optional(),
+  GOOGLE_PRIVATE_KEY: z.string().optional(),
+  GOOGLE_ADMIN_EMAIL: z.string().optional(),
+  GOOGLE_DOMAIN: z.string().default('mondragonmexico.edu.mx'),
+
+  // SICAV (Sistema de Vigilancia)
+  SICAV_API_KEY: z.string().optional(),
+
   // Correo electrónico
   EMAIL_HOST: z.string().default('smtp.gmail.com'),
   EMAIL_PORT: z.string().default('587'),
@@ -63,5 +72,15 @@ export const env = {
   },
   google: {
     clientId: _env.data.GOOGLE_CLIENT_ID ?? '',
+    workspace: {
+      serviceAccountEmail: _env.data.GOOGLE_SERVICE_ACCOUNT_EMAIL ?? '',
+      privateKey: _env.data.GOOGLE_PRIVATE_KEY ?? '',
+      adminEmail: _env.data.GOOGLE_ADMIN_EMAIL ?? '',
+      domain: _env.data.GOOGLE_DOMAIN,
+    },
+  },
+  sicav: {
+    apiKey: _env.data.SICAV_API_KEY ?? '',
+    baseUrl: 'https://sicav.mondragonmexico.edu.mx/api/external',
   },
 }

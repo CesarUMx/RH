@@ -19,6 +19,7 @@ import {
   obtenerExpedienteEmpleado,
   verificarDocumento,
   revertirDocumento,
+  subirDocumentoRH,
 } from './controller'
 
 // Asegurar que el directorio de expedientes exista
@@ -90,3 +91,11 @@ expedientesRouter.get('/', requireAuth, requireRole(['ADMIN', 'RH']), listarExpe
 expedientesRouter.get('/:empleadoId', requireAuth, requireRole(['ADMIN', 'RH']), obtenerExpedienteEmpleado)
 expedientesRouter.patch('/documentos/:id/verificar', requireAuth, requireRole(['ADMIN', 'RH']), verificarDocumento)
 expedientesRouter.patch('/documentos/:id/revertir', requireAuth, requireRole(['ADMIN']), revertirDocumento)
+expedientesRouter.post(
+  '/:empleadoId/documentos',
+  requireAuth,
+  requireRole(['ADMIN', 'RH']),
+  uploadExpediente.single('archivo'),
+  handleMulterError,
+  subirDocumentoRH
+)
