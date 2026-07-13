@@ -117,12 +117,13 @@ export const MiExpediente = () => {
   // ── Mutation ────────────────────────────────────────────────────────────────
   const computarFechaFinal = (): string | undefined => {
     if (!fechaVigencia) return undefined
-    if (precisionFecha === 'anio') {
+    const precision = itemSeleccionado?.tipo.precisionVigencia?.toLowerCase()
+    if (precision === 'anio') {
       const year = parseInt(fechaVigencia, 10)
       // último día del año
       return `${year}-12-31`
     }
-    if (precisionFecha === 'mes') {
+    if (precision === 'mes') {
       // fechaVigencia es 'YYYY-MM'; calcular último día del mes
       const [y, m] = fechaVigencia.split('-').map(Number)
       const ultimo = new Date(y, m, 0).getDate()
@@ -142,7 +143,7 @@ export const MiExpediente = () => {
       expedientesService.subirDocumento(
         itemSeleccionado!.tipo.id,
         archivo!,
-        fechaVigencia || undefined
+        computarFechaFinal()
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mi-expediente'] })

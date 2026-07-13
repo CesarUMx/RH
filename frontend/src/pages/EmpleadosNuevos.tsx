@@ -184,7 +184,6 @@ export const EmpleadosNuevos = () => {
   // ─── Helpers ───────────────────────────────────────────────────────────────
 
   const correoFinal = correoManual.trim() || correoSeleccionado
-  const esDocente = form.tipo === 'DOCENTE'
 
   const nombreCompleto = [
     form.primerNombre,
@@ -226,14 +225,6 @@ export const EmpleadosNuevos = () => {
     e.preventDefault()
     if (!correoFinal) return
     setStep(3)
-  }
-
-  const normalizar = (s: string) =>
-    s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]/g, '')
-
-  const generarCorreoEmpleado = () => {
-    if (!form.primerNombre || !form.primerApellido) return ''
-    return `${normalizar(form.primerNombre)[0]}${normalizar(form.primerApellido)}@mondragonmexico.edu.mx`
   }
 
   const handleCrear = (e: React.FormEvent) => {
