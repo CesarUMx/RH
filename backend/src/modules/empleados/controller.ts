@@ -587,6 +587,24 @@ export async function actualizarEmpleado(req: Request, res: Response) {
 
     await auditarAccion(actor.id, 'ACTUALIZAR_EMPLEADO', 'RegistroIngreso', registro?.id ?? 0, data)
 
+    // Regenerar PDF de credenciales si se cambió la contraseña
+    if (data.password) {
+      try {
+        const cuenta = await prisma.cuentaInstitucional.findUnique({
+          where: { userId },
+          select: { correoInstitucional: true },
+        })
+        const correo = cuenta?.correoInstitucional ?? user.nombre
+        const archivoCredenciales = await generarArchivoCredenciales(nombreBase, correo, data.password, userId)
+        await prisma.registroIngreso.update({
+          where: { userId },
+          data: { archivoCredenciales },
+        })
+      } catch (credErr) {
+        console.error('Error regenerando credenciales:', credErr)
+      }
+    }
+
     return res.json({ ok: true })
   } catch (error) {
     console.error('Error al actualizar empleado:', error)
