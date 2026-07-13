@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast'
-import { FaPlus, FaDownload, FaCopy, FaCheck, FaSearch, FaFileExport, FaFileImport, FaUserTie, FaTrash } from 'react-icons/fa'
+import { FaPlus, FaDownload, FaCopy, FaCheck, FaSearch, FaFileExport, FaFileImport, FaUserTie, FaTrash, FaEdit } from 'react-icons/fa'
 import { createColumnHelper } from '@tanstack/react-table'
 
 import { MainLayout } from '../layouts/MainLayout'
@@ -19,6 +19,7 @@ import type {
   CrearEmpleadoResult,
   TipoColaborador,
   ImportarEmpleadosResult,
+  ActualizarEmpleadoDto,
 } from '../services/empleados.service'
 import { TIPO_COLABORADOR_LABEL, TIPOS_COLABORADOR } from '../services/empleados.service'
 
@@ -88,6 +89,10 @@ export const EmpleadosNuevos = () => {
   const [wizardDestinatarios, setWizardDestinatarios] = useState<string[]>([])
   const [bajaDestinatarios, setBajaDestinatarios] = useState<string[]>([])
 
+  const [editOpen, setEditOpen] = useState(false)
+  const [editEmpleado, setEditEmpleado] = useState<RegistroIngreso | null>(null)
+  const [editForm, setEditForm] = useState<ActualizarEmpleadoDto>({})
+
   // ─── Queries ───────────────────────────────────────────────────────────────
 
   const { data: empleadosData, isLoading } = useQuery({
@@ -103,7 +108,7 @@ export const EmpleadosNuevos = () => {
   const { data: departamentos = [] } = useQuery<Departamento[]>({
     queryKey: ['departamentos'],
     queryFn: departamentosService.getAll,
-    enabled: wizardOpen,
+    enabled: wizardOpen || editOpen,
   })
 
   const { data: miembrosWizard = [], isLoading: loadingMiembrosWizard } = useQuery<MiembroDepartamento[]>({
@@ -179,6 +184,18 @@ export const EmpleadosNuevos = () => {
       toast.success('Empleado dado de baja')
     },
     onError: (e: any) => toast.error(e?.response?.data?.error ?? 'Error al dar de baja'),
+  })
+
+  const editarMut = useMutation({
+    mutationFn: ({ userId, data }: { userId: number; data: ActualizarEmpleadoDto }) =>
+      empleadosService.actualizar(userId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['empleados'] })
+      setEditOpen(false)
+      setEditEmpleado(null)
+      toast.success('Datos actualizados')
+    },
+    onError: (e: any) => toast.error(e?.response?.data?.error ?? 'Error al actualizar'),
   })
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -262,6 +279,40 @@ export const EmpleadosNuevos = () => {
   const deptoNombre =
     (departamentos as Departamento[]).find((d) => d.id === form.departamentoId)?.nombre ?? '—'
 
+  const abrirEditar = (emp: RegistroIngreso) => {
+    setEditEmpleado(emp)
+    const nombrePartes = emp.nombre.trim().split(/\s+/)
+    setEditForm({
+      primerNombre:    nombrePartes[0] ?? '',
+      segundoNombre:   nombrePartes.length === 4 ? nombrePartes[1] : '',
+      primerApellido:  nombrePartes.length === 4 ? nombrePartes[2] : nombrePartes[1] ?? '',
+      segundoApellido: nombrePartes.length === 4 ? nombrePartes[3] : nombrePartes[2] ?? '',
+      tipo:            emp.tipo ?? undefined,
+      fechaNacimiento: emp.fechaNacimiento ? emp.fechaNacimiento.slice(0, 10) : '',
+      numColaborador:  emp.numColaborador ?? '',
+      fechaIngreso:    emp.fechaIngreso ? emp.fechaIngreso.slice(0, 10) : '',
+      puesto:          emp.puesto ?? '',
+      departamentoId:  emp.departamentoId ?? undefined,
+    })
+    setEditOpen(true)
+  }
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setEditForm((f) => ({
+      ...f,
+      [name]: name === 'departamentoId' ? (value === '' ? undefined : parseInt(value)) : value,
+    }))
+  }
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editEmpleado) return
+    const payload: ActualizarEmpleadoDto = { ...editForm }
+    if (!payload.password?.trim()) delete payload.password
+    editarMut.mutate({ userId: editEmpleado.userId, data: payload })
+  }
+
   // ─── Tabla ─────────────────────────────────────────────────────────────────
 
   const empleadosFiltrados = useMemo(() => empleadosData?.data ?? [], [empleadosData])
@@ -304,6 +355,14 @@ export const EmpleadosNuevos = () => {
       header: 'Acciones',
       cell: (info) => (
         <div className="flex gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            title="Editar datos"
+            onClick={() => abrirEditar(info.row.original)}
+          >
+            <FaEdit className="text-blue-500" />
+          </Button>
           {info.row.original.archivoCredenciales ? (
             <Button
               variant="outline"
@@ -834,6 +893,75 @@ export const EmpleadosNuevos = () => {
               </Button>
             </div>
           </div>
+        </Modal>
+
+        {/* ─── Modal Editar Empleado ───────────────────────────── */}
+        <Modal
+          isOpen={editOpen}
+          onClose={() => { setEditOpen(false); setEditEmpleado(null) }}
+          title={`Editar datos — ${editEmpleado?.nombre ?? ''}`}
+          size="lg"
+        >
+          {editEmpleado && (
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="Primer nombre" name="primerNombre" value={editForm.primerNombre ?? ''} onChange={handleEditChange} required />
+                <Input label="Segundo nombre" name="segundoNombre" value={editForm.segundoNombre ?? ''} onChange={handleEditChange} />
+                <Input label="Primer apellido" name="primerApellido" value={editForm.primerApellido ?? ''} onChange={handleEditChange} required />
+                <Input label="Segundo apellido" name="segundoApellido" value={editForm.segundoApellido ?? ''} onChange={handleEditChange} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                  <select
+                    name="tipo"
+                    value={editForm.tipo ?? ''}
+                    onChange={handleEditChange}
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="">Seleccionar...</option>
+                    {TIPOS_COLABORADOR.map((t) => (
+                      <option key={t} value={t}>{TIPO_COLABORADOR_LABEL[t]}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Departamento</label>
+                  <select
+                    name="departamentoId"
+                    value={editForm.departamentoId ?? ''}
+                    onChange={handleEditChange}
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="">Sin cambio</option>
+                    {(departamentos as Departamento[]).filter((d) => d.activo).map((d) => (
+                      <option key={d.id} value={d.id}>{d.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+                <Input label="No. Colaborador" name="numColaborador" value={editForm.numColaborador ?? ''} onChange={handleEditChange} />
+                <Input label="Puesto" name="puesto" value={editForm.puesto ?? ''} onChange={handleEditChange} />
+                <Input type="date" label="Fecha de nacimiento" name="fechaNacimiento" value={editForm.fechaNacimiento ?? ''} onChange={handleEditChange} />
+                <Input type="date" label="Fecha de ingreso" name="fechaIngreso" value={editForm.fechaIngreso ?? ''} onChange={handleEditChange} />
+                <Input
+                  type="password"
+                  label="Nueva contraseña"
+                  name="password"
+                  value={editForm.password ?? ''}
+                  onChange={handleEditChange}
+                  placeholder="Dejar en blanco para no cambiar"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => { setEditOpen(false); setEditEmpleado(null) }}>
+                  Cancelar
+                </Button>
+                <Button type="submit" isLoading={editarMut.isPending}>
+                  Guardar cambios
+                </Button>
+              </div>
+            </form>
+          )}
         </Modal>
 
       </div>

@@ -73,6 +73,20 @@ export interface ImportarEmpleadosResult {
   errores: { linea: number; nombre: string; error: string }[]
 }
 
+export interface ActualizarEmpleadoDto {
+  primerNombre?: string
+  segundoNombre?: string
+  primerApellido?: string
+  segundoApellido?: string
+  tipo?: TipoColaborador
+  fechaNacimiento?: string
+  numColaborador?: string
+  fechaIngreso?: string
+  puesto?: string
+  departamentoId?: number
+  password?: string
+}
+
 const empleadosService = {
   sugerirCorreo: async (data: SugerirCorreoDto): Promise<SugerirCorreoResult> => {
     const res = await api.post<SugerirCorreoResult>('/empleados/sugerir-correo', data)
@@ -170,6 +184,11 @@ const empleadosService = {
 
   actualizarNacionalidad: async (userId: number, esExtranjero: boolean): Promise<{ esExtranjero: boolean }> => {
     const res = await api.patch<{ esExtranjero: boolean }>(`/empleados/${userId}/extranjero`, { esExtranjero })
+    return res.data
+  },
+
+  actualizar: async (userId: number, data: ActualizarEmpleadoDto): Promise<{ ok: boolean }> => {
+    const res = await api.patch<{ ok: boolean }>(`/empleados/${userId}`, data)
     return res.data
   },
 }
