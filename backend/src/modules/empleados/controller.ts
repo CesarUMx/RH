@@ -533,7 +533,6 @@ export async function actualizarEmpleado(req: Request, res: Response) {
     const data = parsed.data
 
     const registro = await prisma.registroIngreso.findUnique({ where: { userId } })
-    if (!registro) return res.status(404).json({ error: 'Empleado no encontrado' })
 
     // Construir nombre completo si se mandan partes
     const partes = {
@@ -545,18 +544,33 @@ export async function actualizarEmpleado(req: Request, res: Response) {
     const nombreNuevo = [partes.primerNombre, partes.segundoNombre, partes.primerApellido, partes.segundoApellido]
       .filter(Boolean).join(' ')
 
-    const registroUpdate: Record<string, any> = {}
-    if (data.tipo)            registroUpdate.tipo            = data.tipo
-    if (data.numColaborador)  registroUpdate.numColaborador  = data.numColaborador
-    if (data.puesto)          registroUpdate.puesto          = data.puesto
-    if (data.fechaNacimiento) registroUpdate.fechaNacimiento = new Date(data.fechaNacimiento)
-    if (data.fechaIngreso)    registroUpdate.fechaIngreso    = new Date(data.fechaIngreso)
-    if (nombreNuevo)          registroUpdate.nombre          = nombreNuevo
+    // Nombre base: el nuevo si se manda, si no el del registro o el del User
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { nombre: true } })
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' })
+    const nombreBase = nombreNuevo || registro?.nombre || user.nombre
+
+    const registroData: Record<string, any> = { nombre: nombreBase }
+    if (data.tipo)            registroData.tipo            = data.tipo
+    if (data.numColaborador)  registroData.numColaborador  = data.numColaborador
+    if (data.puesto)          registroData.puesto          = data.puesto
+    if (data.fechaNacimiento) registroData.fechaNacimiento = new Date(data.fechaNacimiento)
+    if (data.fechaIngreso)    registroData.fechaIngreso    = new Date(data.fechaIngreso)
 
     await prisma.$transaction(async (tx) => {
-      if (Object.keys(registroUpdate).length > 0) {
-        await tx.registroIngreso.update({ where: { userId }, data: registroUpdate })
-      }
+      await tx.registroIngreso.upsert({
+        where: { userId },
+        update: registroData,
+        create: {
+          userId,
+          creadoPorId: actor.id,
+          nombre:          nombreBase,
+          tipo:            (data.tipo ?? 'ADMINISTRATIVO') as any,
+          fechaNacimiento: data.fechaNacimiento ? new Date(data.fechaNacimiento) : new Date('1900-01-01'),
+          numColaborador:  data.numColaborador  ?? '',
+          fechaIngreso:    data.fechaIngreso    ? new Date(data.fechaIngreso)    : new Date(),
+          puesto:          data.puesto          ?? '',
+        },
+      })
       const userUpdate: Record<string, any> = {}
       if (nombreNuevo) userUpdate.nombre = nombreNuevo
       if (data.password) userUpdate.password = await bcrypt.hash(data.password, 10)
@@ -571,7 +585,7 @@ export async function actualizarEmpleado(req: Request, res: Response) {
       }
     })
 
-    await auditarAccion(actor.id, 'ACTUALIZAR_EMPLEADO', 'RegistroIngreso', registro.id, data)
+    await auditarAccion(actor.id, 'ACTUALIZAR_EMPLEADO', 'RegistroIngreso', registro?.id ?? 0, data)
 
     return res.json({ ok: true })
   } catch (error) {
