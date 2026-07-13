@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { sendEmail, emailTemplates } from '../../services/email.service'
+import { suspenderUsuarioWorkspace } from '../../services/googleWorkspace.service'
 
 const prisma = new PrismaClient()
 
@@ -141,6 +142,28 @@ export async function actualizarEstadoSolicitudBaja(req: Request, res: Response)
         where: { id: solicitudActualizada.docenteId },
         data: { activo: true }
       })
+    }
+
+    // Si se procesa la baja, suspender la cuenta institucional si existe
+    if (estado === 'PROCESADO') {
+      try {
+        // Buscar si el docente tiene un User con cuenta institucional
+        // La búsqueda es por nombre del docente como best-effort (no hay link directo Docente↔User)
+        const cuentas = await prisma.cuentaInstitucional.findMany({
+          where: { user: { nombre: solicitudActualizada.docente.nombre } },
+          select: { id: true, correoInstitucional: true },
+        })
+        for (const cuenta of cuentas) {
+          await suspenderUsuarioWorkspace(cuenta.correoInstitucional)
+          await prisma.cuentaInstitucional.update({
+            where: { id: cuenta.id },
+            data: { estado: 'SUSPENDIDA' },
+          })
+        }
+      } catch (gwError) {
+        // No interrumpir el proceso de baja si falla la suspensión de cuenta
+        console.error('No se pudo suspender la cuenta institucional (best-effort):', gwError)
+      }
     }
 
     return res.json(solicitudActualizada)

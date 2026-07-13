@@ -8,9 +8,13 @@ const prisma = new PrismaClient()
 
 // ─── Helper ────────────────────────────────────────────────────────────────────
 
-export async function expedienteCompleto(empleadoId: number): Promise<boolean> {
+export async function expedienteCompleto(empleadoId: number, esExtranjero: boolean = false): Promise<boolean> {
   const tiposRequeridos = await prisma.tipoDocumentoExpediente.findMany({
-    where: { requerido: true, activo: true },
+    where: {
+      requerido: true,
+      activo: true,
+      OR: [{ condicion: null }, { condicion: esExtranjero ? 'EXTRANJERO' : 'MEXICANO' }],
+    },
   })
   if (tiposRequeridos.length === 0) return false
 
@@ -87,7 +91,7 @@ export async function listarTipos(req: Request, res: Response) {
 
 export async function crearTipo(req: Request, res: Response) {
   try {
-    const { nombre, descripcion, seccion, requerido, requiereVigencia, orden } = req.body
+    const { nombre, descripcion, seccion, requerido, requiereVigencia, precisionVigencia, condicion, orden } = req.body
     if (!nombre) return res.status(400).json({ error: 'El nombre es requerido' })
 
     const tipo = await prisma.tipoDocumentoExpediente.create({
@@ -97,6 +101,8 @@ export async function crearTipo(req: Request, res: Response) {
         seccion: seccion?.trim() || null,
         requerido: requerido ?? false,
         requiereVigencia: requiereVigencia ?? false,
+        precisionVigencia: requiereVigencia ? (precisionVigencia ?? 'DIA') : null,
+        condicion: condicion || null,
         orden: orden ?? 0,
       },
     })
@@ -115,19 +121,25 @@ export async function crearTipo(req: Request, res: Response) {
 export async function actualizarTipo(req: Request, res: Response) {
   try {
     const id = Number(req.params.id)
-    const { nombre, descripcion, seccion, requerido, requiereVigencia, activo, orden } = req.body
+    const { nombre, descripcion, seccion, requerido, requiereVigencia, precisionVigencia, condicion, activo, orden } = req.body
+
+    const updateData: any = {}
+    if (nombre !== undefined) updateData.nombre = nombre
+    if (descripcion !== undefined) updateData.descripcion = descripcion
+    if (seccion !== undefined) updateData.seccion = seccion?.trim() || null
+    if (requerido !== undefined) updateData.requerido = requerido
+    if (requiereVigencia !== undefined) {
+      updateData.requiereVigencia = requiereVigencia
+      if (!requiereVigencia) updateData.precisionVigencia = null
+    }
+    if (precisionVigencia !== undefined && precisionVigencia) updateData.precisionVigencia = precisionVigencia
+    if (condicion !== undefined) updateData.condicion = condicion || null
+    if (activo !== undefined) updateData.activo = activo
+    if (orden !== undefined) updateData.orden = orden
 
     const tipo = await prisma.tipoDocumentoExpediente.update({
       where: { id },
-      data: {
-        ...(nombre !== undefined && { nombre }),
-        ...(descripcion !== undefined && { descripcion }),
-        ...(seccion !== undefined && { seccion: seccion?.trim() || null }),
-        ...(requerido !== undefined && { requerido }),
-        ...(requiereVigencia !== undefined && { requiereVigencia }),
-        ...(activo !== undefined && { activo }),
-        ...(orden !== undefined && { orden }),
-      },
+      data: updateData,
     })
 
     await auditarAccion(req.user!.id, 'ACTUALIZAR', 'TipoDocumentoExpediente', tipo.id, tipo)
@@ -164,8 +176,14 @@ export async function miExpediente(req: Request, res: Response) {
   try {
     const empleadoId = req.user!.id
 
+    const registro = await prisma.registroIngreso.findUnique({ where: { userId: empleadoId } })
+    const esExtranjero = registro?.esExtranjero ?? false
+
     const tipos = await prisma.tipoDocumentoExpediente.findMany({
-      where: { activo: true },
+      where: {
+        activo: true,
+        OR: [{ condicion: null }, { condicion: esExtranjero ? 'EXTRANJERO' : 'MEXICANO' }],
+      },
       orderBy: [{ orden: 'asc' }, { nombre: 'asc' }],
     })
 
@@ -181,9 +199,9 @@ export async function miExpediente(req: Request, res: Response) {
       documento: docMap.get(tipo.id) || null,
     }))
 
-    const completo = await expedienteCompleto(empleadoId)
+    const completo = await expedienteCompleto(empleadoId, esExtranjero)
 
-    res.json({ items: resultado, completo })
+    res.json({ items: resultado, completo, esExtranjero })
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: 'Error al obtener el expediente' })
@@ -193,7 +211,7 @@ export async function miExpediente(req: Request, res: Response) {
 export async function subirDocumento(req: Request, res: Response) {
   try {
     const empleadoId = req.user!.id
-    const { tipoDocumentoId, fechaVigencia, soloMesAnio } = req.body
+    const { tipoDocumentoId, fechaVigencia } = req.body
     const archivo = req.file
 
     if (!archivo) return res.status(400).json({ error: 'Archivo requerido' })
@@ -203,22 +221,24 @@ export async function subirDocumento(req: Request, res: Response) {
     const tipo = await prisma.tipoDocumentoExpediente.findUnique({ where: { id: tipoId } })
     if (!tipo || !tipo.activo) return res.status(404).json({ error: 'Tipo de documento no encontrado' })
 
-    // Validar vigencia si el tipo la requiere
     let fechaVigenciaDate: Date | null = null
-    const soloMesAnioFlag = soloMesAnio === 'true' || soloMesAnio === true
+    let soloMesAnioFlag = false
 
     if (tipo.requiereVigencia) {
       if (!fechaVigencia) return res.status(400).json({ error: 'La fecha de vigencia es requerida para este documento' })
-
-      const parsed = new Date(fechaVigencia)
-      if (isNaN(parsed.getTime())) return res.status(400).json({ error: 'Fecha de vigencia inválida' })
-
-      // Si es solo mes/año, ajustar al último día del mes
-      if (soloMesAnioFlag) {
-        const year = parsed.getFullYear()
-        const month = parsed.getMonth()
-        fechaVigenciaDate = new Date(year, month + 1, 0, 23, 59, 59, 999)
+      const precision = tipo.precisionVigencia ?? 'DIA'
+      if (precision === 'ANIO') {
+        const year = parseInt(fechaVigencia, 10)
+        if (isNaN(year)) return res.status(400).json({ error: 'Año de vigencia inválido' })
+        fechaVigenciaDate = new Date(year, 11, 31, 23, 59, 59, 999)
+      } else if (precision === 'MES') {
+        const [y, m] = fechaVigencia.split('-').map(Number)
+        if (isNaN(y) || isNaN(m)) return res.status(400).json({ error: 'Fecha de vigencia inválida' })
+        fechaVigenciaDate = new Date(y, m, 0, 23, 59, 59, 999)
+        soloMesAnioFlag = true
       } else {
+        const parsed = new Date(fechaVigencia)
+        if (isNaN(parsed.getTime())) return res.status(400).json({ error: 'Fecha de vigencia inválida' })
         fechaVigenciaDate = parsed
       }
     }
@@ -349,8 +369,14 @@ export async function obtenerExpedienteEmpleado(req: Request, res: Response) {
     })
     if (!empleado) return res.status(404).json({ error: 'Empleado no encontrado' })
 
+    const registro = await prisma.registroIngreso.findUnique({ where: { userId: empleadoId } })
+    const esExtranjero = registro?.esExtranjero ?? false
+
     const tipos = await prisma.tipoDocumentoExpediente.findMany({
-      where: { activo: true },
+      where: {
+        activo: true,
+        OR: [{ condicion: null }, { condicion: esExtranjero ? 'EXTRANJERO' : 'MEXICANO' }],
+      },
       orderBy: [{ orden: 'asc' }, { nombre: 'asc' }],
     })
 
@@ -366,8 +392,8 @@ export async function obtenerExpedienteEmpleado(req: Request, res: Response) {
       documento: docMap.get(tipo.id) || null,
     }))
 
-    const completo = await expedienteCompleto(empleadoId)
-    res.json({ empleado, items, completo })
+    const completo = await expedienteCompleto(empleadoId, esExtranjero)
+    res.json({ empleado: { ...empleado, esExtranjero }, items, completo })
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: 'Error al obtener expediente del empleado' })
@@ -487,5 +513,129 @@ export async function revertirDocumento(req: Request, res: Response) {
     if (error.code === 'P2025') return res.status(404).json({ error: 'Documento no encontrado' })
     console.error(error)
     res.status(500).json({ error: 'Error al revertir documento' })
+  }
+}
+
+// ─── RH / ADMIN: Subir documento en nombre de un empleado ─────────────────────
+
+export async function subirDocumentoRH(req: Request, res: Response) {
+  try {
+    const empleadoId = Number(req.params['empleadoId'])
+    const rhId = req.user!.id
+    const { tipoDocumentoId, fechaVigencia, soloMesAnio } = req.body
+    const archivo = req.file
+
+    if (!archivo) return res.status(400).json({ error: 'Archivo requerido' })
+    if (!tipoDocumentoId) {
+      fs.unlink(path.join(process.cwd(), archivo.path), () => {})
+      return res.status(400).json({ error: 'tipoDocumentoId requerido' })
+    }
+
+    const empleado = await prisma.user.findUnique({ where: { id: empleadoId } })
+    if (!empleado) {
+      fs.unlink(path.join(process.cwd(), archivo.path), () => {})
+      return res.status(404).json({ error: 'Empleado no encontrado' })
+    }
+
+    const tipoId = Number(tipoDocumentoId)
+    const tipo = await prisma.tipoDocumentoExpediente.findUnique({ where: { id: tipoId } })
+    if (!tipo || !tipo.activo) {
+      fs.unlink(path.join(process.cwd(), archivo.path), () => {})
+      return res.status(404).json({ error: 'Tipo de documento no encontrado' })
+    }
+
+    let fechaVigenciaDate: Date | null = null
+    let soloMesAnioFlag = false
+
+    if (tipo.requiereVigencia) {
+      if (!fechaVigencia) {
+        fs.unlink(path.join(process.cwd(), archivo.path), () => {})
+        return res.status(400).json({ error: 'La fecha de vigencia es requerida para este documento' })
+      }
+      const precision = tipo.precisionVigencia ?? 'DIA'
+      if (precision === 'ANIO') {
+        const year = parseInt(fechaVigencia, 10)
+        if (isNaN(year)) {
+          fs.unlink(path.join(process.cwd(), archivo.path), () => {})
+          return res.status(400).json({ error: 'Año de vigencia inválido' })
+        }
+        fechaVigenciaDate = new Date(year, 11, 31, 23, 59, 59, 999)
+      } else if (precision === 'MES') {
+        const [y, m] = fechaVigencia.split('-').map(Number)
+        if (isNaN(y) || isNaN(m)) {
+          fs.unlink(path.join(process.cwd(), archivo.path), () => {})
+          return res.status(400).json({ error: 'Fecha de vigencia inválida' })
+        }
+        fechaVigenciaDate = new Date(y, m, 0, 23, 59, 59, 999)
+        soloMesAnioFlag = true
+      } else {
+        const parsed = new Date(fechaVigencia)
+        if (isNaN(parsed.getTime())) {
+          fs.unlink(path.join(process.cwd(), archivo.path), () => {})
+          return res.status(400).json({ error: 'Fecha de vigencia inválida' })
+        }
+        fechaVigenciaDate = parsed
+      }
+    }
+
+    const rutaRelativa = `uploads/expedientes/${archivo.filename}`
+    // Si la vigencia ya pasó, guardar como VENCIDO directamente (carga histórica)
+    const estadoFinal = fechaVigenciaDate && fechaVigenciaDate < new Date() ? 'VENCIDO' : 'VERIFICADO'
+
+    const docExistente = await prisma.documentoExpediente.findUnique({
+      where: { empleadoId_tipoDocumentoId: { empleadoId, tipoDocumentoId: tipoId } },
+    })
+
+    if (docExistente) {
+      if (docExistente.archivoAnterior) {
+        const rutaViejo = path.join(process.cwd(), docExistente.archivoAnterior)
+        if (fs.existsSync(rutaViejo)) fs.unlink(rutaViejo, () => {})
+      }
+      const doc = await prisma.documentoExpediente.update({
+        where: { id: docExistente.id },
+        data: {
+          archivo: rutaRelativa,
+          nombreOriginal: archivo.originalname,
+          estado: estadoFinal,
+          fechaVigencia: fechaVigenciaDate,
+          soloMesAnio: soloMesAnioFlag,
+          motivoRechazo: null,
+          verificadoPorId: rhId,
+          verificadoEn: new Date(),
+          alertaProximaEnviada: false,
+          alertaVencidoEnviada: true,
+          archivoAnterior: docExistente.archivo,
+          nombreOriginalAnterior: docExistente.nombreOriginal,
+          fechaVigenciaAnterior: docExistente.fechaVigencia,
+          reemplazadoEn: new Date(),
+        },
+      })
+      await auditarAccion(rhId, 'SUBIR_DOCUMENTO_RH', 'DocumentoExpediente', doc.id, {
+        empleadoId, tipoId, nombreOriginal: archivo.originalname, estado: estadoFinal,
+      })
+      return res.json(doc)
+    }
+
+    const doc = await prisma.documentoExpediente.create({
+      data: {
+        empleadoId,
+        tipoDocumentoId: tipoId,
+        archivo: rutaRelativa,
+        nombreOriginal: archivo.originalname,
+        estado: estadoFinal,
+        fechaVigencia: fechaVigenciaDate,
+        soloMesAnio: soloMesAnioFlag,
+        verificadoPorId: rhId,
+        verificadoEn: new Date(),
+        alertaVencidoEnviada: estadoFinal === 'VENCIDO',
+      },
+    })
+    await auditarAccion(rhId, 'SUBIR_DOCUMENTO_RH', 'DocumentoExpediente', doc.id, {
+      empleadoId, tipoId, nombreOriginal: archivo.originalname,
+    })
+    res.status(201).json(doc)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Error al subir documento' })
   }
 }

@@ -24,6 +24,8 @@ const tipoSchema = z.object({
   seccion: z.string().optional(),
   requerido: z.boolean(),
   requiereVigencia: z.boolean(),
+  precisionVigencia: z.enum(['DIA', 'MES', 'ANIO']).optional(),
+  condicion: z.string().optional(),
   orden: z.number().int(),
 })
 type TipoForm = z.infer<typeof tipoSchema>
@@ -137,16 +139,31 @@ function TabTipos({ secciones }: { secciones: SeccionExpediente[] }) {
       seccion: tipo.seccion || '',
       requerido: tipo.requerido,
       requiereVigencia: tipo.requiereVigencia,
+      precisionVigencia: (tipo.precisionVigencia as any) || 'DIA',
+      condicion: tipo.condicion || '',
       orden: tipo.orden,
     })
     setIsEditOpen(true)
   }
 
   const onSubmitCrear = (data: TipoForm) =>
-    crearMutation.mutate({ ...data, seccion: data.seccion?.trim() || null })
+    crearMutation.mutate({
+      ...data,
+      seccion: data.seccion?.trim() || null,
+      precisionVigencia: data.requiereVigencia ? (data.precisionVigencia ?? 'DIA') : null,
+      condicion: data.condicion || null,
+    })
   const onSubmitEditar = (data: TipoForm) => {
     if (!selected) return
-    actualizarMutation.mutate({ id: selected.id, data: { ...data, seccion: data.seccion?.trim() || null } })
+    actualizarMutation.mutate({
+      id: selected.id,
+      data: {
+        ...data,
+        seccion: data.seccion?.trim() || null,
+        precisionVigencia: data.requiereVigencia ? (data.precisionVigencia ?? 'DIA') : null,
+        condicion: data.condicion || null,
+      },
+    })
   }
 
   const columns = [
@@ -262,6 +279,28 @@ function TabTipos({ secciones }: { secciones: SeccionExpediente[] }) {
               className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" />
             <label htmlFor="create-vigencia" className="ml-2 block text-sm text-gray-700">Requiere vigencia</label>
           </div>
+          {watchRequiereVigencia && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Precisión de vigencia *</label>
+              <select
+                {...register('precisionVigencia')}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm border px-3 py-2">
+                <option value="DIA">Fecha exacta (día/mes/año)</option>
+                <option value="MES">Mes y año</option>
+                <option value="ANIO">Solo año</option>
+              </select>
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Aplica a</label>
+            <select
+              {...register('condicion')}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm border px-3 py-2">
+              <option value="">Todos los empleados</option>
+              <option value="MEXICANO">Solo mexicanos</option>
+              <option value="EXTRANJERO">Solo extranjeros</option>
+            </select>
+          </div>
           <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
             <Button type="submit" isLoading={crearMutation.isPending}>Crear</Button>
@@ -298,6 +337,28 @@ function TabTipos({ secciones }: { secciones: SeccionExpediente[] }) {
               onChange={(e) => setValue('requiereVigencia', e.target.checked)}
               className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" />
             <label htmlFor="edit-vigencia" className="ml-2 block text-sm text-gray-700">Requiere vigencia</label>
+          </div>
+          {watchRequiereVigencia && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Precisión de vigencia *</label>
+              <select
+                {...register('precisionVigencia')}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm border px-3 py-2">
+                <option value="DIA">Fecha exacta (día/mes/año)</option>
+                <option value="MES">Mes y año</option>
+                <option value="ANIO">Solo año</option>
+              </select>
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Aplica a</label>
+            <select
+              {...register('condicion')}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm border px-3 py-2">
+              <option value="">Todos los empleados</option>
+              <option value="MEXICANO">Solo mexicanos</option>
+              <option value="EXTRANJERO">Solo extranjeros</option>
+            </select>
           </div>
           <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>Cancelar</Button>

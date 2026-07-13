@@ -19,7 +19,8 @@ import { ConfiguracionExpedientes } from './pages/ConfiguracionExpedientes';
 import { MiExpediente } from './pages/MiExpediente';
 import { ValidarExpedientes } from './pages/ValidarExpedientes';
 import { Contratos } from './pages/Contratos';
-
+import { Departamentos } from './pages/Departamentos';
+import { EmpleadosNuevos } from './pages/EmpleadosNuevos'
 // Componentes
 import { RedireccionInicio } from './components/RedireccionInicio';
 
@@ -157,6 +158,22 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={['ADMIN', 'RH', 'EMPLEADO']}>
                   <Contratos />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/departamentos"
+              element={
+                <ProtectedRoute requiredRoles={['ADMIN']}>
+                  <Departamentos />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/empleados-nuevos"
+              element={
+                <ProtectedRoute requiredRoles={['ADMIN', 'RH']}>
+                  <EmpleadosNuevos />
                 </ProtectedRoute>
               }
             />

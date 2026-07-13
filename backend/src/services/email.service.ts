@@ -242,4 +242,93 @@ export const emailTemplates = {
       </div>
     `;
   },
+
+  // ── Módulo Empleados Nuevos ────────────────────────────────────────────────
+
+  ingresoEmpleado: (
+    nombre: string,
+    fechaNacimiento: string,
+    numColaborador: string,
+    fechaIngreso: string,
+    puesto: string
+  ): string => {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <p>Hola, buenos días.</p>
+        <p>Por medio del presente, me permito informarles sobre el ingreso de los siguientes colaboradores/as:</p>
+        <table style="border-collapse: collapse; width: 100%; margin: 20px 0;">
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold; width: 40%;">NOMBRE COMPLETO:</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${nombre}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">FECHA DE NACIMIENTO:</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${fechaNacimiento}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">NÚMERO DE COLABORADOR:</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${numColaborador}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">FECHA DE INGRESO:</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${fechaIngreso}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">PUESTO:</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${puesto}</td>
+          </tr>
+        </table>
+        <p>Sofi, te pido su apoyo con su registro y programación de la inducción a la UMx, gracias.</p>
+        <p>Gracias a todos por su colaboración.</p>
+        <p>Saludos,</p>
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #7f8c8d; font-size: 12px;">
+          <p>Este es un correo automático generado por el Sistema de Recursos Humanos.</p>
+          <p>Universidad Mondragón México &copy; ${new Date().getFullYear()}</p>
+        </div>
+      </div>
+    `;
+  },
+
+  bajaEmpleado: (
+    nombre: string,
+    numColaborador: string,
+    puesto: string,
+    fechaBaja: string,
+    tipo: string
+  ): string => {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <p>Buenas tardes,</p>
+        <p>Por este medio hago de su conocimiento la siguiente baja:</p>
+        <table style="border-collapse: collapse; width: 100%; margin: 20px 0;">
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold; width: 40%;">NOMBRE COMPLETO:</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${nombre}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">NÚMERO DE COLABORADOR:</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${numColaborador}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">PUESTO DESEMPEÑADO:</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${puesto}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">TIPO DE COLABORADOR:</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${tipo}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">FECHA EFECTIVA DE BAJA:</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${fechaBaja}</td>
+          </tr>
+        </table>
+        <p>Agradezco de antemano su apoyo.</p>
+        <p>Saludos,</p>
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #7f8c8d; font-size: 12px;">
+          <p>Este es un correo automático generado por el Sistema de Recursos Humanos.</p>
+          <p>Universidad Mondragón México &copy; ${new Date().getFullYear()}</p>
+        </div>
+      </div>
+    `;
+  },
 };

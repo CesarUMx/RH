@@ -26,6 +26,14 @@ model User {
   // módulo expedientes y contratos
   documentosExpediente DocumentoExpediente[] @relation("DocumentosEmpleado")
   contratos            Contrato[]            @relation("ContratosEmpleado")
+  // módulo cuentas institucionales
+  cuenta               CuentaInstitucional?  @relation("CuentaDeEmpleado")
+  cuentasCreadas       CuentaInstitucional[] @relation("CuentasCreadasPor")
+  // módulo empleados nuevos
+  registroIngreso      RegistroIngreso?      @relation("RegistroDeEmpleado")
+  registrosCreados     RegistroIngreso[]     @relation("RegistrosCreadosPor")
+  // coordinador de departamento
+  deptoCoord           Departamento[]        @relation("CoordDepartamento")
   createdAt         DateTime        @default(now())
 }
 
@@ -153,15 +161,17 @@ model SeccionExpediente {
 }
 
 model TipoDocumentoExpediente {
-  id               Int                   @id @default(autoincrement())
-  nombre           String                @unique
-  descripcion      String?
-  seccion          String?
-  requerido        Boolean               @default(false)
-  requiereVigencia Boolean               @default(false)
-  activo           Boolean               @default(true)
-  orden            Int                   @default(0)
-  documentos       DocumentoExpediente[]
+  id                Int                   @id @default(autoincrement())
+  nombre            String                @unique
+  descripcion       String?
+  seccion           String?
+  requerido         Boolean               @default(false)
+  requiereVigencia  Boolean               @default(false)
+  precisionVigencia String?               // 'DIA' | 'MES' | 'ANIO' — solo cuando requiereVigencia: true
+  condicion         String?               // null = todos | 'MEXICANO' | 'EXTRANJERO'
+  activo            Boolean               @default(true)
+  orden             Int                   @default(0)
+  documentos        DocumentoExpediente[]
 }
 
 model DocumentoExpediente {
@@ -237,4 +247,58 @@ model SolicitudBaja {
   creadorId             Int
   createdAt             DateTime      @default(now())
   updatedAt             DateTime?     @updatedAt
+}
+
+model Departamento {
+  id          Int                   @id @default(autoincrement())
+  nombre      String                @unique
+  descripcion String?
+  activo      Boolean               @default(true)
+  coordinador User?                 @relation("CoordDepartamento", fields: [coordinadorId], references: [id])
+  coordinadorId Int?
+  cuentas     CuentaInstitucional[]
+}
+
+model RegistroIngreso {
+  id                  Int           @id @default(autoincrement())
+  user                User          @relation("RegistroDeEmpleado", fields: [userId], references: [id])
+  userId              Int           @unique
+  nombre              String
+  tipo                TipoColaborador @default(ADMINISTRATIVO)
+  fechaNacimiento     DateTime
+  numColaborador      String
+  fechaIngreso        DateTime
+  puesto              String
+  archivoCredenciales String?
+  esExtranjero        Boolean       @default(false)
+  creadoPor           User?         @relation("RegistrosCreadosPor", fields: [creadoPorId], references: [id])
+  creadoPorId         Int?
+  creadoEn            DateTime      @default(now())
+}
+
+enum TipoColaborador {
+  ADMINISTRATIVO
+  GUARDIA
+  LIMPIEZA_MANTENIMIENTO
+  DOCENTE
+}
+
+model CuentaInstitucional {
+  id                  Int          @id @default(autoincrement())
+  user                User         @relation("CuentaDeEmpleado", fields: [userId], references: [id])
+  userId              Int          @unique
+  correoInstitucional String       @unique
+  departamento        Departamento @relation(fields: [departamentoId], references: [id])
+  departamentoId      Int
+  estado              EstadoCuenta @default(ACTIVA)
+  creadoPor           User?        @relation("CuentasCreadasPor", fields: [creadoPorId], references: [id])
+  creadoPorId         Int?
+  creadoEn            DateTime     @default(now())
+  actualizadoEn       DateTime     @updatedAt
+}
+
+enum EstadoCuenta {
+  ACTIVA
+  SUSPENDIDA
+  ELIMINADA
 }

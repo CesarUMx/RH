@@ -9,6 +9,8 @@ export interface TipoDocumento {
   seccion: string | null
   requerido: boolean
   requiereVigencia: boolean
+  precisionVigencia: string | null  // 'DIA' | 'MES' | 'ANIO'
+  condicion: string | null          // null | 'MEXICANO' | 'EXTRANJERO'
   activo: boolean
   orden: number
 }
@@ -44,6 +46,7 @@ export interface ItemExpediente {
 export interface MiExpedienteResponse {
   items: ItemExpediente[]
   completo: boolean
+  esExtranjero: boolean
 }
 
 export interface EmpleadoExpediente {
@@ -57,7 +60,7 @@ export interface EmpleadoExpediente {
 }
 
 export interface ExpedienteEmpleadoResponse {
-  empleado: { id: number; nombre: string; correo: string }
+  empleado: { id: number; nombre: string; correo: string; esExtranjero: boolean }
   items: ItemExpediente[]
   completo: boolean
 }
@@ -68,6 +71,8 @@ export interface CreateTipoDto {
   seccion?: string | null
   requerido: boolean
   requiereVigencia: boolean
+  precisionVigencia?: string | null
+  condicion?: string | null
   orden?: number
 }
 
@@ -119,14 +124,12 @@ export const expedientesService = {
   subirDocumento: async (
     tipoDocumentoId: number,
     archivo: File,
-    fechaVigencia?: string,
-    soloMesAnio?: boolean
+    fechaVigencia?: string
   ): Promise<DocumentoExpediente> => {
     const formData = new FormData()
     formData.append('tipoDocumentoId', String(tipoDocumentoId))
     formData.append('archivo', archivo)
     if (fechaVigencia) formData.append('fechaVigencia', fechaVigencia)
-    if (soloMesAnio !== undefined) formData.append('soloMesAnio', String(soloMesAnio))
 
     const { data } = await api.post('/expedientes/documentos', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -159,6 +162,24 @@ export const expedientesService = {
 
   revertirDocumento: async (docId: number): Promise<DocumentoExpediente> => {
     const { data } = await api.patch(`/expedientes/documentos/${docId}/revertir`)
+    return data
+  },
+
+  subirDocumentoRH: async (
+    empleadoId: number,
+    tipoDocumentoId: number,
+    archivo: File,
+    fechaVigencia?: string,
+    soloMesAnio?: boolean
+  ): Promise<DocumentoExpediente> => {
+    const formData = new FormData()
+    formData.append('tipoDocumentoId', String(tipoDocumentoId))
+    formData.append('archivo', archivo)
+    if (fechaVigencia) formData.append('fechaVigencia', fechaVigencia)
+    if (soloMesAnio !== undefined) formData.append('soloMesAnio', String(soloMesAnio))
+    const { data } = await api.post(`/expedientes/${empleadoId}/documentos`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
     return data
   },
 
