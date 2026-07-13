@@ -505,6 +505,81 @@ export async function tieneCredenciales(req: Request, res: Response) {
   }
 }
 
+// ─── PATCH /empleados/:userId (RH/ADMIN actualiza datos del empleado) ──────────
+
+export async function actualizarEmpleado(req: Request, res: Response) {
+  try {
+    const actor = req.user as JwtPayload
+    const userId = parseInt(req.params.userId ?? '')
+    if (isNaN(userId)) return res.status(400).json({ error: 'userId inválido' })
+
+    const schema = z.object({
+      primerNombre:   z.string().min(1).optional(),
+      segundoNombre:  z.string().optional(),
+      primerApellido: z.string().min(1).optional(),
+      segundoApellido: z.string().optional(),
+      tipo:           z.enum(['ADMINISTRATIVO', 'GUARDIA', 'LIMPIEZA_MANTENIMIENTO', 'DOCENTE']).optional(),
+      fechaNacimiento: z.string().optional(),
+      numColaborador:  z.string().optional(),
+      fechaIngreso:    z.string().optional(),
+      puesto:          z.string().optional(),
+      departamentoId:  z.number().int().optional(),
+      password:        z.string().min(6).optional(),
+    })
+
+    const parsed = schema.safeParse(req.body)
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten().formErrors[0] ?? 'Datos inválidos' })
+
+    const data = parsed.data
+
+    const registro = await prisma.registroIngreso.findUnique({ where: { userId } })
+    if (!registro) return res.status(404).json({ error: 'Empleado no encontrado' })
+
+    // Construir nombre completo si se mandan partes
+    const partes = {
+      primerNombre:   data.primerNombre   ?? '',
+      segundoNombre:  data.segundoNombre  ?? '',
+      primerApellido: data.primerApellido ?? '',
+      segundoApellido: data.segundoApellido ?? '',
+    }
+    const nombreNuevo = [partes.primerNombre, partes.segundoNombre, partes.primerApellido, partes.segundoApellido]
+      .filter(Boolean).join(' ')
+
+    const registroUpdate: Record<string, any> = {}
+    if (data.tipo)            registroUpdate.tipo            = data.tipo
+    if (data.numColaborador)  registroUpdate.numColaborador  = data.numColaborador
+    if (data.puesto)          registroUpdate.puesto          = data.puesto
+    if (data.fechaNacimiento) registroUpdate.fechaNacimiento = new Date(data.fechaNacimiento)
+    if (data.fechaIngreso)    registroUpdate.fechaIngreso    = new Date(data.fechaIngreso)
+    if (nombreNuevo)          registroUpdate.nombre          = nombreNuevo
+
+    await prisma.$transaction(async (tx) => {
+      if (Object.keys(registroUpdate).length > 0) {
+        await tx.registroIngreso.update({ where: { userId }, data: registroUpdate })
+      }
+      const userUpdate: Record<string, any> = {}
+      if (nombreNuevo) userUpdate.nombre = nombreNuevo
+      if (data.password) userUpdate.password = await bcrypt.hash(data.password, 10)
+      if (Object.keys(userUpdate).length > 0) {
+        await tx.user.update({ where: { id: userId }, data: userUpdate })
+      }
+      if (data.departamentoId) {
+        await tx.cuentaInstitucional.updateMany({
+          where: { userId },
+          data: { departamentoId: data.departamentoId },
+        })
+      }
+    })
+
+    await auditarAccion(actor.id, 'ACTUALIZAR_EMPLEADO', 'RegistroIngreso', registro.id, data)
+
+    return res.json({ ok: true })
+  } catch (error) {
+    console.error('Error al actualizar empleado:', error)
+    return res.status(500).json({ error: 'Error al actualizar empleado' })
+  }
+}
+
 // ─── PATCH /empleados/mi-extranjero (empleado actualiza su propia nacionalidad) ─
 
 export async function miNacionalidad(req: Request, res: Response) {

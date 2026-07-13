@@ -14,6 +14,7 @@ import {
   darDeBaja,
   miNacionalidad,
   actualizarNacionalidad,
+  actualizarEmpleado,
 } from './controller'
 
 export const empleadosRouter = Router()
@@ -34,3 +35,4 @@ empleadosRouter.post('/',   requireAuth, requireRole(rhAdmin), crearEmpleado)
 empleadosRouter.delete('/:userId',           requireAuth, requireRole(rhAdmin), darDeBaja)
 empleadosRouter.get('/:userId/credenciales', requireAuth, requireRole(rhAdmin), descargarCredenciales)
 empleadosRouter.patch('/:userId/extranjero', requireAuth, requireRole(rhAdmin), actualizarNacionalidad)
+empleadosRouter.patch('/:userId',            requireAuth, requireRole(rhAdmin), actualizarEmpleado)
