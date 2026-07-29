@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client'
 import path from 'path'
 import fs from 'fs'
 import { auditarAccion } from '../../utils/auditoria'
+import { mergePdfs } from '../../utils/mergePdfs'
 
 const prisma = new PrismaClient()
 
@@ -104,6 +105,7 @@ export async function crearTipo(req: Request, res: Response) {
         precisionVigencia: requiereVigencia ? (precisionVigencia ?? 'DIA') : null,
         condicion: condicion || null,
         orden: orden ?? 0,
+        permiteMultiple: req.body.permiteMultiple ?? false,
       },
     })
 
@@ -136,6 +138,7 @@ export async function actualizarTipo(req: Request, res: Response) {
     if (condicion !== undefined) updateData.condicion = condicion || null
     if (activo !== undefined) updateData.activo = activo
     if (orden !== undefined) updateData.orden = orden
+    if (req.body.permiteMultiple !== undefined) updateData.permiteMultiple = req.body.permiteMultiple
 
     const tipo = await prisma.tipoDocumentoExpediente.update({
       where: { id },
@@ -212,9 +215,9 @@ export async function subirDocumento(req: Request, res: Response) {
   try {
     const empleadoId = req.user!.id
     const { tipoDocumentoId, fechaVigencia } = req.body
-    const archivo = req.file
+    const archivos = req.files as Express.Multer.File[]
 
-    if (!archivo) return res.status(400).json({ error: 'Archivo requerido' })
+    if (!archivos || archivos.length === 0) return res.status(400).json({ error: 'Archivo requerido' })
     if (!tipoDocumentoId) return res.status(400).json({ error: 'tipoDocumentoId requerido' })
 
     const tipoId = Number(tipoDocumentoId)
@@ -243,6 +246,8 @@ export async function subirDocumento(req: Request, res: Response) {
       }
     }
 
+    // Fusionar PDFs si hay más de uno
+    const archivo = await mergePdfs(archivos)
     const rutaRelativa = `uploads/expedientes/${archivo.filename}`
 
     // Verificar si ya existe un documento para este tipo
@@ -253,8 +258,7 @@ export async function subirDocumento(req: Request, res: Response) {
     if (docExistente) {
       // Bloquear si está VERIFICADO
       if (docExistente.estado === 'VERIFICADO') {
-        // Eliminar el archivo recién subido
-        fs.unlink(path.join(process.cwd(), archivo.path), () => {})
+        fs.unlink(archivo.path, () => {})
         return res.status(400).json({ error: 'No se puede reemplazar un documento verificado' })
       }
 
@@ -279,7 +283,6 @@ export async function subirDocumento(req: Request, res: Response) {
           verificadoEn: null,
           alertaProximaEnviada: false,
           alertaVencidoEnviada: false,
-          // guardar versión anterior
           archivoAnterior: docExistente.archivo,
           nombreOriginalAnterior: docExistente.nombreOriginal,
           fechaVigenciaAnterior: docExistente.fechaVigencia,
@@ -329,17 +332,24 @@ export async function listarExpedientes(req: Request, res: Response) {
         documentosExpediente: {
           include: { tipo: true },
         },
+        registroIngreso: { select: { esExtranjero: true } },
       },
     })
 
-    const tiposRequeridos = await prisma.tipoDocumentoExpediente.findMany({
+    const todosLosTiposRequeridos = await prisma.tipoDocumentoExpediente.findMany({
       where: { requerido: true, activo: true },
     })
 
-    const totalRequeridos = tiposRequeridos.length
-
     const resultado = empleados.map((emp) => {
-      const verificados = emp.documentosExpediente.filter((d) => d.estado === 'VERIFICADO' && tiposRequeridos.some((t) => t.id === d.tipoDocumentoId)).length
+      const esExtranjero = emp.registroIngreso?.esExtranjero ?? false
+      const condicion = esExtranjero ? 'EXTRANJERO' : 'MEXICANO'
+      const tiposAplicables = todosLosTiposRequeridos.filter(
+        (t) => t.condicion === null || t.condicion === condicion
+      )
+      const totalRequeridos = tiposAplicables.length
+      const verificados = emp.documentosExpediente.filter(
+        (d) => d.estado === 'VERIFICADO' && tiposAplicables.some((t) => t.id === d.tipoDocumentoId)
+      ).length
       const completo = totalRequeridos > 0 && verificados === totalRequeridos
       return {
         id: emp.id,
@@ -523,24 +533,24 @@ export async function subirDocumentoRH(req: Request, res: Response) {
     const empleadoId = Number(req.params['empleadoId'])
     const rhId = req.user!.id
     const { tipoDocumentoId, fechaVigencia, soloMesAnio } = req.body
-    const archivo = req.file
+    const archivos = req.files as Express.Multer.File[]
 
-    if (!archivo) return res.status(400).json({ error: 'Archivo requerido' })
+    if (!archivos || archivos.length === 0) return res.status(400).json({ error: 'Archivo requerido' })
     if (!tipoDocumentoId) {
-      fs.unlink(path.join(process.cwd(), archivo.path), () => {})
+      for (const a of archivos) fs.unlink(path.join(process.cwd(), a.path), () => {})
       return res.status(400).json({ error: 'tipoDocumentoId requerido' })
     }
 
     const empleado = await prisma.user.findUnique({ where: { id: empleadoId } })
     if (!empleado) {
-      fs.unlink(path.join(process.cwd(), archivo.path), () => {})
+      for (const a of archivos) fs.unlink(path.join(process.cwd(), a.path), () => {})
       return res.status(404).json({ error: 'Empleado no encontrado' })
     }
 
     const tipoId = Number(tipoDocumentoId)
     const tipo = await prisma.tipoDocumentoExpediente.findUnique({ where: { id: tipoId } })
     if (!tipo || !tipo.activo) {
-      fs.unlink(path.join(process.cwd(), archivo.path), () => {})
+      for (const a of archivos) fs.unlink(path.join(process.cwd(), a.path), () => {})
       return res.status(404).json({ error: 'Tipo de documento no encontrado' })
     }
 
@@ -549,21 +559,21 @@ export async function subirDocumentoRH(req: Request, res: Response) {
 
     if (tipo.requiereVigencia) {
       if (!fechaVigencia) {
-        fs.unlink(path.join(process.cwd(), archivo.path), () => {})
+        for (const a of archivos) fs.unlink(path.join(process.cwd(), a.path), () => {})
         return res.status(400).json({ error: 'La fecha de vigencia es requerida para este documento' })
       }
       const precision = tipo.precisionVigencia ?? 'DIA'
       if (precision === 'ANIO') {
         const year = parseInt(fechaVigencia, 10)
         if (isNaN(year)) {
-          fs.unlink(path.join(process.cwd(), archivo.path), () => {})
+          for (const a of archivos) fs.unlink(path.join(process.cwd(), a.path), () => {})
           return res.status(400).json({ error: 'Año de vigencia inválido' })
         }
         fechaVigenciaDate = new Date(year, 11, 31, 23, 59, 59, 999)
       } else if (precision === 'MES') {
         const [y, m] = fechaVigencia.split('-').map(Number)
         if (isNaN(y) || isNaN(m)) {
-          fs.unlink(path.join(process.cwd(), archivo.path), () => {})
+          for (const a of archivos) fs.unlink(path.join(process.cwd(), a.path), () => {})
           return res.status(400).json({ error: 'Fecha de vigencia inválida' })
         }
         fechaVigenciaDate = new Date(y, m, 0, 23, 59, 59, 999)
@@ -571,13 +581,15 @@ export async function subirDocumentoRH(req: Request, res: Response) {
       } else {
         const parsed = new Date(fechaVigencia)
         if (isNaN(parsed.getTime())) {
-          fs.unlink(path.join(process.cwd(), archivo.path), () => {})
+          for (const a of archivos) fs.unlink(path.join(process.cwd(), a.path), () => {})
           return res.status(400).json({ error: 'Fecha de vigencia inválida' })
         }
         fechaVigenciaDate = parsed
       }
     }
 
+    // Fusionar PDFs si hay más de uno
+    const archivo = await mergePdfs(archivos)
     const rutaRelativa = `uploads/expedientes/${archivo.filename}`
     // Si la vigencia ya pasó, guardar como VENCIDO directamente (carga histórica)
     const estadoFinal = fechaVigenciaDate && fechaVigenciaDate < new Date() ? 'VENCIDO' : 'VERIFICADO'

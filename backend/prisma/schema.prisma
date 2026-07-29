@@ -171,6 +171,7 @@ model TipoDocumentoExpediente {
   condicion         String?               // null = todos | 'MEXICANO' | 'EXTRANJERO'
   activo            Boolean               @default(true)
   orden             Int                   @default(0)
+  permiteMultiple   Boolean               @default(false)
   documentos        DocumentoExpediente[]
 }
 

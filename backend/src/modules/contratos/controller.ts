@@ -26,13 +26,6 @@ export async function subirContrato(req: Request, res: Response) {
       return res.status(404).json({ error: 'Empleado no encontrado' })
     }
 
-    // Verificar que el expediente esté completo antes de subir contrato
-    const completo = await expedienteCompleto(empId)
-    if (!completo) {
-      fs.unlink(path.join(process.cwd(), archivo.path), () => {})
-      return res.status(400).json({ error: 'El empleado no tiene el expediente completo y verificado' })
-    }
-
     const rutaRelativa = `uploads/contratos/${archivo.filename}`
 
     const contrato = await prisma.contrato.create({

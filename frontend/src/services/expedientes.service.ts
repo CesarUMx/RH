@@ -13,6 +13,7 @@ export interface TipoDocumento {
   condicion: string | null          // null | 'MEXICANO' | 'EXTRANJERO'
   activo: boolean
   orden: number
+  permiteMultiple: boolean
 }
 
 export type EstadoDocumento = 'PENDIENTE' | 'VERIFICADO' | 'RECHAZADO' | 'PROXIMO_A_VENCER' | 'VENCIDO'
@@ -74,6 +75,7 @@ export interface CreateTipoDto {
   precisionVigencia?: string | null
   condicion?: string | null
   orden?: number
+  permiteMultiple?: boolean
 }
 
 export interface UpdateTipoDto extends Partial<CreateTipoDto> {
@@ -123,12 +125,13 @@ export const expedientesService = {
 
   subirDocumento: async (
     tipoDocumentoId: number,
-    archivo: File,
+    archivos: File | File[],
     fechaVigencia?: string
   ): Promise<DocumentoExpediente> => {
     const formData = new FormData()
     formData.append('tipoDocumentoId', String(tipoDocumentoId))
-    formData.append('archivo', archivo)
+    const lista = Array.isArray(archivos) ? archivos : [archivos]
+    for (const a of lista) formData.append('archivos', a)
     if (fechaVigencia) formData.append('fechaVigencia', fechaVigencia)
 
     const { data } = await api.post('/expedientes/documentos', formData, {
@@ -168,13 +171,14 @@ export const expedientesService = {
   subirDocumentoRH: async (
     empleadoId: number,
     tipoDocumentoId: number,
-    archivo: File,
+    archivos: File | File[],
     fechaVigencia?: string,
     soloMesAnio?: boolean
   ): Promise<DocumentoExpediente> => {
     const formData = new FormData()
     formData.append('tipoDocumentoId', String(tipoDocumentoId))
-    formData.append('archivo', archivo)
+    const lista = Array.isArray(archivos) ? archivos : [archivos]
+    for (const a of lista) formData.append('archivos', a)
     if (fechaVigencia) formData.append('fechaVigencia', fechaVigencia)
     if (soloMesAnio !== undefined) formData.append('soloMesAnio', String(soloMesAnio))
     const { data } = await api.post(`/expedientes/${empleadoId}/documentos`, formData, {

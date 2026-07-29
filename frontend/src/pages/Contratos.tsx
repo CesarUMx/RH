@@ -12,6 +12,7 @@ import { DataTable } from '../components/ui/DataTable'
 import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
+import { SearchableSelect } from '../components/ui/SearchableSelect'
 
 import { useAuth } from '../context/AuthContext'
 import { contratosService } from '../services/contratos.service'
@@ -136,6 +137,7 @@ const VistaRH = () => {
   const [selected, setSelected] = useState<Contrato | null>(null)
   const [archivo, setArchivo] = useState<File | null>(null)
   const [archivoError, setArchivoError] = useState('')
+  const [empleadoSelId, setEmpleadoSelId] = useState<number | null>(null)
 
   const {
     register,
@@ -151,7 +153,7 @@ const VistaRH = () => {
     queryFn: expedientesService.listarExpedientes,
   })
 
-  const empleadosCompletos = expedientes.filter((e) => e.completo)
+  const empleadosCompletos = expedientes
 
   const { data: contratos = [], isLoading } = useQuery({
     queryKey: ['contratos-lista'],
@@ -167,6 +169,7 @@ const VistaRH = () => {
       setIsSubirOpen(false)
       reset()
       setArchivo(null)
+      setEmpleadoSelId(null)
     },
     onError: (err: any) => toast.error(err.response?.data?.error || 'Error al subir contrato'),
   })
@@ -240,16 +243,19 @@ const VistaRH = () => {
 
   return (
     <div>
-      {/* Aviso si no hay empleados con expediente completo */}
+      {/* Aviso si no hay empleados */}
       {empleadosCompletos.length === 0 && (
         <div className="flex items-center gap-3 bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800 mb-4">
           <FaExclamationTriangle className="flex-shrink-0" />
-          No hay empleados con expediente completo. Los contratos solo pueden subirse a empleados verificados.
+          No hay empleados registrados aún.
         </div>
       )}
 
       <div className="flex justify-end mb-4">
-        <Button onClick={() => { reset(); setArchivo(null); setArchivoError(''); setIsSubirOpen(true) }} className="flex items-center">
+        <Button
+          onClick={() => { reset(); setArchivo(null); setArchivoError(''); setEmpleadoSelId(null); setIsSubirOpen(true) }}
+          className="flex items-center"
+        >
           <FaPlus className="mr-2" /> Subir contrato
         </Button>
       </div>
@@ -266,20 +272,14 @@ const VistaRH = () => {
       <Modal isOpen={isSubirOpen} onClose={() => setIsSubirOpen(false)} title="Subir contrato" size="md">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Selección empleado */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Empleado *</label>
-            <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-white text-sm"
-              onChange={(e) => setValue('empleadoId', Number(e.target.value))}
-              defaultValue=""
-            >
-              <option value="" disabled>Selecciona un empleado...</option>
-              {empleadosCompletos.map((emp) => (
-                <option key={emp.id} value={emp.id}>{emp.nombre} — {emp.correo}</option>
-              ))}
-            </select>
-            {errors.empleadoId && <p className="mt-1 text-xs text-red-600">{errors.empleadoId.message}</p>}
-          </div>
+          <SearchableSelect
+            label="Empleado *"
+            placeholder="Buscar por nombre o correo..."
+            options={empleadosCompletos.map((e) => ({ value: e.id, label: e.nombre, sublabel: e.correo }))}
+            value={empleadoSelId}
+            onChange={(v) => { setEmpleadoSelId(v); setValue('empleadoId', v ?? 0) }}
+            error={errors.empleadoId?.message}
+          />
 
           <Input label="Título del contrato *" {...register('titulo')} error={errors.titulo?.message} />
 
