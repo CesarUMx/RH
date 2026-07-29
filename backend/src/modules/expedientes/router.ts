@@ -81,7 +81,7 @@ expedientesRouter.post(
   '/documentos',
   requireAuth,
   requireRole(['EMPLEADO']),
-  uploadExpediente.single('archivo'),
+  uploadExpediente.array('archivos', 10),
   handleMulterError,
   subirDocumento
 )
@@ -95,7 +95,7 @@ expedientesRouter.post(
   '/:empleadoId/documentos',
   requireAuth,
   requireRole(['ADMIN', 'RH']),
-  uploadExpediente.single('archivo'),
+  uploadExpediente.array('archivos', 10),
   handleMulterError,
   subirDocumentoRH
 )

@@ -347,7 +347,7 @@ export const EmpleadosNuevos = () => {
       header: 'Ingreso',
       cell: (info) =>
         info.getValue()
-          ? new Date(info.getValue()!).toLocaleDateString('es-MX')
+          ? new Date(info.getValue()!.slice(0, 10) + 'T12:00:00').toLocaleDateString('es-MX')
           : <span className="text-gray-400">—</span>,
     }),
     columnHelper.display({

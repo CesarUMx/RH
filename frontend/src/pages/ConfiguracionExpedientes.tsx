@@ -27,6 +27,7 @@ const tipoSchema = z.object({
   precisionVigencia: z.enum(['DIA', 'MES', 'ANIO']).optional(),
   condicion: z.string().optional(),
   orden: z.number().int(),
+  permiteMultiple: z.boolean(),
 })
 type TipoForm = z.infer<typeof tipoSchema>
 
@@ -76,10 +77,11 @@ function TabTipos({ secciones }: { secciones: SeccionExpediente[] }) {
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<TipoForm>({
     resolver: zodResolver(tipoSchema) as any,
-    defaultValues: { requerido: false, requiereVigencia: false, orden: 0, seccion: '' },
+    defaultValues: { requerido: false, requiereVigencia: false, orden: 0, seccion: '', permiteMultiple: false },
   })
   const watchRequerido = watch('requerido', false)
   const watchRequiereVigencia = watch('requiereVigencia', false)
+  const watchPermiteMultiple = watch('permiteMultiple', false)
 
   const { data: tipos = [], isLoading } = useQuery({
     queryKey: ['tipos-expediente'],
@@ -142,6 +144,7 @@ function TabTipos({ secciones }: { secciones: SeccionExpediente[] }) {
       precisionVigencia: (tipo.precisionVigencia as any) || 'DIA',
       condicion: tipo.condicion || '',
       orden: tipo.orden,
+      permiteMultiple: tipo.permiteMultiple,
     })
     setIsEditOpen(true)
   }
@@ -152,6 +155,7 @@ function TabTipos({ secciones }: { secciones: SeccionExpediente[] }) {
       seccion: data.seccion?.trim() || null,
       precisionVigencia: data.requiereVigencia ? (data.precisionVigencia ?? 'DIA') : null,
       condicion: data.condicion || null,
+      permiteMultiple: data.permiteMultiple,
     })
   const onSubmitEditar = (data: TipoForm) => {
     if (!selected) return
@@ -162,6 +166,7 @@ function TabTipos({ secciones }: { secciones: SeccionExpediente[] }) {
         seccion: data.seccion?.trim() || null,
         precisionVigencia: data.requiereVigencia ? (data.precisionVigencia ?? 'DIA') : null,
         condicion: data.condicion || null,
+        permiteMultiple: data.permiteMultiple,
       },
     })
   }
@@ -301,6 +306,12 @@ function TabTipos({ secciones }: { secciones: SeccionExpediente[] }) {
               <option value="EXTRANJERO">Solo extranjeros</option>
             </select>
           </div>
+          <div className="flex items-center">
+            <input type="checkbox" id="create-multiple" checked={watchPermiteMultiple}
+              onChange={(e) => setValue('permiteMultiple', e.target.checked)}
+              className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" />
+            <label htmlFor="create-multiple" className="ml-2 block text-sm text-gray-700">Permite subir múltiples archivos (se fusionan en uno)</label>
+          </div>
           <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
             <Button type="submit" isLoading={crearMutation.isPending}>Crear</Button>
@@ -359,6 +370,12 @@ function TabTipos({ secciones }: { secciones: SeccionExpediente[] }) {
               <option value="MEXICANO">Solo mexicanos</option>
               <option value="EXTRANJERO">Solo extranjeros</option>
             </select>
+          </div>
+          <div className="flex items-center">
+            <input type="checkbox" id="edit-multiple" checked={watchPermiteMultiple}
+              onChange={(e) => setValue('permiteMultiple', e.target.checked)}
+              className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" />
+            <label htmlFor="edit-multiple" className="ml-2 block text-sm text-gray-700">Permite subir múltiples archivos (se fusionan en uno)</label>
           </div>
           <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>Cancelar</Button>

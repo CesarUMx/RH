@@ -117,9 +117,8 @@ export const ValidarExpedientes = () => {
 
   const [isSubirOpen, setIsSubirOpen] = useState(false)
   const [itemParaSubir, setItemParaSubir] = useState<ItemExpediente | null>(null)
-  const [archivoSubir, setArchivoSubir] = useState<File | null>(null)
+  const [archivoSubir, setArchivoSubir] = useState<File[]>([])
   const [vigenciaSubir, setVigenciaSubir] = useState('')
-  const [soloMesAnioSubir, setSoloMesAnioSubir] = useState(false)
 
   // ── Queries ────────────────────────────────────────────────────────────────
   const { data: empleados = [], isLoading: loadingLista } = useQuery({
@@ -150,24 +149,40 @@ export const ValidarExpedientes = () => {
     onError: (err: any) => toast.error(err.response?.data?.error || 'Error al actualizar'),
   })
 
+  const computarFechaFinalRH = (): string | undefined => {
+    if (!vigenciaSubir) return undefined
+    const precision = itemParaSubir?.tipo.precisionVigencia?.toLowerCase()
+    if (precision === 'anio') {
+      const year = parseInt(vigenciaSubir, 10)
+      return `${year}-12-31`
+    }
+    if (precision === 'mes') {
+      const [y, m] = vigenciaSubir.split('-').map(Number)
+      const ultimo = new Date(y, m, 0).getDate()
+      return `${y}-${String(m).padStart(2, '0')}-${String(ultimo).padStart(2, '0')}`
+    }
+    return vigenciaSubir
+  }
+
   const subirRHMutation = useMutation({
-    mutationFn: () =>
-      expedientesService.subirDocumentoRH(
+    mutationFn: () => {
+      const precision = itemParaSubir?.tipo.precisionVigencia?.toLowerCase()
+      return expedientesService.subirDocumentoRH(
         empleadoSeleccionado!,
         itemParaSubir!.tipo.id,
-        archivoSubir!,
-        vigenciaSubir || undefined,
-        soloMesAnioSubir
-      ),
+        itemParaSubir!.tipo.permiteMultiple ? archivoSubir : archivoSubir[0]!,
+        computarFechaFinalRH(),
+        precision === 'mes'
+      )
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expedientes-lista'] })
       queryClient.invalidateQueries({ queryKey: ['expediente-empleado', empleadoSeleccionado] })
       toast.success('Documento subido y verificado')
       setIsSubirOpen(false)
       setItemParaSubir(null)
-      setArchivoSubir(null)
+      setArchivoSubir([])
       setVigenciaSubir('')
-      setSoloMesAnioSubir(false)
     },
     onError: (err: any) => toast.error(err.response?.data?.error || 'Error al subir documento'),
   })
@@ -414,9 +429,9 @@ export const ValidarExpedientes = () => {
                               title="Subir documento (RH)"
                               onClick={() => {
                                 setItemParaSubir(item)
-                                setArchivoSubir(null)
+                                setArchivoSubir([])
                                 setVigenciaSubir('')
-                                setSoloMesAnioSubir(false)
+                                setArchivoSubir([])
                                 setIsSubirOpen(true)
                               }}
                             >
@@ -503,33 +518,58 @@ export const ValidarExpedientes = () => {
             <input
               type="file"
               accept=".pdf"
-              onChange={(e) => setArchivoSubir(e.target.files?.[0] ?? null)}
+              multiple={itemParaSubir?.tipo.permiteMultiple ?? false}
+              onChange={(e) => setArchivoSubir(Array.from(e.target.files ?? []))}
               className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
             />
+            {archivoSubir.length > 1 && (
+              <p className="mt-1 text-xs text-blue-600">Se fusionarán {archivoSubir.length} archivos en un solo PDF</p>
+            )}
           </div>
-          {itemParaSubir?.tipo.requiereVigencia && (
-            <>
-              <Input
-                type="date"
-                label="Fecha de vigencia *"
-                value={vigenciaSubir}
-                onChange={(e) => setVigenciaSubir(e.target.value)}
-              />
-              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={soloMesAnioSubir}
-                  onChange={(e) => setSoloMesAnioSubir(e.target.checked)}
-                  className="h-4 w-4 text-primary rounded border-gray-300"
-                />
-                Solo mes y año (vence al último día del mes)
-              </label>
-            </>
-          )}
+          {itemParaSubir?.tipo.requiereVigencia && (() => {
+            const precision = itemParaSubir.tipo.precisionVigencia ?? 'DIA'
+            return (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Fecha de vigencia *
+                  <span className="ml-1 text-xs text-gray-400">
+                    ({precision === 'ANIO' ? 'Solo año' : precision === 'MES' ? 'Mes y año' : 'Fecha exacta'})
+                  </span>
+                </label>
+                {precision === 'ANIO' && (
+                  <input
+                    type="number"
+                    min={1900}
+                    max={2099}
+                    placeholder="Ej. 2028"
+                    value={vigenciaSubir}
+                    onChange={(e) => setVigenciaSubir(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
+                )}
+                {precision === 'MES' && (
+                  <input
+                    type="month"
+                    value={vigenciaSubir}
+                    onChange={(e) => setVigenciaSubir(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
+                )}
+                {precision === 'DIA' && (
+                  <input
+                    type="date"
+                    value={vigenciaSubir}
+                    onChange={(e) => setVigenciaSubir(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
+                )}
+              </div>
+            )
+          })()}
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => setIsSubirOpen(false)}>Cancelar</Button>
             <Button
-              disabled={!archivoSubir || (!!itemParaSubir?.tipo.requiereVigencia && !vigenciaSubir)}
+              disabled={archivoSubir.length === 0 || (!!itemParaSubir?.tipo.requiereVigencia && !vigenciaSubir)}
               isLoading={subirRHMutation.isPending}
               onClick={() => subirRHMutation.mutate()}
             >

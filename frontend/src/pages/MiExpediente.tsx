@@ -89,7 +89,7 @@ export const MiExpediente = () => {
   const queryClient = useQueryClient()
   const [isSubirOpen, setIsSubirOpen] = useState(false)
   const [itemSeleccionado, setItemSeleccionado] = useState<ItemExpediente | null>(null)
-  const [archivo, setArchivo] = useState<File | null>(null)
+  const [archivos, setArchivos] = useState<File[]>([])
   const [fechaVigencia, setFechaVigencia] = useState('')
   const [archivoError, setArchivoError] = useState('')
 
@@ -142,7 +142,7 @@ export const MiExpediente = () => {
     mutationFn: () =>
       expedientesService.subirDocumento(
         itemSeleccionado!.tipo.id,
-        archivo!,
+        itemSeleccionado!.tipo.permiteMultiple ? archivos : archivos[0]!,
         computarFechaFinal()
       ),
     onSuccess: () => {
@@ -156,7 +156,7 @@ export const MiExpediente = () => {
   // ── Handlers ────────────────────────────────────────────────────────────────
   const abrirSubir = (item: ItemExpediente) => {
     setItemSeleccionado(item)
-    setArchivo(null)
+    setArchivos([])
     setFechaVigencia('')
     setArchivoError('')
     setIsSubirOpen(true)
@@ -165,25 +165,26 @@ export const MiExpediente = () => {
   const cerrarModal = () => {
     setIsSubirOpen(false)
     setItemSeleccionado(null)
-    setArchivo(null)
+    setArchivos([])
     setFechaVigencia('')
     setArchivoError('')
   }
 
   const handleArchivoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const files = Array.from(e.target.files ?? [])
     setArchivoError('')
-    if (!file) return
-    if (!file.name.toLowerCase().endsWith('.pdf')) {
+    if (files.length === 0) return
+    const invalidos = files.filter((f) => !f.name.toLowerCase().endsWith('.pdf'))
+    if (invalidos.length > 0) {
       setArchivoError('Solo se permiten archivos PDF')
       return
     }
-    setArchivo(file)
+    setArchivos(files)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!archivo) { setArchivoError('Selecciona un archivo PDF'); return }
+    if (archivos.length === 0) { setArchivoError('Selecciona al menos un archivo PDF'); return }
     if (itemSeleccionado?.tipo.requiereVigencia && !fechaVigencia) {
       toast.error('La fecha de vigencia es requerida para este documento')
       return
@@ -414,20 +415,32 @@ export const MiExpediente = () => {
             </label>
             <div
               className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-                archivo ? 'border-green-400 bg-green-50' : 'border-gray-300 hover:border-primary'
+                archivos.length > 0 ? 'border-green-400 bg-green-50' : 'border-gray-300 hover:border-primary'
               }`}
               onClick={() => document.getElementById('pdf-input')?.click()}
             >
-              <FaFilePdf className={`mx-auto h-8 w-8 mb-2 ${archivo ? 'text-green-500' : 'text-gray-400'}`} />
-              {archivo ? (
-                <p className="text-sm text-green-700 font-medium">{archivo.name}</p>
+              <FaFilePdf className={`mx-auto h-8 w-8 mb-2 ${archivos.length > 0 ? 'text-green-500' : 'text-gray-400'}`} />
+              {archivos.length > 0 ? (
+                <div className="space-y-0.5">
+                  {archivos.map((f, i) => (
+                    <p key={i} className="text-sm text-green-700 font-medium">{f.name}</p>
+                  ))}
+                  {archivos.length > 1 && (
+                    <p className="text-xs text-green-600 mt-1">Se fusionarán en un solo PDF</p>
+                  )}
+                </div>
               ) : (
-                <p className="text-sm text-gray-500">Haz clic para seleccionar un PDF (máx. 10MB)</p>
+                <p className="text-sm text-gray-500">
+                  {itemSeleccionado?.tipo.permiteMultiple
+                    ? 'Haz clic para seleccionar uno o más PDFs (máx. 10MB c/u)'
+                    : 'Haz clic para seleccionar un PDF (máx. 10MB)'}
+                </p>
               )}
               <input
                 id="pdf-input"
                 type="file"
                 accept=".pdf"
+                multiple={itemSeleccionado?.tipo.permiteMultiple ?? false}
                 className="hidden"
                 onChange={handleArchivoChange}
               />
