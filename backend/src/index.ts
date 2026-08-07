@@ -15,6 +15,7 @@ import { expedientesRouter } from './modules/expedientes/router'
 import { contratosRouter } from './modules/contratos/router'
 import { departamentosRouter } from './modules/departamentos/router'
 import { empleadosRouter } from './modules/empleados/router'
+import { integracionRouter } from './modules/integracion/router'
 import { requireAuth } from './middlewares/auth'
 import { errorHandler } from './middlewares/errorHandler'
 import { PrismaClient } from '@prisma/client'
@@ -28,7 +29,7 @@ const prisma = new PrismaClient()
 app.use(cors({
     origin: env.cors.allowedOrigins, // Orígenes permitidos (puerto por defecto de Vite)
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
     credentials: true // Permite enviar cookies entre orígenes
 }))
 
@@ -61,6 +62,7 @@ app.use('/api/expedientes', expedientesRouter)
 app.use('/api/contratos', contratosRouter)
 app.use('/api/departamentos', departamentosRouter)
 app.use('/api/empleados', empleadosRouter)
+app.use('/api/v1/integracion', integracionRouter)
 
 // Ruta de salud
 app.get('/health', (_, res) => {

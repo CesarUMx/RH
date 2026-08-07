@@ -29,6 +29,9 @@ const envSchema = z.object({
   // SICAV (Sistema de Vigilancia)
   SICAV_API_KEY: z.string().optional(),
 
+  // API de Integración (para desarrolladores externos)
+  INTEGRATION_API_KEY: z.string().min(1),
+
   // Correo electrónico
   EMAIL_HOST: z.string().default('smtp.gmail.com'),
   EMAIL_PORT: z.string().default('587'),
@@ -82,5 +85,8 @@ export const env = {
   sicav: {
     apiKey: _env.data.SICAV_API_KEY ?? '',
     baseUrl: 'https://sicav.mondragonmexico.edu.mx/api/external',
+  },
+  integration: {
+    apiKey: _env.data.INTEGRATION_API_KEY,
   },
 }
