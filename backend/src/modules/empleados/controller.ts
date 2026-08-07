@@ -278,7 +278,7 @@ export async function listarEmpleados(req: Request, res: Response) {
   try {
     const { q, tipo, page = '1', pageSize = '15' } = req.query as Record<string, string>
     const pageNum = Math.max(1, parseInt(page))
-    const size = Math.min(100, Math.max(1, parseInt(pageSize)))
+    const size = Math.min(1000, Math.max(1, parseInt(pageSize)))
     const skip = (pageNum - 1) * size
 
     // Filtro de búsqueda sobre campos de User y RegistroIngreso
